@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+
+# Môi trường và Bí mật
+.env
+.env.local
+.env.*.local
