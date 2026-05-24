@@ -10,8 +10,8 @@ import {
   Dimensions,
   StatusBar
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Bell, ChevronRight, Zap } from 'lucide-react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { Bell, ChevronRight, Zap, ChevronLeft } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { useUserStore } from '../../../store/userStore';
 import { useNutritionStore } from '../../../store/nutritionStore';
@@ -25,6 +25,9 @@ import { dashboardService } from '../../../api/services';
 
 const StudentDashboardScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const { isPTView, studentData } = route.params || {};
+  
   const { user } = useAuthStore();
   const { profile, metrics: storeMetrics, fetchProfile } = useUserStore();
   
@@ -63,7 +66,7 @@ const StudentDashboardScreen = () => {
     fetchDashboard();
   }, []);
 
-  const displayUser = profile || user;
+  const displayUser = isPTView ? studentData : (profile || user);
 
   // Lấy Target từ kết quả Onboarding trong Store
   const metrics = storeMetrics || displayUser?.metrics || {};
@@ -93,22 +96,31 @@ const StudentDashboardScreen = () => {
         {/* ===== Curved Header ===== */}
         <View style={styles.headerContainer}>
           <View style={styles.headerTop}>
-            <View style={styles.profileInfo}>
-              <View style={styles.avatarContainer}>
-                <Image 
-                  source={{ uri: displayUser?.avatarUrl || displayUser?.avatar || 'https://i.pravatar.cc/100' }} 
-                  style={styles.avatar} 
-                />
-              </View>
-              <View>
-                <Text style={styles.greeting}>{getGreeting()}</Text>
-                <Text style={styles.userName}>{displayUser?.fullName || 'Người dùng Nutri'}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {isPTView && (
+                <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
+                  <ChevronLeft color="#fff" size={28} />
+                </TouchableOpacity>
+              )}
+              <View style={styles.profileInfo}>
+                <View style={styles.avatarContainer}>
+                  <Image 
+                    source={{ uri: displayUser?.avatarUrl || displayUser?.avatar || 'https://i.pravatar.cc/100' }} 
+                    style={styles.avatar} 
+                  />
+                </View>
+                <View>
+                  <Text style={styles.greeting}>{isPTView ? 'Học viên của bạn' : getGreeting()}</Text>
+                  <Text style={styles.userName}>{displayUser?.fullName || 'Người dùng Nutri'}</Text>
+                </View>
               </View>
             </View>
-            <TouchableOpacity style={styles.notificationBtn}>
-              <Bell color="#fff" size={22} />
-              <View style={styles.badge} />
-            </TouchableOpacity>
+            {!isPTView && (
+              <TouchableOpacity style={styles.notificationBtn}>
+                <Bell color="#fff" size={22} />
+                <View style={styles.badge} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -141,7 +153,7 @@ const StudentDashboardScreen = () => {
         {/* ===== Gợi ý bữa ăn ===== */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Gợi ý bữa ăn</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('SuggestedMeals')}>
             <Text style={styles.viewAll}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
@@ -215,7 +227,7 @@ const StudentDashboardScreen = () => {
               <Text style={styles.summaryTitle}>Tổng calo hôm nay</Text>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryValue}>{consumedCalories}/{targetCalories} calo</Text>
-                <TouchableOpacity style={styles.summaryLink}>
+                <TouchableOpacity style={styles.summaryLink} onPress={() => navigation.navigate('NutritionOverview')}>
                   <Text style={styles.summaryLinkText}>Xem tổng quan</Text>
                   <ChevronRight size={14} color={COLORS.textSecondary} />
                 </TouchableOpacity>

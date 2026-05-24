@@ -34,15 +34,15 @@ export const AppNavigator = () => {
     }
 
     // 3. Đã đăng nhập VÀ đã onboarding -> Vào Stack theo Role
-    if (user.role === 'student') {
+    if (user.role === 'USER') {
       return <StudentStack />;
     }
 
-    if (user.role === 'pt') {
+    if (user.role === 'PT') {
       return <PTStack />;
     }
 
-    if (user.role === 'admin') {
+    if (user.role === 'ADMIN') {
       return <AdminStack />;
     }
 

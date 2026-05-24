@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import ptService from '../api/services/pt.service';
+import { USE_MOCK, mockStudents, mockCourses, mockEarnings } from '../mocks';
 
 export const usePTStore = create((set, get) => ({
   verificationStatus: null, // PENDING, APPROVED, REJECTED
@@ -15,6 +16,11 @@ export const usePTStore = create((set, get) => ({
 
   // --- Kiểm tra trạng thái xác minh ---
   fetchVerificationStatus: async () => {
+    if (USE_MOCK) {
+      // In mock mode, we assume the PT is either PENDING or already APPROVED based on some local mock, but let's default to null to show verification
+      // If we want to simulate auto-approve, we could return APPROVED. But let's return PENDING initially to let user bypass.
+      return null;
+    }
     try {
       const response = await ptService.getVerificationStatus();
       set({ verificationStatus: response.data.status });
@@ -28,6 +34,11 @@ export const usePTStore = create((set, get) => ({
   // --- Gửi yêu cầu xác minh ---
   submitVerification: async (data) => {
     set({ isLoading: true, error: null });
+    if (USE_MOCK) {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      set({ verificationStatus: 'PENDING', isLoading: false });
+      return { success: true };
+    }
     try {
       const response = await ptService.requestVerification(data);
       set({ verificationStatus: 'PENDING', isLoading: false });
@@ -41,6 +52,11 @@ export const usePTStore = create((set, get) => ({
   // --- Quản lý học viên ---
   fetchStudents: async () => {
     set({ isLoading: true });
+    if (USE_MOCK) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      set({ students: mockStudents, isLoading: false });
+      return;
+    }
     try {
       const response = await ptService.getStudents();
       set({ students: response.data || [], isLoading: false });
@@ -52,6 +68,11 @@ export const usePTStore = create((set, get) => ({
   // --- Quản lý khóa học ---
   fetchCourses: async () => {
     set({ isLoading: true });
+    if (USE_MOCK) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      set({ courses: mockCourses, isLoading: false });
+      return;
+    }
     try {
       const response = await ptService.getCourses();
       set({ courses: response.data || [], isLoading: false });
@@ -62,6 +83,10 @@ export const usePTStore = create((set, get) => ({
 
   // --- Tài chính ---
   fetchEarnings: async () => {
+    if (USE_MOCK) {
+      set({ earnings: mockEarnings });
+      return;
+    }
     try {
       const response = await ptService.getEarnings();
       set({ earnings: response.data });

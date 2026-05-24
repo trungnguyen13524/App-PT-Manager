@@ -18,7 +18,9 @@ import {
   ChevronLeft,
   Shield,
   CheckCircle,
-  Clock as ClockIcon
+  Clock as ClockIcon,
+  Video,
+  User as UserIcon
 } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import NutriButton from '../../../components/shared/NutriButton';
@@ -34,6 +36,8 @@ const PTVerificationScreen = () => {
   const [idCardFront, setIdCardFront] = useState(null);
   const [idCardBack, setIdCardBack] = useState(null);
   const [certificates, setCertificates] = useState([]);
+  const [facePhoto, setFacePhoto] = useState(null);
+  const [introVideo, setIntroVideo] = useState(null);
 
   useEffect(() => {
     fetchVerificationStatus();
@@ -45,30 +49,40 @@ const PTVerificationScreen = () => {
     if (type === 'id_front') setIdCardFront(mockUri);
     else if (type === 'id_back') setIdCardBack(mockUri);
     else if (type === 'cert') setCertificates([...certificates, mockUri]);
+    else if (type === 'face') setFacePhoto(mockUri);
+    else if (type === 'video') setIntroVideo(mockUri);
   };
 
   const handleSubmit = async () => {
-    if (!idCardFront || !idCardBack) {
-      Alert.alert('Thông báo', 'Vui lòng tải lên cả mặt trước và mặt sau CCCD');
+    if (!idCardFront || !idCardBack || !facePhoto || !introVideo) {
+      Alert.alert('Thông báo', 'Vui lòng cung cấp đầy đủ CCCD, ảnh khuôn mặt và video giới thiệu.');
       return;
     }
     
     const payload = {
       idCardFrontUrl: idCardFront,
       idCardBackUrl: idCardBack,
-      certificates: certificates
+      certificates: certificates,
+      facePhotoUrl: facePhoto,
+      introVideoUrl: introVideo
     };
 
     const res = await submitVerification(payload);
     if (res.success) {
+      // Gọi completeOnboarding để chuyển sang PTStack
+      await completeOnboarding();
       Alert.alert(
         'Gửi xác minh thành công!',
         'Hồ sơ của bạn đang được Admin xem xét.',
-        [{ text: 'Đồng ý', onPress: () => navigation.goBack() }]
+        [{ text: 'Đồng ý' }]
       );
     } else {
       Alert.alert('Lỗi', res.error || 'Không thể gửi hồ sơ');
     }
+  };
+
+  const handleBypass = async () => {
+    await completeOnboarding();
   };
 
   // Giao diện khi đang chờ duyệt
@@ -97,7 +111,9 @@ const PTVerificationScreen = () => {
           <ChevronLeft color={COLORS.text} size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Xác minh PT</Text>
-        <View style={{ width: 28 }} />
+        <TouchableOpacity onPress={handleBypass} style={styles.bypassBtn}>
+          <Text style={styles.bypassText}>Bỏ qua</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -157,8 +173,57 @@ const PTVerificationScreen = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Face Photo Section */}
+        <Text style={styles.sectionTitle}>2. Ảnh khuôn mặt hiện tại</Text>
+        <Text style={styles.sectionSubtitle}>
+          Ảnh rõ mặt, chụp trong vòng 6 tháng gần nhất để xác minh danh tính.
+        </Text>
+        <TouchableOpacity 
+          style={[styles.uploadCard, { width: '100%', height: 160, marginBottom: 28 }]} 
+          onPress={() => handlePickImage('face')}
+        >
+          {facePhoto ? (
+            <View style={styles.uploadedContainer}>
+              <Image source={{ uri: facePhoto }} style={styles.uploadedImage} />
+              <View style={styles.checkBadge}>
+                <CheckCircle size={20} color={COLORS.white} />
+              </View>
+            </View>
+          ) : (
+            <>
+              <UserIcon size={36} color={COLORS.textLight} />
+              <Text style={styles.uploadLabel}>Tải lên ảnh khuôn mặt</Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        {/* Intro Video Section */}
+        <Text style={styles.sectionTitle}>3. Video giới thiệu bản thân</Text>
+        <Text style={styles.sectionSubtitle}>
+          Một video ngắn (30s - 1 phút) giới thiệu về bản thân và kinh nghiệm huấn luyện.
+        </Text>
+        <TouchableOpacity 
+          style={[styles.uploadCard, { width: '100%', height: 160, marginBottom: 28 }]} 
+          onPress={() => handlePickImage('video')}
+        >
+          {introVideo ? (
+            <View style={[styles.uploadedContainer, { backgroundColor: COLORS.primaryLight, justifyContent: 'center', alignItems: 'center' }]}>
+              <Video size={48} color={COLORS.primary} />
+              <Text style={{ color: COLORS.primary, marginTop: 10, fontWeight: '600' }}>Video đã được tải lên</Text>
+              <View style={styles.checkBadge}>
+                <CheckCircle size={20} color={COLORS.white} />
+              </View>
+            </View>
+          ) : (
+            <>
+              <Video size={36} color={COLORS.textLight} />
+              <Text style={styles.uploadLabel}>Tải lên video giới thiệu</Text>
+            </>
+          )}
+        </TouchableOpacity>
+
         {/* Certificates Section */}
-        <Text style={styles.sectionTitle}>2. Bằng cấp / Chứng chỉ chuyên môn</Text>
+        <Text style={styles.sectionTitle}>4. Bằng cấp / Chứng chỉ chuyên môn</Text>
         <Text style={styles.sectionSubtitle}>
           Tải lên bằng cấp hoặc chứng chỉ liên quan đến thể hình, dinh dưỡng
         </Text>
@@ -232,6 +297,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     ...TYPOGRAPHY.h3,
     color: COLORS.text,
+  },
+  bypassBtn: {
+    padding: 4,
+  },
+  bypassText: {
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: '700',
   },
   scrollContent: {
     paddingHorizontal: 24,

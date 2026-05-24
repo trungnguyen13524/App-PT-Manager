@@ -1,7 +1,7 @@
 // Dữ liệu giả cho Học viên
 export const MOCK_STUDENT = {
   id: 'usr_001',
-  role: 'student',
+  role: 'USER',
   email: 'student@test.com',
   fullName: 'Nguyễn Văn Học Viên',
   avatar: 'https://i.pravatar.cc/150?u=student',
@@ -21,7 +21,7 @@ export const MOCK_STUDENT = {
 // Dữ liệu giả cho Huấn luyện viên
 export const MOCK_PT = {
   id: 'usr_002',
-  role: 'pt',
+  role: 'PT',
   email: 'pt@test.com',
   fullName: 'Trần Văn PT',
   avatar: 'https://i.pravatar.cc/150?u=pt',

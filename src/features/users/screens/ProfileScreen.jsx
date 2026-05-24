@@ -96,7 +96,7 @@ const ProfileScreen = () => {
         </View>
 
         {/* Stats Row (Only for Students) */}
-        {displayUser?.role === 'student' && (
+        {displayUser?.role === 'USER' && (
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>Cân nặng</Text>
@@ -123,12 +123,6 @@ const ProfileScreen = () => {
               icon={User} 
               title="Thông tin cá nhân" 
               subtitle="Tên, Email, Ảnh đại diện"
-              onPress={() => {}} 
-            />
-            <MenuOption 
-              icon={Scale} 
-              title="Chỉ số cơ thể" 
-              subtitle="Cập nhật cân nặng, mục tiêu"
               onPress={() => {}} 
             />
             <MenuOption 

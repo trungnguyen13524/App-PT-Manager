@@ -39,8 +39,8 @@ const PTDashboardScreen = () => {
     fetchEarnings();
   }, []);
 
-  const StatCard = ({ title, value, icon, color }) => (
-    <NutriCard style={styles.statCard}>
+  const StatCard = ({ title, value, icon, color, onPress }) => (
+    <TouchableOpacity style={[styles.statCard, { backgroundColor: '#fff', borderRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 }]} onPress={onPress} activeOpacity={0.8}>
       <View style={[styles.statIcon, { backgroundColor: color + '20' }]}>
         {icon}
       </View>
@@ -48,7 +48,7 @@ const PTDashboardScreen = () => {
         <Text style={styles.statLabel}>{title}</Text>
         <Text style={styles.statValue}>{value}</Text>
       </View>
-    </NutriCard>
+    </TouchableOpacity>
   );
 
   return (
@@ -88,6 +88,7 @@ const PTDashboardScreen = () => {
             value={`${(earnings.balance || 0).toLocaleString()}đ`} 
             icon={<DollarSign size={20} color="#F1C40F" />} 
             color="#F1C40F"
+            onPress={() => navigation.navigate('PTEarnings')}
           />
         </View>
 
@@ -97,7 +98,7 @@ const PTDashboardScreen = () => {
         </View>
         
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionItem}>
+          <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('CourseManagement')}>
             <View style={[styles.actionIcon, { backgroundColor: '#3498DB20' }]}>
               <Plus size={24} color="#3498DB" />
             </View>
@@ -135,7 +136,7 @@ const PTDashboardScreen = () => {
           students.slice(0, 3).map((student) => (
             <TouchableOpacity 
               key={student.id} 
-              onPress={() => navigation.navigate('StudentDetail', { studentId: student.id })}
+              onPress={() => navigation.navigate('StudentDashboard', { isPTView: true, studentData: student })}
             >
               <NutriCard style={styles.studentCard}>
                 <Image source={{ uri: student.avatar }} style={styles.studentAvatar} />

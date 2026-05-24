@@ -47,10 +47,20 @@ export const useNutritionStore = create((set, get) => ({
   // Lấy thực đơn gợi ý (Meal Plan)
   fetchActiveMealPlan: async () => {
     try {
+      const { USE_MOCK } = require('../mocks');
+      if (USE_MOCK) {
+        set({ suggestedMenu: {
+          morning: [{ id: 1, title: 'Phở gà', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80', calories: 350, protein: 20 }],
+          lunch: [{ id: 2, title: 'Cơm gà gạo lứt', image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=400&q=80', calories: 420, protein: 30 }],
+          evening: [{ id: 3, title: 'Salad cá hồi', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80', calories: 310, protein: 25 }]
+        }});
+        return;
+      }
       const response = await nutritionService.getActiveMealPlan();
-      set({ suggestedMenu: response.data });
+      set({ suggestedMenu: response.data || { morning: [], lunch: [], evening: [] } });
     } catch (err) {
       console.warn('Không thể lấy thực đơn gợi ý');
+      set({ suggestedMenu: { morning: [], lunch: [], evening: [] } });
     }
   },
 

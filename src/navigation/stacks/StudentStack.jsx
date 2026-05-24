@@ -7,6 +7,8 @@ import MealLogScreen from '../../features/nutrition/screens/MealLogScreen';
 import FoodScanScreen from '../../features/nutrition/screens/FoodScanScreen';
 import MealDetailScreen from '../../features/nutrition/screens/MealDetailScreen';
 import ScanResultScreen from '../../features/nutrition/screens/ScanResultScreen';
+import NutritionOverviewScreen from '../../features/nutrition/screens/NutritionOverviewScreen';
+import SuggestedMealsScreen from '../../features/nutrition/screens/SuggestedMealsScreen';
 import WorkoutListScreen from '../../features/workout/screens/WorkoutListScreen';
 import WorkoutDetailScreen from '../../features/workout/screens/WorkoutDetailScreen';
 import ExerciseVideoScreen from '../../features/workout/screens/ExerciseVideoScreen';
@@ -14,6 +16,7 @@ import ActiveWorkoutScreen from '../../features/workout/screens/ActiveWorkoutScr
 import PricingScreen from '../../features/users/screens/PricingScreen';
 import CheckoutScreen from '../../features/users/screens/CheckoutScreen';
 import TransactionHistoryScreen from '../../features/payment/screens/TransactionHistoryScreen';
+import BodyMetricsScreen from '../../features/users/screens/BodyMetricsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -26,6 +29,8 @@ export const StudentStack = () => {
       <Stack.Screen name="FoodScan" component={FoodScanScreen} />
       <Stack.Screen name="MealDetail" component={MealDetailScreen} />
       <Stack.Screen name="ScanResult" component={ScanResultScreen} />
+      <Stack.Screen name="NutritionOverview" component={NutritionOverviewScreen} />
+      <Stack.Screen name="SuggestedMeals" component={SuggestedMealsScreen} />
       <Stack.Screen name="WorkoutList" component={WorkoutListScreen} />
       <Stack.Screen name="WorkoutDetail" component={WorkoutDetailScreen} />
       <Stack.Screen name="ExerciseVideo" component={ExerciseVideoScreen} />
@@ -33,6 +38,7 @@ export const StudentStack = () => {
       <Stack.Screen name="Pricing" component={PricingScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
       <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
+      <Stack.Screen name="BodyMetrics" component={BodyMetricsScreen} />
     </Stack.Navigator>
   );
 };

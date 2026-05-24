@@ -18,6 +18,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { ChevronLeft, Check, Edit3, Plus, Minus, FileText, AlertCircle } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { useNutritionStore } from '../../../store/nutritionStore';
+import scanService from '../../../api/services/scan.service';
 
 const { width } = Dimensions.get('window');
 
@@ -53,22 +54,37 @@ const ScanResultScreen = () => {
     };
 
     const payload = {
-      foodName: foodData.name,
-      calories: Math.round(foodData.calories * foodData.amount),
-      proteinG: Math.round(foodData.protein * foodData.amount),
-      carbsG: Math.round(foodData.carbs * foodData.amount),
-      fatG: Math.round(foodData.fat * foodData.amount),
       mealType: 'BREAKFAST', // Mặc định, có thể thêm UI chọn buổi sau
-      imageUrl: foodData.image,
-      consumedAt: new Date().toISOString()
     };
 
-    const result = await addFoodLog(payload);
-    if (result.success) {
-      Alert.alert('Thành công', 'Đã lưu vào nhật ký dinh dưỡng!');
-      navigation.navigate('MainTab', { screen: 'Trang chủ' });
-    } else {
-      Alert.alert('Lỗi', result.error || 'Không thể lưu món ăn');
+    try {
+      if (scannedData?.scanId) {
+        // Thực tế: Gọi API confirm
+        await scanService.confirmScan(scannedData.scanId, payload);
+        Alert.alert('Thành công', 'Đã lưu vào nhật ký dinh dưỡng qua AI Scan!');
+        navigation.navigate('MainTab', { screen: 'Trang chủ' });
+      } else {
+        // Fallback lưu thủ công nếu không có scanId (mock)
+        const fallbackPayload = {
+          foodName: foodData.name,
+          calories: Math.round(foodData.calories * foodData.amount),
+          proteinG: Math.round(foodData.protein * foodData.amount),
+          carbsG: Math.round(foodData.carbs * foodData.amount),
+          fatG: Math.round(foodData.fat * foodData.amount),
+          mealType: 'BREAKFAST',
+          imageUrl: foodData.image,
+          consumedAt: new Date().toISOString()
+        };
+        const result = await addFoodLog(fallbackPayload);
+        if (result.success) {
+          Alert.alert('Thành công', 'Đã lưu vào nhật ký dinh dưỡng!');
+          navigation.navigate('MainTab', { screen: 'Trang chủ' });
+        } else {
+          Alert.alert('Lỗi', result.error || 'Không thể lưu món ăn');
+        }
+      }
+    } catch (err) {
+      Alert.alert('Lỗi', err.message || 'Không thể xác nhận quét AI');
     }
   };
 

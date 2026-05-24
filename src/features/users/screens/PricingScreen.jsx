@@ -45,7 +45,13 @@ const PricingScreen = () => {
   const handleSubscribe = async (planId) => {
     setLoadingPlan(planId);
     try {
-      const response = await paymentService.createCheckoutSession(planId);
+      const payload = {
+        productType: 'SUBSCRIPTION',
+        productId: planId,
+        returnUrl: 'app-pt-manager://payment/success',
+        cancelUrl: 'app-pt-manager://payment/cancel'
+      };
+      const response = await paymentService.createCheckoutSession(payload);
       if (response.data && response.data.checkoutUrl) {
         navigation.navigate('Checkout', { url: response.data.checkoutUrl });
       } else {

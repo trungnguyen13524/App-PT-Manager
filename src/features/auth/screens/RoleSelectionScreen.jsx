@@ -22,9 +22,9 @@ const RoleSelectionScreen = () => {
   const handleSelectRole = (role) => {
     setUserRole(role);
 
-    if (role === 'student') {
+    if (role === 'USER') {
       navigation.navigate('Onboarding');
-    } else if (role === 'pt') {
+    } else if (role === 'PT') {
       navigation.navigate('PTVerification');
     }
   };
@@ -41,7 +41,7 @@ const RoleSelectionScreen = () => {
           {/* Student Card */}
           <TouchableOpacity 
             style={styles.roleCard}
-            onPress={() => handleSelectRole('student')}
+            onPress={() => handleSelectRole('USER')}
             activeOpacity={0.8}
           >
             <View style={[styles.iconContainer, { backgroundColor: COLORS.primaryLight }]}>
@@ -54,7 +54,7 @@ const RoleSelectionScreen = () => {
           {/* PT Card */}
           <TouchableOpacity 
             style={styles.roleCard}
-            onPress={() => handleSelectRole('pt')}
+            onPress={() => handleSelectRole('PT')}
             activeOpacity={0.8}
           >
             <View style={[styles.iconContainer, { backgroundColor: '#FFF3E0' }]}>

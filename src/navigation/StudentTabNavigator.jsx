@@ -113,6 +113,8 @@ const StudentTabNavigator = () => {
       navigation.navigate('MealLog');
     } else if (key === 'camera') {
       navigation.navigate('FoodScan');
+    } else if (key === 'metrics') {
+      navigation.navigate('BodyMetrics');
     } else {
       console.log('Selected:', key);
     }

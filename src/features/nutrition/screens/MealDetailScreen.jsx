@@ -20,7 +20,9 @@ const { width } = Dimensions.get('window');
 const MealDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { meal } = route.params;
+  const { meal } = route.params || {};
+  
+  if (!meal) return null; // Or a loading/error state
 
   return (
     <View style={styles.container}>
@@ -54,15 +56,15 @@ const MealDetailScreen = () => {
           <View style={styles.macroRow}>
             <View style={styles.macroItem}>
               <Text style={styles.macroLabel}>Carbs</Text>
-              <Text style={styles.macroVal}>{meal.carbs}g</Text>
+              <Text style={styles.macroVal}>{meal.carbs || 0}g</Text>
             </View>
             <View style={styles.macroItem}>
               <Text style={styles.macroLabel}>Protein</Text>
-              <Text style={styles.macroVal}>{meal.protein}g</Text>
+              <Text style={styles.macroVal}>{meal.protein || 0}g</Text>
             </View>
             <View style={styles.macroItem}>
               <Text style={styles.macroLabel}>Fat</Text>
-              <Text style={styles.macroVal}>{meal.fat}g</Text>
+              <Text style={styles.macroVal}>{meal.fat || 0}g</Text>
             </View>
           </View>
         </View>
@@ -71,30 +73,32 @@ const MealDetailScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Cách chế biến</Text>
           <View style={styles.instructionBox}>
-            <Text style={styles.instructionText}>{meal.instructions}</Text>
+            <Text style={styles.instructionText}>{meal.instructions || 'Đang cập nhật hướng dẫn chế biến cho món ăn này...'}</Text>
           </View>
         </View>
 
         {/* Alternatives */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Món ăn tương đương</Text>
-            <RefreshCw size={18} color={COLORS.primary} />
+        {(meal.alternatives && meal.alternatives.length > 0) && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Món ăn tương đương</Text>
+              <RefreshCw size={18} color={COLORS.primary} />
+            </View>
+            <Text style={styles.subTitle}>Các món có cùng lượng Calo bạn có thể đổi:</Text>
+            
+            {meal.alternatives.map((alt, index) => (
+              <TouchableOpacity key={index} style={styles.altItem} activeOpacity={0.7}>
+                <View style={styles.altInfo}>
+                  <CheckCircle2 size={20} color={COLORS.primary} />
+                  <Text style={styles.altName}>{alt}</Text>
+                </View>
+                <View style={styles.swapBtn}>
+                  <Text style={styles.swapText}>Đổi món</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
-          <Text style={styles.subTitle}>Các món có cùng lượng Calo bạn có thể đổi:</Text>
-          
-          {meal.alternatives.map((alt, index) => (
-            <TouchableOpacity key={index} style={styles.altItem} activeOpacity={0.7}>
-              <View style={styles.altInfo}>
-                <CheckCircle2 size={20} color={COLORS.primary} />
-                <Text style={styles.altName}>{alt}</Text>
-              </View>
-              <View style={styles.swapBtn}>
-                <Text style={styles.swapText}>Đổi món</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+        )}
 
         <View style={{ height: 40 }} />
       </ScrollView>
