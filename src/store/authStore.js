@@ -114,7 +114,7 @@ export const useAuthStore = create((set, get) => ({
   // --- Đăng xuất ---
   logout: async () => {
     try {
-      await authService.logout();
+      await authService.logout(get().refreshToken);
     } catch (e) {
       console.warn('Logout API failed, clearing local data anyway.');
     } finally {

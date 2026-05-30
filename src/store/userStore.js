@@ -26,7 +26,11 @@ export const useUserStore = create((set, get) => ({
     set({ isLoading: true });
     try {
       const response = await usersService.updateMe(data);
-      set({ profile: response.data, isLoading: false });
+      set({ 
+        profile: response.data, 
+        metrics: response.data?.metrics || get().metrics,
+        isLoading: false 
+      });
       return { success: true };
     } catch (err) {
       set({ error: err.message, isLoading: false });
@@ -73,11 +77,12 @@ export const useUserStore = create((set, get) => ({
 
   updateAvatar: async (fileKey) => {
     try {
-      const response = await usersService.updateAvatar(fileKey);
-      set((state) => ({
-        profile: { ...state.profile, avatarUrl: response.data.avatarUrl }
-      }));
-      return { success: true };
+      // NOTE: BE chưa hỗ trợ API Upload/Avatar. Tạm thời chặn gọi API thật để tránh 404
+      // const response = await usersService.updateAvatar(fileKey);
+      // set((state) => ({ profile: { ...state.profile, avatarUrl: response.data.avatarUrl } }));
+      
+      console.warn("Tính năng Upload Avatar đang tạm đóng do BE chưa hỗ trợ API.");
+      return { success: false, error: "Chức năng đổi ảnh đại diện đang được bảo trì từ hệ thống." };
     } catch (err) {
       return { success: false, error: err.message };
     }

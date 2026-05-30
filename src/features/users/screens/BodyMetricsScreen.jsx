@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   TextInput,
   StatusBar,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft, Save, Scale, ArrowUp, Activity, Check } from 'lucide-react-native';
@@ -17,7 +18,7 @@ import { useUserStore } from '../../../store/userStore';
 
 const BodyMetricsScreen = () => {
   const navigation = useNavigation();
-  const { user, metrics: storeMetrics } = useUserStore();
+  const { user, metrics: storeMetrics, updateProfile, isLoading } = useUserStore();
   
   const currentMetrics = storeMetrics || user?.metrics || {
     heightCm: 170,
@@ -27,10 +28,10 @@ const BodyMetricsScreen = () => {
   };
 
   const [formData, setFormData] = useState({
-    heightCm: currentMetrics.heightCm.toString(),
-    weightKg: currentMetrics.weightKg.toString(),
-    goal: currentMetrics.goal,
-    activityLevel: currentMetrics.activityLevel
+    heightCm: (currentMetrics.heightCm || 170).toString(),
+    weightKg: (currentMetrics.weightKg || 65).toString(),
+    goal: currentMetrics.goal || 'LOSE_WEIGHT',
+    activityLevel: currentMetrics.activityLevel || 'MODERATE'
   });
 
   const goals = [
@@ -40,13 +41,32 @@ const BodyMetricsScreen = () => {
     { id: 'GAIN_MUSCLE', label: 'Tăng cơ bắp' }
   ];
 
-  const handleSave = () => {
-    // In a real scenario, we would call an API like userStore.updateMetrics(formData)
-    Alert.alert(
-      "Thành công", 
-      "Đã cập nhật chỉ số cơ thể của bạn!",
-      [{ text: "OK", onPress: () => navigation.goBack() }]
-    );
+  const handleSave = async () => {
+    if (!formData.heightCm || !formData.weightKg) {
+      Alert.alert('Lỗi', 'Vui lòng nhập chiều cao và cân nặng hợp lệ.');
+      return;
+    }
+
+    // Gửi data với chuẩn chung (nested object hoặc tùy thuộc spec BE, ở đây gửi nguyên payload chuẩn)
+    const payload = {
+      metrics: {
+        heightCm: parseFloat(formData.heightCm),
+        weightKg: parseFloat(formData.weightKg),
+        goal: formData.goal,
+        activityLevel: formData.activityLevel
+      }
+    };
+    
+    const res = await updateProfile(payload);
+    if (res.success) {
+      Alert.alert(
+        "Thành công", 
+        "Đã cập nhật chỉ số cơ thể của bạn!",
+        [{ text: "OK", onPress: () => navigation.goBack() }]
+      );
+    } else {
+      Alert.alert("Lỗi", res.error || "Không thể cập nhật chỉ số cơ thể.");
+    }
   };
 
   const calculateBMI = () => {
@@ -80,8 +100,12 @@ const BodyMetricsScreen = () => {
           <ChevronLeft color={COLORS.text} size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chỉ số cơ thể</Text>
-        <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
-          <Text style={styles.saveText}>Lưu</Text>
+        <TouchableOpacity onPress={handleSave} style={styles.saveBtn} disabled={isLoading}>
+          {isLoading ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <Text style={styles.saveText}>Lưu</Text>
+          )}
         </TouchableOpacity>
       </View>
 

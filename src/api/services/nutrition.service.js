@@ -5,11 +5,11 @@ import { endpoints } from '../endpoints';
  * Nutrition Module - 7 Endpoints (Gồm Meal Plans, Food Logs và Summaries)
  */
 const nutritionService = {
-  // POST /nutrition/meal-plans/generate - Tự động tạo thực đơn bằng AI
-  generateMealPlan: (data) => apiClient.post(endpoints.NUTRITION.GENERATE_MEAL_PLAN, data),
+  // POST /nutrition/meal-plans/generate - Tự động tạo thực đơn bằng AI (CHƯA CÓ TRONG BE)
+  // generateMealPlan: (data) => apiClient.post('/nutrition/meal-plans/generate', data),
   
-  // GET /nutrition/meal-plans/active - Lấy thực đơn đang áp dụng
-  getActiveMealPlan: () => apiClient.get(endpoints.NUTRITION.ACTIVE_MEAL_PLAN),
+  // GET /nutrition/meal-plans/active - Lấy thực đơn đang áp dụng (CHƯA CÓ TRONG BE)
+  // getActiveMealPlan: () => apiClient.get('/nutrition/meal-plans/active'),
   
   // GET /nutrition/food-logs - Lấy danh sách nhật ký ăn uống
   getFoodLogs: (params) => apiClient.get(endpoints.NUTRITION.FOOD_LOGS, { params }),
@@ -26,8 +26,8 @@ const nutritionService = {
   // GET /nutrition/summary/daily - Tóm tắt dinh dưỡng ngày
   getDailySummary: (date) => apiClient.get(endpoints.NUTRITION.DAILY_SUMMARY, { params: { date } }),
   
-  // GET /nutrition/summary/weekly - Tóm tắt dinh dưỡng tuần
-  getWeeklySummary: (weekStart) => apiClient.get(endpoints.NUTRITION.WEEKLY_SUMMARY, { params: { weekStart } }),
+  // GET /nutrition/summary/weekly - Tóm tắt dinh dưỡng tuần (CHƯA CÓ TRONG BE)
+  // getWeeklySummary: (weekStart) => apiClient.get('/nutrition/summary/weekly', { params: { weekStart } }),
 };
 
 export default nutritionService;

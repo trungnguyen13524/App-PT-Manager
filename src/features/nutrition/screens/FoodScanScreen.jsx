@@ -51,10 +51,10 @@ const FoodScanScreen = () => {
 
   const handleCapture = async () => {
     if (isScanning || !cameraRef.current) return;
-    
+
     try {
       setIsScanning(true);
-      
+
       // Chụp ảnh thật
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.5,
@@ -63,7 +63,7 @@ const FoodScanScreen = () => {
       // GIẢ LẬP: Đợi 1.5 giây giống như đang gọi AI thật
       setTimeout(() => {
         setIsScanning(false);
-        navigation.navigate('ScanResult', { 
+        navigation.navigate('ScanResult', {
           scannedData: {
             name: "Món ăn đang quét...", // Placeholder vì chưa có AI
             calories: 350,
@@ -71,8 +71,8 @@ const FoodScanScreen = () => {
             carbs: 40,
             fat: 10,
             confidence: 99,
-            image: photo.uri 
-          } 
+            image: photo.uri
+          }
         });
       }, 1500);
 
@@ -86,9 +86,9 @@ const FoodScanScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
-      <CameraView 
-        style={StyleSheet.absoluteFill} 
+
+      <CameraView
+        style={StyleSheet.absoluteFill}
         facing="back"
         flash={flash ? 'on' : 'off'}
         ref={cameraRef}
@@ -117,9 +117,9 @@ const FoodScanScreen = () => {
           <TouchableOpacity style={styles.sideBtn}>
             <ImageIcon color="#fff" size={28} />
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.captureBtn, isScanning && styles.captureBtnDisabled]} 
+
+          <TouchableOpacity
+            style={[styles.captureBtn, isScanning && styles.captureBtnDisabled]}
             onPress={handleCapture}
             disabled={isScanning}
           >

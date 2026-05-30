@@ -3,13 +3,13 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  ScrollView, 
-  SafeAreaView, 
+  ScrollView,
   TouchableOpacity, 
   Image,
   Dimensions,
   StatusBar
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Bell, ChevronRight, Zap, ChevronLeft } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
@@ -30,6 +30,7 @@ const StudentDashboardScreen = () => {
   
   const { user } = useAuthStore();
   const { profile, metrics: storeMetrics, fetchProfile } = useUserStore();
+  const { weeklySummary, fetchWeeklySummary } = useNutritionStore();
   
   const [dashboardData, setDashboardData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -37,6 +38,11 @@ const StudentDashboardScreen = () => {
   // Lấy dữ liệu từ Backend
   React.useEffect(() => {
     fetchProfile(); // Load latest profile
+    
+    // Gọi API lấy dữ liệu tuần
+    const today = new Date();
+    fetchWeeklySummary(today.toISOString().split('T')[0]);
+
     const fetchDashboard = async () => {
       try {
         const { USE_MOCK } = require('../../../mocks');
@@ -207,14 +213,31 @@ const StudentDashboardScreen = () => {
         <NutriCard style={styles.weeklyCard}>
            <View style={styles.barChartRow}>
               {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day, idx) => {
-                const heights = [60, 45, 80, 35, 50, 0, 0];
-                const isToday = idx === 2;
+                // Tính toán ngày hiện tại (getDay: 0 là Chủ nhật, 1 là T2)
+                const currentDay = new Date().getDay();
+                const mappedTodayIdx = currentDay === 0 ? 6 : currentDay - 1;
+                const isToday = idx === mappedTodayIdx;
+                
+                // Xử lý dữ liệu trả về từ API hoặc fallback
+                let barHeight = 8; // Chiều cao tối thiểu
+                if (weeklySummary && weeklySummary[idx]) {
+                  const dayData = weeklySummary[idx];
+                  if (dayData.targetCalories > 0) {
+                    const ratio = dayData.consumedCalories / dayData.targetCalories;
+                    barHeight = Math.min(80, Math.max(8, ratio * 80)); // Max height = 80
+                  }
+                } else if (!weeklySummary) {
+                  // Fallback UI trong lúc chưa có API hoặc đang dùng Mock
+                  const mockHeights = [60, 45, 80, 35, 50, 0, 0];
+                  barHeight = mockHeights[idx] || 8;
+                }
+
                 return (
                   <View key={day} style={styles.barContainer}>
                     <View style={[
                       styles.bar, 
                       { 
-                        height: heights[idx] || 8, 
+                        height: barHeight, 
                         backgroundColor: isToday ? COLORS.primary : '#E9ECEF' 
                       }
                     ]} />

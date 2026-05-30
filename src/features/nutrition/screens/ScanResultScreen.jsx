@@ -34,6 +34,15 @@ const ScanResultScreen = () => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [notes, setNotes] = useState('');
   
+  const getDefaultMeal = () => {
+    const hour = new Date().getHours();
+    if (hour < 11) return 'BREAKFAST';
+    if (hour < 15) return 'LUNCH';
+    if (hour < 21) return 'DINNER';
+    return 'SNACK';
+  };
+  const [selectedMeal, setSelectedMeal] = useState(getDefaultMeal());
+  
   const [foodData, setFoodData] = useState({
     name: scannedData?.name || 'Không rõ',
     calories: scannedData?.calories || 0,
@@ -46,21 +55,15 @@ const ScanResultScreen = () => {
   });
 
   const handleFinalSave = async () => {
-    const mealTypeMap = {
-      'Bữa sáng': 'BREAKFAST',
-      'Bữa trưa': 'LUNCH',
-      'Bữa tối': 'DINNER',
-      'Bữa phụ': 'SNACK'
-    };
-
-    const payload = {
-      mealType: 'BREAKFAST', // Mặc định, có thể thêm UI chọn buổi sau
-    };
-
     try {
       if (scannedData?.scanId) {
-        // Thực tế: Gọi API confirm
-        await scanService.confirmScan(scannedData.scanId, payload);
+        // Thực tế: Gọi API confirm gửi lên đầy đủ dữ liệu người dùng đã sửa
+        await scanService.confirmScan(scannedData.scanId, {
+          mealType: selectedMeal,
+          amount: foodData.amount,
+          foodName: foodData.name,
+          notes: notes
+        });
         Alert.alert('Thành công', 'Đã lưu vào nhật ký dinh dưỡng qua AI Scan!');
         navigation.navigate('MainTab', { screen: 'Trang chủ' });
       } else {
@@ -71,7 +74,7 @@ const ScanResultScreen = () => {
           proteinG: Math.round(foodData.protein * foodData.amount),
           carbsG: Math.round(foodData.carbs * foodData.amount),
           fatG: Math.round(foodData.fat * foodData.amount),
-          mealType: 'BREAKFAST',
+          mealType: selectedMeal,
           imageUrl: foodData.image,
           consumedAt: new Date().toISOString()
         };
@@ -168,6 +171,34 @@ const ScanResultScreen = () => {
                     <Text style={styles.statVal}>{Math.round(foodData.carbs * foodData.amount)}g</Text>
                     <Text style={styles.statLabel}>Carbs</Text>
                   </View>
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Loại bữa ăn</Text>
+                <View style={styles.mealTypeRow}>
+                  {[
+                    { key: 'BREAKFAST', label: 'Bữa sáng' },
+                    { key: 'LUNCH', label: 'Bữa trưa' },
+                    { key: 'DINNER', label: 'Bữa tối' },
+                    { key: 'SNACK', label: 'Bữa phụ' }
+                  ].map(meal => (
+                    <TouchableOpacity
+                      key={meal.key}
+                      style={[
+                        styles.mealPill,
+                        selectedMeal === meal.key && styles.mealPillActive
+                      ]}
+                      onPress={() => setSelectedMeal(meal.key)}
+                    >
+                      <Text style={[
+                        styles.mealPillText,
+                        selectedMeal === meal.key && styles.mealPillTextActive
+                      ]}>
+                        {meal.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
 
@@ -279,6 +310,11 @@ const styles = StyleSheet.create({
   footer: { paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 30 : 20, paddingTop: 10, borderTopWidth: 1, borderTopColor: COLORS.divider, backgroundColor: '#fff' },
   confirmBtn: { backgroundColor: COLORS.primary, height: 56, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   confirmBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  mealTypeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  mealPill: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.divider },
+  mealPillActive: { backgroundColor: COLORS.primaryLight, borderColor: COLORS.primary },
+  mealPillText: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '600' },
+  mealPillTextActive: { color: COLORS.primary, fontWeight: '800' },
 });
 
 export default ScanResultScreen;
