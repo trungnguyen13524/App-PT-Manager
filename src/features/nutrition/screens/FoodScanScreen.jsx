@@ -4,18 +4,20 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   ActivityIndicator,
   Dimensions,
-  Alert
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { X, Zap, ZapOff, Image as ImageIcon } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY } from '../../../theme';
+import { useDialogStore } from '../../../store/dialogStore';
 
 const { width } = Dimensions.get('window');
+const SCANNER_SIZE = width * 0.75;
+const OVERLAY_COLOR = 'rgba(0, 0, 0, 0.55)'; // Elegant dark overlay
 
 const FoodScanScreen = () => {
   const navigation = useNavigation();
@@ -33,7 +35,7 @@ const FoodScanScreen = () => {
   if (!permission) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color="#FFFFFF" />
       </View>
     );
   }
@@ -55,17 +57,16 @@ const FoodScanScreen = () => {
     try {
       setIsScanning(true);
 
-      // Chụp ảnh thật
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.5,
       });
 
-      // GIẢ LẬP: Đợi 1.5 giây giống như đang gọi AI thật
+      // MOCK AI delay
       setTimeout(() => {
         setIsScanning(false);
         navigation.navigate('ScanResult', {
           scannedData: {
-            name: "Món ăn đang quét...", // Placeholder vì chưa có AI
+            name: "Món ăn đang quét...",
             calories: 350,
             protein: 20,
             carbs: 40,
@@ -79,13 +80,17 @@ const FoodScanScreen = () => {
     } catch (error) {
       console.error(error);
       setIsScanning(false);
-      Alert.alert("Lỗi", "Không thể chụp ảnh. Vui lòng thử lại!");
+      useDialogStore.getState().showDialog({
+        title: "Lỗi",
+        message: "Không thể chụp ảnh. Vui lòng thử lại!",
+        type: 'error'
+      });
     }
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       <CameraView
         style={StyleSheet.absoluteFill}
@@ -94,45 +99,56 @@ const FoodScanScreen = () => {
         ref={cameraRef}
       />
 
-      <View style={styles.overlay}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-            <X color="#fff" size={28} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setFlash(!flash)} style={styles.iconBtn}>
-            {flash ? <Zap color="#FFD600" size={24} fill="#FFD600" /> : <ZapOff color="#fff" size={24} />}
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.scanTargetWrapper}>
-          <View style={styles.scanFrame}>
-            {isScanning && <View style={styles.scanLine} />}
+      <View style={StyleSheet.absoluteFill}>
+        <View style={styles.maskTop} />
+        <View style={styles.maskCenterRow}>
+          <View style={styles.maskSide} />
+          
+          <View style={styles.transparentCenter}>
+            <View style={styles.scannerFrame} />
           </View>
-          <Text style={styles.scanHint}>
-            {isScanning ? 'Đang phân tích món ăn...' : 'Đưa món ăn vào khung hình'}
-          </Text>
+
+          <View style={styles.maskSide} />
+        </View>
+        <View style={styles.maskBottom}>
+           <View style={styles.hintContainer}>
+            <View style={styles.hintPill}>
+              {isScanning ? <ActivityIndicator color="#FFFFFF" size="small" style={{ marginRight: 8 }} /> : null}
+              <Text style={styles.hintText}>
+                {isScanning ? 'Đang phân tích...' : 'Đưa món ăn vào khung hình'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      <SafeAreaView style={styles.uiOverlay}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.glassIconBtn}>
+            <X color="#FFFFFF" size={24} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setFlash(!flash)} style={styles.glassIconBtn}>
+            {flash ? <Zap color="#FFD600" size={24} fill="#FFD600" /> : <ZapOff color="#FFFFFF" size={24} />}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.sideBtn}>
-            <ImageIcon color="#fff" size={28} />
+          <TouchableOpacity style={styles.glassIconBtn}>
+            <ImageIcon color="#FFFFFF" size={24} />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.captureBtn, isScanning && styles.captureBtnDisabled]}
+            style={[styles.captureBtnOuter, isScanning && styles.captureBtnDisabled]}
             onPress={handleCapture}
             disabled={isScanning}
+            activeOpacity={0.8}
           >
-            {isScanning ? (
-              <ActivityIndicator color={COLORS.primary} size="large" />
-            ) : (
-              <View style={styles.captureInner} />
-            )}
+            <View style={styles.captureBtnInner} />
           </TouchableOpacity>
 
-          <View style={styles.sideBtn} />
+          <View style={{ width: 50, height: 50 }} />
         </View>
-      </View>
+      </SafeAreaView>
     </View>
   );
 };
@@ -144,13 +160,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: COLORS.white,
+    backgroundColor: '#0F172A',
   },
   permissionText: {
     ...TYPOGRAPHY.body1,
     textAlign: 'center',
     marginBottom: 20,
-    color: COLORS.textSecondary,
+    color: '#94A3B8',
   },
   permissionBtn: {
     backgroundColor: COLORS.primary,
@@ -158,79 +174,123 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
   },
-  permissionBtnText: { color: '#fff', fontWeight: '700' },
-  overlay: {
+  permissionBtnText: { color: '#000', fontWeight: '800' },
+  
+  // --- MASK OVERLAY ---
+  maskTop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: OVERLAY_COLOR,
+  },
+  maskCenterRow: {
+    flexDirection: 'row',
+    height: SCANNER_SIZE,
+  },
+  maskSide: {
+    flex: 1,
+    backgroundColor: OVERLAY_COLOR,
+  },
+  transparentCenter: {
+    width: SCANNER_SIZE,
+    height: SCANNER_SIZE,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  maskBottom: {
+    flex: 1,
+    backgroundColor: OVERLAY_COLOR,
+    alignItems: 'center',
+  },
+
+  // --- ELEGANT SCANNER FRAME ---
+  scannerFrame: {
+    width: '100%',
+    height: '100%',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+  },
+
+  // --- UI ELEMENTS OVERLAY ---
+  uiOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
     justifyContent: 'space-between',
-    paddingVertical: 50,
+    paddingVertical: 20,
+    pointerEvents: 'box-none',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
+    marginTop: 20,
   },
-  iconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  glassIconBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  scanTargetWrapper: { alignItems: 'center' },
-  scanFrame: {
-    width: width * 0.75,
-    height: width * 0.75,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    borderRadius: 30,
-    overflow: 'hidden',
+
+  // --- CLEAN TEXT PILL ---
+  hintContainer: {
+    marginTop: 30,
+    alignItems: 'center',
   },
-  scanLine: {
-    width: '100%',
-    height: 2,
-    backgroundColor: COLORS.primary,
-    position: 'absolute',
-    top: 0,
+  hintPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  scanHint: {
-    color: '#fff',
-    marginTop: 24,
-    fontSize: 16,
-    fontWeight: '700',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,
+  hintText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
+
+  // --- MINIMALIST CAPTURE BUTTON (iOS STYLE) ---
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
-  captureBtn: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+  captureBtnOuter: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 5,
-    borderColor: '#fff',
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
-  captureBtnDisabled: { opacity: 0.5 },
-  captureInner: {
+  captureBtnDisabled: {
+    opacity: 0.5,
+  },
+  captureBtnInner: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#fff',
-  },
-  sideBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   }
 });
 

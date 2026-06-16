@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { X, ChevronLeft } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY } from '../../../theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CheckoutScreen = () => {
   const navigation = useNavigation();

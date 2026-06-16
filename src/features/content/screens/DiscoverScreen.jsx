@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -14,6 +13,8 @@ import {
   Platform
 } from 'react-native';
 import { Search, Compass, ExternalLink, Bookmark, Clock } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { USE_MOCK } from '../../../mocks';
 import contentService from '../../../api/services/content.service';
@@ -54,6 +55,32 @@ const MOCK_ARTICLES = [
   }
 ];
 
+const AbstractBackground = React.memo(() => (
+  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+    <Svg width="100%" height="100%">
+      <Defs>
+        <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#0F172A" />
+          <Stop offset="100%" stopColor="#1E293B" />
+        </LinearGradient>
+        <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.1" />
+          <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.02" />
+        </LinearGradient>
+        <LinearGradient id="circleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#FF4D00" stopOpacity="0.1" />
+          <Stop offset="100%" stopColor="#FF0080" stopOpacity="0.02" />
+        </LinearGradient>
+      </Defs>
+      <Rect width="100%" height="100%" fill="url(#bgGrad)" />
+      
+      <Circle cx="10%" cy="10%" r="120" fill="url(#circleGrad1)" />
+      <Circle cx="90%" cy="40%" r="150" fill="url(#circleGrad2)" />
+      <Circle cx="20%" cy="80%" r="180" fill="url(#circleGrad1)" />
+    </Svg>
+  </View>
+));
+
 const DiscoverScreen = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +100,7 @@ const DiscoverScreen = () => {
           setArticles(response.data || []);
         }
       } catch (error) {
-        console.warn('Không thể lấy bài viết:', error);
+        // console.warn('Không thể lấy bài viết:', error);
       } finally {
         setLoading(false);
       }
@@ -94,7 +121,8 @@ const DiscoverScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <AbstractBackground />
       
       {/* Header */}
       <View style={styles.header}>
@@ -103,7 +131,7 @@ const DiscoverScreen = () => {
           <Text style={styles.headerSubtitle}>Kiến thức dinh dưỡng & sức khỏe</Text>
         </View>
         <TouchableOpacity style={styles.searchBtn}>
-          <Search color={COLORS.text} size={24} />
+          <Search color="#FFFFFF" size={24} />
         </TouchableOpacity>
       </View>
 
@@ -128,7 +156,7 @@ const DiscoverScreen = () => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         {loading ? (
-          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 50 }} />
+          <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />
         ) : (
           <>
             {/* Featured Article */}
@@ -139,6 +167,18 @@ const DiscoverScreen = () => {
                 onPress={() => handleOpenLink(filteredArticles[0].url)}
               >
                 <Image source={{ uri: filteredArticles[0].imageUrl }} style={styles.featuredImage} />
+                <View style={styles.featuredGradientOverlay}>
+                  <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+                    <Defs>
+                      <LinearGradient id="overlayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <Stop offset="0%" stopColor="#000000" stopOpacity="0" />
+                        <Stop offset="50%" stopColor="#000000" stopOpacity="0.4" />
+                        <Stop offset="100%" stopColor="#000000" stopOpacity="0.95" />
+                      </LinearGradient>
+                    </Defs>
+                    <Rect width="100%" height="100%" fill="url(#overlayGrad)" />
+                  </Svg>
+                </View>
                 <View style={styles.featuredOverlay}>
                   <View style={styles.tagBadge}>
                     <Text style={styles.tagText}>{filteredArticles[0].category}</Text>
@@ -171,8 +211,8 @@ const DiscoverScreen = () => {
                     <Text style={styles.articleTitle} numberOfLines={2}>{article.title}</Text>
                     <View style={styles.articleFooter}>
                       <Text style={styles.articleMeta}>{article.date}</Text>
-                      <TouchableOpacity>
-                        <ExternalLink size={18} color={COLORS.primary} />
+                      <TouchableOpacity style={styles.actionBtn}>
+                        <ExternalLink size={18} color="#00FF66" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -196,7 +236,7 @@ const DiscoverScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#0F172A',
   },
   header: {
     flexDirection: 'row',
@@ -205,27 +245,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 40 : 10,
     paddingBottom: 15,
-    backgroundColor: '#fff',
   },
   headerTitle: {
     ...TYPOGRAPHY.h2,
-    color: COLORS.text,
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   headerSubtitle: {
-    ...TYPOGRAPHY.body2,
-    color: COLORS.textSecondary,
+    fontSize: 14,
+    color: '#9CA3AF',
     marginTop: 4,
   },
   searchBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   categoriesWrapper: {
-    backgroundColor: '#fff',
     paddingBottom: 15,
   },
   categoriesContainer: {
@@ -233,42 +276,55 @@ const styles = StyleSheet.create({
   },
   categoryPill: {
     paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     marginHorizontal: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   categoryPillActive: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: 'rgba(0, 255, 102, 0.15)',
+    borderColor: '#00FF66',
+    shadowColor: '#00FF66',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
   },
   categoryText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textSecondary,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   categoryTextActive: {
-    color: '#fff',
+    color: '#00FF66',
+    fontWeight: 'bold',
   },
   scrollContent: {
     padding: 20,
   },
   featuredCard: {
     width: '100%',
-    height: 240,
+    height: 280,
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 24,
-    backgroundColor: '#000',
+    backgroundColor: '#1E293B',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   featuredImage: {
     width: '100%',
     height: '100%',
-    opacity: 0.8,
+  },
+  featuredGradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   featuredOverlay: {
     position: 'absolute',
@@ -277,66 +333,69 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 20,
     paddingTop: 40,
-    // Tạo gradient từ code có thể phức tạp nên dùng background color bán trong suốt
-    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   tagBadge: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    backgroundColor: 'rgba(0, 255, 102, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
     alignSelf: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 102, 0.5)',
   },
   tagText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
+    color: '#00FF66',
+    fontSize: 11,
+    fontWeight: '900',
     textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   featuredTitle: {
-    ...TYPOGRAPHY.h3,
-    color: '#fff',
-    marginBottom: 8,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    lineHeight: 30,
   },
   featuredMeta: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   featuredMetaText: {
-    color: '#rgba(255,255,255,0.8)',
-    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 13,
     marginLeft: 6,
+    fontWeight: '500',
   },
   featuredMetaDot: {
-    color: '#rgba(255,255,255,0.8)',
+    color: 'rgba(255, 255, 255, 0.4)',
     fontSize: 12,
-    marginHorizontal: 8,
+    marginHorizontal: 10,
   },
   sectionTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.text,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
     marginBottom: 16,
+    letterSpacing: 0.5,
   },
   listContainer: {
     marginBottom: 20,
   },
   articleCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 20,
     padding: 12,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   articleImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
+    width: 110,
+    height: 110,
+    borderRadius: 16,
   },
   articleContent: {
     flex: 1,
@@ -344,16 +403,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   articleCategory: {
-    color: COLORS.primary,
+    color: '#00B3FF',
     fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontWeight: '800',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   articleTitle: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.text,
-    fontSize: 15,
-    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 10,
     lineHeight: 22,
   },
   articleFooter: {
@@ -362,14 +423,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   articleMeta: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
+    color: '#9CA3AF',
+    fontSize: 13,
+  },
+  actionBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyText: {
     textAlign: 'center',
-    color: COLORS.textSecondary,
-    marginTop: 20,
-    fontStyle: 'italic'
+    color: '#9CA3AF',
+    marginTop: 30,
+    fontStyle: 'italic',
+    fontSize: 15,
   }
 });
 

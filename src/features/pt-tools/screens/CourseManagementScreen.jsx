@@ -5,48 +5,66 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  StatusBar
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Plus, BookOpen, Edit2, CheckCircle } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import NutriButton from '../../../components/shared/NutriButton';
-import ptService from '../../../api/services/pt.service';
+import { usePTStore } from '../../../store/ptStore';
+import { useDialogStore } from '../../../store/dialogStore';
 
 const CourseManagementScreen = () => {
   const navigation = useNavigation();
-  const [courses, setCourses] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { courses, isLoading, verificationStatus, fetchCourses } = usePTStore();
 
   useEffect(() => {
-    fetchCourses();
-  }, []);
-
-  const fetchCourses = async () => {
-    try {
-      // Gọi API giả lập hoặc thật
-      // const response = await ptService.getCourses();
-      // Giả lập data nếu API chưa có data
-      const mockCourses = [
-        { id: 'crs_1', title: 'Giảm 5kg trong 30 ngày', priceVnd: 1490000, status: 'PUBLISHED', enrolled: 12 },
-        { id: 'crs_2', title: 'Tăng cơ giảm mỡ cơ bản', priceVnd: 990000, status: 'DRAFT', enrolled: 0 }
-      ];
-      setCourses(mockCourses);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+    if (verificationStatus === 'APPROVED') {
+      fetchCourses();
     }
-  };
+  }, [verificationStatus]);
+
+  if (verificationStatus === 'PENDING_REVIEW' || verificationStatus === 'PENDING') {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{ color: '#fff', marginTop: 20, fontSize: 16 }}>Đang chờ Admin duyệt hồ sơ PT...</Text>
+      </View>
+    );
+  }
+
+  if (verificationStatus === 'NONE' || verificationStatus === null) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <Text style={{ color: '#fff', marginBottom: 20, fontSize: 16 }}>Bạn chưa đăng ký làm Huấn luyện viên</Text>
+        <TouchableOpacity 
+          style={{ backgroundColor: COLORS.primary, padding: 12, borderRadius: 8 }} 
+          onPress={() => navigation.navigate('PTVerification')}
+        >
+          <Text style={{ color: '#1E293B', fontWeight: 'bold' }}>Đăng ký ngay</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const handlePublish = async (courseId) => {
     try {
-      // await ptService.publishCourse(courseId);
-      Alert.alert('Thành công', 'Khóa học đã được gửi yêu cầu duyệt xuất bản.');
+      // Gọi API publish thực tế, ví dụ: await ptService.publishCourse(courseId);
+      useDialogStore.getState().showDialog({
+        title: 'Thành công',
+        message: 'Chức năng xuất bản đang kết nối API.',
+        type: 'success'
+      });
       fetchCourses();
     } catch (error) {
-      Alert.alert('Lỗi', 'Không thể xuất bản khóa học.');
+      useDialogStore.getState().showDialog({
+        title: 'Lỗi',
+        message: 'Không thể xuất bản khóa học.',
+        type: 'error'
+      });
     }
   };
 
@@ -60,6 +78,7 @@ const CourseManagementScreen = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <ArrowLeft size={24} color={COLORS.text} />
@@ -141,7 +160,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: 50,
     paddingBottom: SPACING.md,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
   },
   headerTitle: {
     ...TYPOGRAPHY.h3,
@@ -163,7 +182,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.lg,
   },
   courseCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: SPACING.md,
     padding: SPACING.md,
     marginBottom: SPACING.md,

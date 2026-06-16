@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
-import { COLORS } from '../../theme';
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 const SIZE = width * 0.45;
-const STROKE_WIDTH = 12;
+const STROKE_WIDTH = 14;
 const RADIUS = (SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -16,12 +15,18 @@ const CalorieChart = ({ current = 0, target = 2000 }) => {
   return (
     <View style={styles.container}>
       <Svg width={SIZE} height={SIZE}>
+        <Defs>
+          <LinearGradient id="energyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <Stop offset="0%" stopColor="#00FF66" stopOpacity="1" />
+            <Stop offset="100%" stopColor="#00B3FF" stopOpacity="1" />
+          </LinearGradient>
+        </Defs>
         {/* Background Circle */}
         <Circle
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={RADIUS}
-          stroke="#E9ECEF"
+          stroke="rgba(255, 255, 255, 0.05)"
           strokeWidth={STROKE_WIDTH}
           fill="none"
         />
@@ -30,7 +35,7 @@ const CalorieChart = ({ current = 0, target = 2000 }) => {
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={RADIUS}
-          stroke={COLORS.primary}
+          stroke="url(#energyGrad)"
           strokeWidth={STROKE_WIDTH}
           strokeDasharray={CIRCUMFERENCE}
           strokeDashoffset={strokeDashoffset}
@@ -53,6 +58,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    shadowColor: '#00FF66',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
   textContainer: {
     position: 'absolute',
@@ -60,13 +70,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   currentText: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: COLORS.text,
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 255, 102, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   targetText: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    fontWeight: '700',
+    color: '#9CA3AF',
     marginTop: 4,
   },
 });

@@ -66,7 +66,7 @@ const FABMenu = ({ isOpen, onClose, onSelect }) => {
                   activeOpacity={0.7}
                 >
                   <View style={styles.fabMenuIconBox}>
-                    <IconComponent size={24} color={COLORS.text} />
+                    <IconComponent size={24} color="#FFFFFF" strokeWidth={2} />
                   </View>
                   <Text style={styles.fabMenuLabel}>{item.label}</Text>
                 </TouchableOpacity>
@@ -79,7 +79,7 @@ const FABMenu = ({ isOpen, onClose, onSelect }) => {
       {/* Close FAB button */}
       <View style={styles.closeFabWrapper}>
         <TouchableOpacity style={styles.closeFabButton} onPress={onClose} activeOpacity={0.8}>
-          <X size={26} color="#fff" />
+          <X size={26} color="#0A0B10" strokeWidth={3} />
         </TouchableOpacity>
       </View>
     </Modal>
@@ -94,7 +94,7 @@ const CustomTabBarButton = ({ onPress }) => (
     activeOpacity={0.8}
   >
     <View style={styles.fabButton}>
-      <Plus size={28} color="#fff" strokeWidth={2.5} />
+      <Plus size={28} color="#0A0B10" strokeWidth={3} />
     </View>
   </TouchableOpacity>
 );
@@ -131,16 +131,17 @@ const StudentTabNavigator = () => {
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: '#ffffff',
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
+            backgroundColor: '#0F172A',
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            borderTopWidth: 0,
             height: Platform.OS === 'ios' ? 90 : 70,
             paddingBottom: Platform.OS === 'ios' ? 24 : 8,
             paddingTop: 8,
             ...styles.shadow,
           },
-          tabBarActiveTintColor: COLORS.primary,
-          tabBarInactiveTintColor: COLORS.textLight,
+          tabBarActiveTintColor: '#00FF66',
+          tabBarInactiveTintColor: '#9CA3AF',
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: '600',
@@ -151,14 +152,14 @@ const StudentTabNavigator = () => {
           name="Trang chủ" 
           component={StudentDashboardScreen} 
           options={{
-            tabBarIcon: ({ color }) => <Home size={22} color={color} />,
+            tabBarIcon: ({ color, focused }) => <Home size={22} color={color} strokeWidth={focused ? 2.5 : 2} fill={focused ? color : "transparent"} />,
           }}
         />
         <Tab.Screen 
           name="Khám Phá" 
           component={DiscoverScreen} 
           options={{
-            tabBarIcon: ({ color, size }) => <Compass color={color} size={size} />,
+            tabBarIcon: ({ color, focused }) => <Compass size={22} color={color} strokeWidth={focused ? 2.5 : 2} fill={focused ? color : "transparent"} />,
           }}
         />
         <Tab.Screen 
@@ -173,14 +174,14 @@ const StudentTabNavigator = () => {
           name="PT Connect" 
           component={PTConnectScreen} 
           options={{
-            tabBarIcon: ({ color }) => <Users size={22} color={color} />,
+            tabBarIcon: ({ color, focused }) => <Users size={22} color={color} strokeWidth={focused ? 2.5 : 2} fill={focused ? color : "transparent"} />,
           }}
         />
         <Tab.Screen 
           name="Cài đặt" 
           component={ProfileScreen}
           options={{
-            tabBarIcon: ({ color }) => <Settings size={22} color={color} />,
+            tabBarIcon: ({ color, focused }) => <Settings size={22} color={color} strokeWidth={focused ? 2.5 : 2} />,
           }}
         />
       </Tab.Navigator>
@@ -213,14 +214,16 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#00FF66',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowColor: '#00FF66',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 15,
+    elevation: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   // ===== FAB Menu Popup =====
   overlay: {
@@ -235,15 +238,17 @@ const styles = StyleSheet.create({
   fabMenuRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.white,
-    borderRadius: SPACING.borderRadius.xl,
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderRadius: 24,
     paddingVertical: 20,
     paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 8,
   },
   fabMenuItem: {
     alignItems: 'center',
@@ -253,16 +258,18 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: COLORS.background,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   fabMenuLabel: {
     fontSize: 11,
-    color: COLORS.textSecondary,
+    color: '#CBD5E1',
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '600',
     lineHeight: 14,
   },
   // ===== Close FAB =====
@@ -275,13 +282,13 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#00FF66',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: COLORS.primary,
+    shadowColor: '#00FF66',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
     elevation: 8,
   },
 });

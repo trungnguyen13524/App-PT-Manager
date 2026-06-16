@@ -3,18 +3,18 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   TextInput,
   StatusBar,
-  Alert,
   ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronLeft, Save, Scale, ArrowUp, Activity, Check } from 'lucide-react-native';
-import { COLORS, TYPOGRAPHY } from '../../../theme';
+import { ChevronLeft, Scale, ArrowUp, Check } from 'lucide-react-native';
 import { useUserStore } from '../../../store/userStore';
+import { useDialogStore } from '../../../store/dialogStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AbstractBackground } from '../../../components/common/AbstractBackground';
 
 const BodyMetricsScreen = () => {
   const navigation = useNavigation();
@@ -43,11 +43,14 @@ const BodyMetricsScreen = () => {
 
   const handleSave = async () => {
     if (!formData.heightCm || !formData.weightKg) {
-      Alert.alert('Lỗi', 'Vui lòng nhập chiều cao và cân nặng hợp lệ.');
+      useDialogStore.getState().showDialog({
+        title: 'Lỗi',
+        message: 'Vui lòng nhập chiều cao và cân nặng hợp lệ.',
+        type: 'error'
+      });
       return;
     }
 
-    // Gửi data với chuẩn chung (nested object hoặc tùy thuộc spec BE, ở đây gửi nguyên payload chuẩn)
     const payload = {
       metrics: {
         heightCm: parseFloat(formData.heightCm),
@@ -59,13 +62,18 @@ const BodyMetricsScreen = () => {
     
     const res = await updateProfile(payload);
     if (res.success) {
-      Alert.alert(
-        "Thành công", 
-        "Đã cập nhật chỉ số cơ thể của bạn!",
-        [{ text: "OK", onPress: () => navigation.goBack() }]
-      );
+      useDialogStore.getState().showDialog({
+        title: "Thành công", 
+        message: "Đã cập nhật chỉ số cơ thể của bạn!",
+        type: 'success',
+        buttons: [{ text: "OK", onPress: () => navigation.goBack() }]
+      });
     } else {
-      Alert.alert("Lỗi", res.error || "Không thể cập nhật chỉ số cơ thể.");
+      useDialogStore.getState().showDialog({
+        title: "Lỗi",
+        message: res.error || "Không thể cập nhật chỉ số cơ thể.",
+        type: 'error'
+      });
     }
   };
 
@@ -79,10 +87,10 @@ const BodyMetricsScreen = () => {
   };
 
   const getBMIStatus = (bmi) => {
-    if (bmi === '--') return { text: '', color: COLORS.text };
+    if (bmi === '--') return { text: '', color: '#FFFFFF' };
     const val = parseFloat(bmi);
     if (val < 18.5) return { text: 'Thiếu cân', color: '#FFB74D' };
-    if (val < 24.9) return { text: 'Bình thường', color: COLORS.primary };
+    if (val < 24.9) return { text: 'Bình thường', color: '#00FF66' };
     if (val < 29.9) return { text: 'Thừa cân', color: '#FF8A65' };
     return { text: 'Béo phì', color: '#E53935' };
   };
@@ -92,19 +100,20 @@ const BodyMetricsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <AbstractBackground />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color={COLORS.text} size={28} />
+          <ChevronLeft color="#FFFFFF" size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chỉ số cơ thể</Text>
         <TouchableOpacity onPress={handleSave} style={styles.saveBtn} disabled={isLoading}>
           {isLoading ? (
-            <ActivityIndicator size="small" color={COLORS.primary} />
+            <ActivityIndicator size="small" color="#00FF66" />
           ) : (
-            <Text style={styles.saveText}>Lưu</Text>
+            <Text style={styles.saveText}>LƯU</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -112,10 +121,10 @@ const BodyMetricsScreen = () => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         
         {/* BMI Card */}
-        <View style={styles.bmiCard}>
+        <View style={styles.glassCard}>
           <View style={styles.bmiHeader}>
             <Text style={styles.bmiTitle}>Chỉ số BMI của bạn</Text>
-            <View style={[styles.bmiBadge, { backgroundColor: bmiStatus.color + '20' }]}>
+            <View style={[styles.bmiBadge, { backgroundColor: bmiStatus.color + '20', borderColor: bmiStatus.color + '50' }]}>
               <Text style={[styles.bmiBadgeText, { color: bmiStatus.color }]}>{bmiStatus.text}</Text>
             </View>
           </View>
@@ -127,10 +136,10 @@ const BodyMetricsScreen = () => {
 
         <Text style={styles.sectionTitle}>Thông tin cơ bản</Text>
 
-        <View style={styles.inputGroup}>
+        <View style={styles.glassCardInput}>
           <View style={styles.inputWrapper}>
             <View style={styles.inputIconBox}>
-              <ArrowUp size={20} color={COLORS.primary} />
+              <ArrowUp size={20} color="#00FF66" />
             </View>
             <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>Chiều cao</Text>
@@ -140,6 +149,7 @@ const BodyMetricsScreen = () => {
                   keyboardType="numeric"
                   value={formData.heightCm}
                   onChangeText={(val) => setFormData({...formData, heightCm: val})}
+                  placeholderTextColor="#6B7280"
                 />
                 <Text style={styles.inputUnit}>cm</Text>
               </View>
@@ -147,10 +157,10 @@ const BodyMetricsScreen = () => {
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
+        <View style={styles.glassCardInput}>
           <View style={styles.inputWrapper}>
             <View style={styles.inputIconBox}>
-              <Scale size={20} color={COLORS.primary} />
+              <Scale size={20} color="#00FF66" />
             </View>
             <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>Cân nặng hiện tại</Text>
@@ -160,6 +170,7 @@ const BodyMetricsScreen = () => {
                   keyboardType="numeric"
                   value={formData.weightKg}
                   onChangeText={(val) => setFormData({...formData, weightKg: val})}
+                  placeholderTextColor="#6B7280"
                 />
                 <Text style={styles.inputUnit}>kg</Text>
               </View>
@@ -177,6 +188,7 @@ const BodyMetricsScreen = () => {
                 formData.goal === g.id && styles.goalOptionActive
               ]}
               onPress={() => setFormData({...formData, goal: g.id})}
+              activeOpacity={0.8}
             >
               <Text style={[
                 styles.goalText, 
@@ -184,7 +196,7 @@ const BodyMetricsScreen = () => {
               ]}>
                 {g.label}
               </Text>
-              {formData.goal === g.id && <Check color={COLORS.primary} size={18} />}
+              {formData.goal === g.id && <Check color="#00FF66" size={20} strokeWidth={3} />}
             </TouchableOpacity>
           ))}
         </View>
@@ -196,7 +208,7 @@ const BodyMetricsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1, backgroundColor: '#0F172A' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -205,22 +217,19 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backBtn: { padding: 8, marginLeft: -8 },
-  headerTitle: { ...TYPOGRAPHY.h2, color: COLORS.text },
+  headerTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
   saveBtn: { padding: 8, marginRight: -8 },
-  saveText: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
+  saveText: { fontSize: 16, fontWeight: '900', color: '#00FF66', letterSpacing: 1 },
   
   content: { paddingHorizontal: 20, paddingTop: 10 },
   
-  bmiCard: {
-    backgroundColor: '#fff',
+  glassCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 24,
     padding: 24,
     marginBottom: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 20,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   bmiHeader: {
     flexDirection: 'row',
@@ -228,62 +237,84 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  bmiTitle: { fontSize: 16, fontWeight: '600', color: COLORS.textSecondary },
-  bmiBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  bmiBadgeText: { fontSize: 12, fontWeight: '700' },
+  bmiTitle: { fontSize: 16, fontWeight: '600', color: '#9CA3AF' },
+  bmiBadge: { 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  bmiBadgeText: { fontSize: 13, fontWeight: '800' },
   bmiValueContainer: { flexDirection: 'row', alignItems: 'baseline' },
-  bmiValue: { fontSize: 48, fontWeight: '800' },
-  bmiUnit: { fontSize: 16, color: COLORS.textLight, fontWeight: '600' },
+  bmiValue: { 
+    fontSize: 56, 
+    fontWeight: '900',
+    textShadowColor: 'rgba(0, 255, 102, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  bmiUnit: { fontSize: 18, color: '#9CA3AF', fontWeight: '700' },
 
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, marginBottom: 16, marginLeft: 4 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#FFFFFF', marginBottom: 16, marginLeft: 4 },
   
-  inputGroup: {
-    backgroundColor: '#fff',
+  glassCardInput: {
+    backgroundColor: 'rgba(20, 24, 35, 0.65)',
     borderRadius: 20,
     marginBottom: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   inputIconBox: {
-    width: 48,
-    height: 48,
+    width: 50,
+    height: 50,
     borderRadius: 16,
-    backgroundColor: COLORS.primaryLight + '40',
+    backgroundColor: 'rgba(0, 255, 102, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 102, 0.2)',
   },
   inputContent: { flex: 1 },
-  inputLabel: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 4 },
+  inputLabel: { fontSize: 14, color: '#9CA3AF', marginBottom: 4, fontWeight: '600' },
   inputRow: { flexDirection: 'row', alignItems: 'center' },
   input: {
     flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.text,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
     paddingVertical: 0,
   },
-  inputUnit: { fontSize: 16, fontWeight: '600', color: COLORS.textLight, marginLeft: 8 },
+  inputUnit: { fontSize: 16, fontWeight: '700', color: '#9CA3AF', marginLeft: 8 },
 
   goalsContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 24,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   goalOption: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 4,
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  goalOptionActive: { backgroundColor: COLORS.primaryLight + '30' },
-  goalText: { fontSize: 16, fontWeight: '600', color: COLORS.text },
-  goalTextActive: { color: COLORS.primary },
+  goalOptionActive: { 
+    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    borderColor: 'rgba(0, 255, 102, 0.3)',
+  },
+  goalText: { fontSize: 16, fontWeight: '600', color: '#9CA3AF' },
+  goalTextActive: { color: '#00FF66', fontWeight: '800' },
 });
 
 export default BodyMetricsScreen;

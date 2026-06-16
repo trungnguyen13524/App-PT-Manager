@@ -3,12 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   Image,
   TouchableOpacity,
   ScrollView,
-  Alert
+  Platform,
+  ActivityIndicator
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
   User, 
   Settings, 
@@ -24,12 +25,15 @@ import { useNavigation } from '@react-navigation/native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { useAuthStore } from '../../../store/authStore';
 import { useUserStore } from '../../../store/userStore';
-import NutriCard from '../../../components/shared/NutriCard';
+import { useDialogStore } from '../../../store/dialogStore';
+import { AbstractBackground, GlassCard } from '../../../components/common';
+
+import * as ImagePicker from 'expo-image-picker';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
   const { user, logout } = useAuthStore();
-  const { profile, metrics: storeMetrics, fetchProfile } = useUserStore();
+  const { profile, metrics: storeMetrics, fetchProfile, updateAvatar, isLoading } = useUserStore();
   
   React.useEffect(() => {
     fetchProfile();
@@ -39,10 +43,11 @@ const ProfileScreen = () => {
   const displayUser = profile || user;
 
   const handleLogout = () => {
-    Alert.alert(
-      'Đăng xuất',
-      'Bạn có chắc chắn muốn đăng xuất không?',
-      [
+    useDialogStore.getState().showDialog({
+      title: 'Đăng xuất',
+      message: 'Bạn có chắc chắn muốn đăng xuất không?',
+      type: 'warning',
+      buttons: [
         { text: 'Hủy', style: 'cancel' },
         { 
           text: 'Đăng xuất', 
@@ -52,18 +57,67 @@ const ProfileScreen = () => {
           }
         },
       ]
-    );
+    });
   };
 
-  const MenuOption = ({ icon: Icon, title, subtitle, onPress, color = COLORS.text }) => (
+  const handleEditAvatar = async () => {
+    if (isLoading) return;
+    
+    // Yêu cầu quyền truy cập thư viện
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      useDialogStore.getState().showDialog({
+        title: 'Yêu cầu quyền',
+        message: 'Bạn cần cấp quyền truy cập ảnh để đổi Avatar.',
+        type: 'warning'
+      });
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!pickerResult.canceled && pickerResult.assets?.length > 0) {
+      const asset = pickerResult.assets[0];
+      const uri = asset.uri;
+      
+      const uriParts = uri.split('.');
+      const fileType = uriParts[uriParts.length - 1].toLowerCase();
+      const mimeType = (fileType === 'jpg' || fileType === 'jpeg') ? 'image/jpeg' 
+                     : (fileType === 'png') ? 'image/png' 
+                     : 'image/webp';
+      const fileName = `avatar_${Date.now()}.${fileType}`;
+      
+      const res = await updateAvatar(uri, mimeType, fileName);
+      if (res.success) {
+        useDialogStore.getState().showDialog({
+          title: 'Thành công',
+          message: 'Đã cập nhật ảnh đại diện thành công!',
+          type: 'success'
+        });
+      } else {
+        useDialogStore.getState().showDialog({
+          title: 'Lỗi upload',
+          message: res.error || 'Cập nhật thất bại.',
+          type: 'error'
+        });
+      }
+    }
+  };
+
+  const MenuOption = ({ icon: Icon, title, subtitle, onPress, color = '#FFFFFF' }) => (
     <TouchableOpacity style={styles.menuOption} onPress={onPress}>
       <View style={styles.menuOptionLeft}>
-        <View style={[styles.iconBox, { backgroundColor: COLORS.background }]}>
-          <Icon size={22} color={color} />
+        <View style={styles.iconBox}>
+          <Icon size={20} color={COLORS.primary} />
         </View>
         <View>
           <Text style={[styles.menuOptionTitle, { color }]}>{title}</Text>
-          {subtitle && <Text style={styles.menuOptionSubtitle}>{subtitle}</Text>}
+          {subtitle ? <Text style={styles.menuOptionSubtitle}>{subtitle}</Text> : null}
         </View>
       </View>
       <ChevronRight size={20} color={COLORS.textLight} />
@@ -72,7 +126,8 @@ const ProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <AbstractBackground />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
@@ -80,8 +135,12 @@ const ProfileScreen = () => {
               source={{ uri: displayUser?.avatarUrl || 'https://i.pravatar.cc/150' }} 
               style={styles.avatar} 
             />
-            <TouchableOpacity style={styles.editAvatarBtn}>
-              <Settings size={16} color="#fff" />
+            <TouchableOpacity style={styles.editAvatarBtn} onPress={handleEditAvatar} disabled={isLoading}>
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#000" />
+              ) : (
+                <Settings size={14} color="#000" />
+              )}
             </TouchableOpacity>
           </View>
           <Text style={styles.name}>{displayUser?.fullName || 'Người dùng Nutri'}</Text>
@@ -96,34 +155,36 @@ const ProfileScreen = () => {
         </View>
 
         {/* Stats Row (Only for Students) */}
-        {displayUser?.role === 'USER' && (
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Cân nặng</Text>
-              <Text style={styles.statValue}>{metrics.weightKg || '--'} <Text style={styles.unit}>kg</Text></Text>
+        {displayUser?.role === 'USER' ? (
+          <GlassCard style={styles.statsCard}>
+            <View style={styles.statsRow}>
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Cân nặng</Text>
+                <Text style={styles.statValue}>{metrics.weightKg || '--'} <Text style={styles.unit}>kg</Text></Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Chiều cao</Text>
+                <Text style={styles.statValue}>{metrics.heightCm || '--'} <Text style={styles.unit}>cm</Text></Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Mục tiêu</Text>
+                <Text style={styles.statValue}>{metrics.dailyCalorieTarget || '--'} <Text style={styles.unit}>kcal</Text></Text>
+              </View>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Chiều cao</Text>
-              <Text style={styles.statValue}>{metrics.heightCm || '--'} <Text style={styles.unit}>cm</Text></Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Mục tiêu</Text>
-              <Text style={styles.statValue}>{metrics.dailyCalorieTarget || '--'} <Text style={styles.unit}>kcal</Text></Text>
-            </View>
-          </View>
-        )}
+          </GlassCard>
+        ) : null}
 
         {/* Menu Groups */}
         <View style={styles.menuContainer}>
           <Text style={styles.menuGroupTitle}>Tài khoản</Text>
-          <NutriCard style={styles.menuCard}>
+          <GlassCard style={styles.menuCard}>
             <MenuOption 
               icon={User} 
               title="Thông tin cá nhân" 
-              subtitle="Tên, Email, Ảnh đại diện"
-              onPress={() => {}} 
+              subtitle="Tên, Số điện thoại"
+              onPress={() => navigation.navigate('EditProfile')} 
             />
             <MenuOption 
               icon={CreditCard} 
@@ -131,24 +192,24 @@ const ProfileScreen = () => {
               subtitle={displayUser?.tier === 'PRO' ? 'Bạn đang dùng bản PRO' : 'Nâng cấp lên PRO'}
               onPress={() => navigation.navigate('Pricing')} 
             />
-          </NutriCard>
+          </GlassCard>
 
           <Text style={styles.menuGroupTitle}>Ứng dụng</Text>
-          <NutriCard style={styles.menuCard}>
+          <GlassCard style={styles.menuCard}>
             <MenuOption 
               icon={Settings} 
               title="Cài đặt thông báo" 
-              onPress={() => {}} 
+              onPress={() => navigation.navigate('NotificationSettings')} 
             />
             <MenuOption 
               icon={Info} 
               title="Trung tâm hỗ trợ" 
               onPress={() => {}} 
             />
-          </NutriCard>
+          </GlassCard>
 
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <LogOut size={20} color={COLORS.error} />
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+            <LogOut size={20} color="#EF4444" />
             <Text style={styles.logoutText}>Đăng xuất</Text>
           </TouchableOpacity>
         </View>
@@ -161,10 +222,28 @@ const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  header: { alignItems: 'center', paddingVertical: 30, backgroundColor: COLORS.white },
-  avatarContainer: { position: 'relative', marginBottom: 16 },
-  avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 4, borderColor: COLORS.primaryLight },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#0F172A' // Dark slate fallback
+  },
+  scrollContent: {
+    paddingTop: Platform.OS === 'android' ? 40 : 20, // Add proper safe area padding for Android/clipped avatars
+  },
+  header: { 
+    alignItems: 'center', 
+    paddingVertical: 20,
+  },
+  avatarContainer: { 
+    position: 'relative', 
+    marginBottom: 16 
+  },
+  avatar: { 
+    width: 110, 
+    height: 110, 
+    borderRadius: 55, 
+    borderWidth: 3, 
+    borderColor: COLORS.primary 
+  },
   editAvatarBtn: {
     position: 'absolute',
     bottom: 0,
@@ -176,58 +255,162 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#fff'
+    borderColor: '#0F172A',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 5
   },
-  name: { ...TYPOGRAPHY.h2, color: COLORS.text },
-  email: { fontSize: 14, color: COLORS.textSecondary, marginTop: 4 },
-  badgeContainer: { marginTop: 12 },
+  name: { 
+    ...TYPOGRAPHY.h2, 
+    color: '#FFFFFF' 
+  },
+  email: { 
+    fontSize: 14, 
+    color: '#94A3B8', 
+    marginTop: 4 
+  },
+  badgeContainer: { 
+    marginTop: 12 
+  },
   tierBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: 'rgba(0, 255, 102, 0.1)',
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
   },
-  tierText: { fontSize: 12, fontWeight: '700', color: COLORS.primary, marginLeft: 6 },
+  tierText: { 
+    fontSize: 12, 
+    fontWeight: '700', 
+    color: COLORS.primary, 
+    marginLeft: 6,
+    textTransform: 'uppercase'
+  },
   
+  statsCard: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 10,
+  },
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
     paddingVertical: 20,
-    marginTop: 10
   },
-  statBox: { flex: 1, alignItems: 'center' },
-  statDivider: { width: 1, height: '60%', backgroundColor: COLORS.divider, alignSelf: 'center' },
-  statLabel: { fontSize: 12, color: COLORS.textSecondary, marginBottom: 4 },
-  statValue: { fontSize: 18, fontWeight: '700', color: COLORS.text },
-  unit: { fontSize: 12, fontWeight: '400', color: COLORS.textLight },
+  statBox: { 
+    flex: 1, 
+    alignItems: 'center' 
+  },
+  statDivider: { 
+    width: 1, 
+    height: '70%', 
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', 
+    alignSelf: 'center' 
+  },
+  statLabel: { 
+    fontSize: 12, 
+    color: '#94A3B8', 
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1
+  },
+  statValue: { 
+    fontSize: 22, 
+    fontWeight: '800', 
+    color: '#FFFFFF', 
+    fontVariant: ['tabular-nums'] 
+  },
+  unit: { 
+    fontSize: 12, 
+    fontWeight: '500', 
+    color: COLORS.primary 
+  },
 
-  menuContainer: { padding: 20 },
-  menuGroupTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textLight, marginBottom: 12, marginTop: 10, marginLeft: 4 },
-  menuCard: { padding: 8, marginBottom: 10 },
+  menuContainer: { 
+    paddingHorizontal: 20,
+    paddingTop: 10
+  },
+  menuGroupTitle: { 
+    fontSize: 14, 
+    fontWeight: '700', 
+    color: '#94A3B8', 
+    marginBottom: 12, 
+    marginTop: 16, 
+    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1
+  },
+  menuCard: { 
+    padding: 8, 
+    marginBottom: 10 
+  },
   menuOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 12,
   },
-  menuOptionLeft: { flexDirection: 'row', alignItems: 'center' },
-  iconBox: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  menuOptionTitle: { fontSize: 16, fontWeight: '600' },
-  menuOptionSubtitle: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  menuOptionLeft: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
+  iconBox: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 14, 
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)'
+  },
+  menuOptionTitle: { 
+    fontSize: 16, 
+    fontWeight: '600' 
+  },
+  menuOptionSubtitle: { 
+    fontSize: 13, 
+    color: '#94A3B8', 
+    marginTop: 4 
+  },
   
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF0F0',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     padding: 16,
     borderRadius: 16,
-    marginTop: 20,
+    marginTop: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.5)',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 3
   },
-  logoutText: { color: COLORS.error, fontSize: 16, fontWeight: '700', marginLeft: 8 },
-  version: { textAlign: 'center', color: COLORS.textLight, fontSize: 12, marginTop: 20 }
+  logoutText: { 
+    color: '#EF4444', 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    marginLeft: 10 
+  },
+  version: { 
+    textAlign: 'center', 
+    color: '#64748B', 
+    fontSize: 12, 
+    marginTop: 30 
+  }
 });
 
 export default ProfileScreen;

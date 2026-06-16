@@ -42,36 +42,65 @@ export const useAuthStore = create((set, get) => ({
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      let response;
-      if (USE_MOCK) {
-        console.log('--- ĐANG SỬ DỤNG MOCK LOGIN ---');
-        // Giả lập delay mạng
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        response = MOCK_LOGIN_RESPONSE;
-      } else {
-        response = await authService.login(email, password);
+      // Ép dùng API thật để test (bỏ qua USE_MOCK cho riêng login)
+      console.log('--- GỌI API LOGIN THẬT ĐỂ TEST ---');
+      const response = await authService.login(email, password);
+      console.log('Login Response:', response);
+      
+      // Theo Spec Backend: response.data chứa { user, accessToken, refreshToken }
+      let { user, accessToken, refreshToken } = response.data;
+      
+      // Nếu API trả về cấu trúc lồng nhau
+      if (!user && response.data.tokens) {
+        accessToken = response.data.tokens.accessToken;
+        refreshToken = response.data.tokens.refreshToken;
+        user = response.data.user;
       }
       
-      // Theo Spec Backend: response.data chứa { user, tokens: { accessToken, refreshToken, expiresIn } }
-      const { user, tokens } = response.data;
-      
-      // Lưu vào bộ nhớ bảo mật
-      await storage.saveTokens(tokens.accessToken, tokens.refreshToken);
+      // Khởi tạo user rỗng nếu vẫn undefined
+      if (!user) user = {};
+
+      // Lưu vào bộ nhớ bảo mật để các request tiếp theo có token
+      await storage.saveTokens(accessToken, refreshToken);
+      console.log('Saved tokens to storage');
+
+      // Fetch full profile từ /users/me để lấy chính xác trạng thái onboardingCompleted và metrics
+      try {
+        console.log('Fetching full profile from /users/me...');
+        const { default: usersService } = require('../api/services/users.service');
+        const meResponse = await usersService.getMe();
+        console.log('Full profile response:', meResponse);
+        if (meResponse && meResponse.data) {
+          user = { 
+            ...user, 
+            ...meResponse.data,
+            // Đảm bảo cập nhật trạng thái nếu user đã có metrics
+            onboardingCompleted: meResponse.data.onboardingCompleted || !!meResponse.data.metrics 
+          };
+        }
+      } catch (meErr) {
+        console.warn('Không thể lấy full profile sau khi login:', meErr);
+      }
+
+      console.log('Final user object before save:', user);
       await storage.saveUser(user);
       
+      console.log('Setting auth state to authenticated');
       set({ 
         user, 
-        token: tokens.accessToken, 
-        refreshToken: tokens.refreshToken,
+        token: accessToken, 
+        refreshToken: refreshToken,
         isAuthenticated: true,
         isOnboardingComplete: user.onboardingCompleted || false,
         isLoading: false 
       });
       return { success: true };
     } catch (err) {
+      console.error('Login Error Caught:', err);
       set({ 
         error: err.message || 'Đăng nhập thất bại', 
         isLoading: false 
+
       });
       return { success: false };
     }
@@ -82,15 +111,17 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await authService.register(data);
-      const { user, tokens } = response.data;
       
-      await storage.saveTokens(tokens.accessToken, tokens.refreshToken);
+      // Theo Spec Backend mới: response.data chứa { user, accessToken, refreshToken }
+      const { user, accessToken, refreshToken } = response.data;
+      
+      await storage.saveTokens(accessToken, refreshToken);
       await storage.saveUser(user);
       
       set({ 
         user, 
-        token: tokens.accessToken, 
-        refreshToken: tokens.refreshToken,
+        token: accessToken, 
+        refreshToken: refreshToken,
         isAuthenticated: true,
         isOnboardingComplete: false,
         isLoading: false 
@@ -134,6 +165,12 @@ export const useAuthStore = create((set, get) => ({
   // --- Các actions khác ---
   setUserRole: async (role) => {
     const updatedUser = { ...get().user, role };
+    await storage.saveUser(updatedUser);
+    set({ user: updatedUser });
+  },
+
+  updateUser: async (updates) => {
+    const updatedUser = { ...get().user, ...updates };
     await storage.saveUser(updatedUser);
     set({ user: updatedUser });
   },

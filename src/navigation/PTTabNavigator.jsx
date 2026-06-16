@@ -22,16 +22,18 @@ const PTTabNavigator = () => {
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: '#ffffff',
+          backgroundColor: '#1E293B',
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(255,255,255,0.1)',
           height: Platform.OS === 'ios' ? 90 : 70,
           paddingBottom: Platform.OS === 'ios' ? 24 : 8,
           paddingTop: 8,
           ...styles.shadow,
         },
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textLight,
+        tabBarActiveTintColor: '#3498DB',
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.4)',
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
@@ -42,28 +44,28 @@ const PTTabNavigator = () => {
         name="Trang chủ" 
         component={PTDashboardScreen} 
         options={{
-          tabBarIcon: ({ color }) => <Home size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => <Home size={22} color={color} strokeWidth={focused ? 2.5 : 2} fill={focused ? color : "transparent"} />,
         }}
       />
       <Tab.Screen 
         name="Khóa học" 
         component={CourseManagementScreen} 
         options={{
-          tabBarIcon: ({ color }) => <BookOpen size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => <BookOpen size={22} color={color} strokeWidth={focused ? 2.5 : 2} fill={focused ? color : "transparent"} />,
         }}
       />
       <Tab.Screen 
         name="Học viên" 
         component={PTStudentListScreen}
         options={{
-          tabBarIcon: ({ color }) => <Users size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => <Users size={22} color={color} strokeWidth={focused ? 2.5 : 2} fill={focused ? color : "transparent"} />,
         }}
       />
       <Tab.Screen 
         name="Cá nhân" 
         component={PTProfileScreen}
         options={{
-          tabBarIcon: ({ color }) => <UserIcon size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => <UserIcon size={22} color={color} strokeWidth={focused ? 2.5 : 2} fill={focused ? color : "transparent"} />,
         }}
       />
     </Tab.Navigator>

@@ -22,17 +22,19 @@ const NutriCard = ({ children, style, onPress, elevated = true }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: SPACING.borderRadius.xl,
     padding: SPACING.md,
     marginVertical: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   elevated: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 8,
   },
 });
 

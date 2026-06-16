@@ -19,44 +19,38 @@ export const useWorkoutStore = create((set, get) => ({
     }
   },
 
-  // Bắt đầu một phiên tập mới
-  startSession: async (sessionData) => {
-    set({ isLoading: true });
-    try {
-      const response = await workoutService.startSession(sessionData);
-      set({ currentSession: response.data, isLoading: false });
-      return { success: true, data: response.data };
-    } catch (err) {
-      set({ error: err.message, isLoading: false });
-      return { success: false, error: err.message };
-    }
+  // Bắt đầu một phiên tập mới (Chỉ lưu Local)
+  startSession: (sessionData) => {
+    set({ currentSession: sessionData, isLoading: false, error: null });
+    return { success: true, data: sessionData };
   },
 
-  // Ghi nhận một set tập
-  logExerciseSet: async (exerciseId, setData) => {
-    const session = get().currentSession;
-    const sessionId = session?.id || session?.sessionId;
-    if (!sessionId) return;
-
-    try {
-      await workoutService.logExerciseSet(sessionId, {
-        exerciseId,
-        ...setData
-      });
-    } catch (err) {
-      console.error('Lỗi khi ghi nhận set tập:', err);
-    }
-  },
-
-
-  // Kết thúc buổi tập
+  // Kết thúc buổi tập (Single-shot API)
   finishSession: async (summary) => {
     const { currentSession } = get();
-    if (!currentSession) return;
+    if (!currentSession) return { success: false, error: 'Không có phiên tập hiện tại' };
 
     set({ isLoading: true });
     try {
-      const response = await workoutService.finishSession(currentSession.id, summary);
+      // Chuẩn bị Payload theo chuẩn mới
+      const payload = {
+        name: currentSession.name || currentSession.title || 'Buổi tập cá nhân',
+        performedAt: new Date().toISOString(),
+        durationSec: summary.totalDurationSec || 0,
+        caloriesBurned: summary.totalCaloriesBurned || 0,
+        notes: summary.notes || '',
+        logs: (currentSession.exercises || []).map((ex, index) => ({
+          exerciseId: ex.id || 'EX_ID_MOCK',
+          orderIndex: index,
+          setNumber: 1, // Giả lập 1 hiệp
+          reps: ex.reps ? parseInt(ex.reps) : 10,
+          weightKg: 0,
+          restSec: 60,
+          notes: ''
+        }))
+      };
+
+      const response = await workoutService.createSession(payload);
       set({ currentSession: null, isLoading: false });
       return { success: true, data: response.data };
     } catch (err) {

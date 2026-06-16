@@ -1,24 +1,21 @@
 import apiClient from '../apiClient';
 import { endpoints } from '../endpoints';
 
-/**
- * Content Module - 5 Endpoints (Public)
- */
 const contentService = {
-  // GET /content/articles - Danh sách bài viết
+  // GET /content/discover/pt-courses
+  getDiscoverPTCourses: (params) => apiClient.get(endpoints.CONTENT.DISCOVER_PT_COURSES, { params }),
+  
+  // GET /content/pt-courses/{id}
+  getPTCourseDetail: (id) => apiClient.get(`${endpoints.CONTENT.PT_COURSES}/${id}`),
+
+  // GET /content/articles
   getArticles: (params) => apiClient.get(endpoints.CONTENT.ARTICLES, { params }),
-  
-  // GET /content/articles/:slug - Chi tiết bài viết (Markdown)
+
+  // GET /content/categories
+  getCategories: (params) => apiClient.get(endpoints.CONTENT.CATEGORIES, { params }),
+
+  // GET /content/articles/{slug}
   getArticleBySlug: (slug) => apiClient.get(`${endpoints.CONTENT.ARTICLES}/${slug}`),
-  
-  // GET /content/discover/pt-courses - Khám phá khóa học PT
-  getPTCourses: (params) => apiClient.get(endpoints.CONTENT.DISCOVER_COURSES, { params }),
-  
-  // GET /content/pt-courses/:id - Chi tiết khóa học
-  getCourseDetail: (id) => apiClient.get(`/content/pt-courses/${id}`),
-  
-  // GET /content/search - Tìm kiếm toàn hệ thống
-  search: (query, type) => apiClient.get(endpoints.CONTENT.SEARCH, { params: { q: query, type } }),
 };
 
 export default contentService;

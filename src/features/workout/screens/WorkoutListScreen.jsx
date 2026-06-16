@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -15,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Search, Filter, Play, Clock, BarChart } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { useWorkoutStore } from '../../../store/workoutStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 

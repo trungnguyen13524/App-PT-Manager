@@ -2,7 +2,7 @@ import axios from 'axios';
 import storage from '../utils/storage';
 
 const apiClient = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL,
+  baseURL: process.env.EXPO_PUBLIC_API_URL || 'https://test-nutricoach.onrender.com/api/v1',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
@@ -33,12 +33,27 @@ apiClient.interceptors.request.use(
     }
     
     // Thêm Idempotency-Key cho các request tài chính quan trọng
-    if (config.url.includes('/payment/checkout') || config.url.includes('/pt/withdrawals')) {
-      if (!config.headers['Idempotency-Key']) {
-        const { v4: uuidv4 } = require('uuid'); // Giả sử có uuid, nếu không dùng crypto.randomUUID()
-        config.headers['Idempotency-Key'] = typeof crypto !== 'undefined' && crypto.randomUUID 
+    if (config.url && (config.url.includes('/payment/checkout') || config.url.includes('/pt/withdrawals'))) {
+      const hasIdempotencyKey = config.headers.has ? config.headers.has('Idempotency-Key') : config.headers['Idempotency-Key'];
+      if (!hasIdempotencyKey) {
+        // Simple fallback UUID v4 generator if crypto is not available
+        const generateUUID = () => {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        };
+
+        const idempotencyKey = typeof crypto !== 'undefined' && crypto.randomUUID 
           ? crypto.randomUUID() 
-          : `idmp-${Date.now()}`;
+          : generateUUID();
+        
+        if (config.headers.set) {
+          config.headers.set('Idempotency-Key', idempotencyKey);
+        } else {
+          config.headers['Idempotency-Key'] = idempotencyKey;
+        }
       }
     }
 
@@ -66,6 +81,19 @@ apiClient.interceptors.response.use(
       code: 'INTERNAL_SERVER_ERROR', 
       message: 'Có lỗi xảy ra, vui lòng thử lại sau.' 
     };
+    
+    // Tắt tạm log này cho đỡ rối Terminal vì luồng Food Scan đã hoạt động tốt
+    /*
+    if (error.response?.status === 400 || error.response?.status === 500) {
+      console.warn('--- API ERROR LOG ---');
+      console.warn('URL:', originalRequest.url);
+      console.warn('Method:', originalRequest.method);
+      console.warn('Data Sent:', originalRequest.data);
+      console.warn('Response Status:', error.response?.status);
+      console.warn('Response Error Data:', JSON.stringify(error.response?.data, null, 2));
+      console.warn('---------------------');
+    }
+    */
 
     // Nếu lỗi 401 và không phải là yêu cầu refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -99,8 +127,8 @@ apiClient.interceptors.response.use(
       }
 
       try {
-        // Gọi API refresh token đúng theo spec v1
-        const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/auth/refresh`, {
+        const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://test-nutricoach.onrender.com/api/v1';
+        const response = await axios.post(`${baseUrl}/auth/refresh`, {
           refreshToken: refreshToken,
         });
 

@@ -1,33 +1,33 @@
 export const COLORS = {
   // Brand Colors
-  primary: '#2ECC71',      // Xanh lá chủ đạo (Success/Health)
-  primaryDark: '#27AE60',
-  primaryLight: '#D5F5E3',
+  primary: '#00FF66',      // Xanh Neon chủ đạo (Success/Health/Neon)
+  primaryDark: '#00CC52',
+  primaryLight: 'rgba(0, 255, 102, 0.2)',
   
-  secondary: '#3498DB',    // Xanh dương (Trust/Workout)
-  accent: '#E67E22',       // Cam (Energy/Nutrition)
+  secondary: '#00B3FF',    // Xanh dương Neon (Trust/Workout)
+  accent: '#FF0080',       // Hồng Neon (Energy/Nutrition)
   
   // Neutral Colors
   white: '#FFFFFF',
   black: '#000000',
-  background: '#F8F9FA',   // Màu nền xám nhạt cực nhẹ
-  surface: '#FFFFFF',      // Màu nền của các Card
+  background: '#0F172A',   // Nền hệ thống: Xanh đen sâu (Dark Slate)
+  surface: 'rgba(255, 255, 255, 0.05)', // Nền thẻ: Trong suốt mờ kính
   
   // Text Colors
-  text: '#2C3E50',         // Màu chữ chính (Dark Blue Gray)
-  textSecondary: '#7F8C8D', // Màu chữ phụ (Gray)
-  textLight: '#BDC3C7',    // Màu chữ mờ
+  text: '#FFFFFF',         // Màu chữ chính: Trắng
+  textSecondary: '#94A3B8', // Màu chữ phụ: Xám nhạt
+  textLight: '#64748B',    // Màu chữ mờ
   
   // Status Colors
-  success: '#27AE60',
-  error: '#E74C3C',
-  warning: '#F1C40F',
-  info: '#3498DB',
+  success: '#00FF66',
+  error: '#FF4D4D',
+  warning: '#FFD700',
+  info: '#00B3FF',
   
   // Border & Divider
-  border: '#ECF0F1',
-  divider: '#E5E7E9',
+  border: 'rgba(255, 255, 255, 0.1)',
+  divider: 'rgba(255, 255, 255, 0.1)',
 
   // Gradient Placeholders
-  gradientPrimary: ['#2ECC71', '#27AE60'],
+  gradientPrimary: ['#00FF66', '#00B3FF'],
 };

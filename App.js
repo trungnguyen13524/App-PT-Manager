@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, StatusBar } from 'react-native';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { useAuthStore } from './src/store/authStore';
 import { COLORS } from './src/theme';
+import CustomDialog from './src/components/common/CustomDialog';
+import GlobalRewardToast from './src/components/shared/GlobalRewardToast';
 
 export default function App() {
   const { initialize, isInitialized } = useAuthStore();
@@ -19,5 +21,12 @@ export default function App() {
     );
   }
 
-  return <AppNavigator />;
+  return (
+    <>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+      <AppNavigator />
+      <CustomDialog />
+      <GlobalRewardToast />
+    </>
+  );
 }

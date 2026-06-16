@@ -233,10 +233,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   amount: {
-    ...TYPOGRAPHY.body1,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginBottom: 4,
+    fontSize: 16,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   status: {
     fontSize: 12,

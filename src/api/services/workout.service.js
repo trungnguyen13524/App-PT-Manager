@@ -11,21 +11,20 @@ const workoutService = {
   // GET /workout/exercises/:id - Chi tiết kỹ thuật bài tập
   getExerciseDetail: (id) => apiClient.get(`${endpoints.WORKOUT.EXERCISES}/${id}`),
   
-  // POST /workout/sessions - Bắt đầu một buổi tập mới
-  // Body: { name, plannedExercises: [...] }
-  startSession: (data) => apiClient.post(endpoints.WORKOUT.SESSIONS, data),
-  
-  // POST /workout/sessions/:id/logs - Ghi nhận kết quả một bài tập trong buổi
-  logExerciseSet: (sessionId, data) => apiClient.post(`${endpoints.WORKOUT.SESSIONS}/${sessionId}/logs`, data),
-  
-  // POST /workout/sessions/:id/finish - Hoàn thành buổi tập
-  finishSession: (sessionId, data) => apiClient.post(`${endpoints.WORKOUT.SESSIONS}/${sessionId}/finish`, data),
+  // POST /workout/sessions - Lưu một buổi tập (Single-shot log)
+  createSession: (data) => apiClient.post(endpoints.WORKOUT.SESSIONS, data),
   
   // GET /workout/sessions - Lịch sử các buổi tập đã qua
   getWorkoutHistory: (params) => apiClient.get(endpoints.WORKOUT.SESSIONS, { params }),
-  
-  // GET /workout/programs/me - Chương trình tập cá nhân hóa hiện tại
-  getMyPrograms: () => apiClient.get(endpoints.WORKOUT.PROGRAMS_ME),
+
+  // GET /workout/sessions/:id - Chi tiết một buổi tập
+  getSessionDetail: (id) => apiClient.get(`${endpoints.WORKOUT.SESSIONS}/${id}`),
+
+  // PATCH /workout/sessions/:id - Sửa thông tin chung của buổi tập
+  updateWorkoutSession: (id, data) => apiClient.patch(`${endpoints.WORKOUT.SESSIONS}/${id}`, data),
+
+  // DELETE /workout/sessions/:id - Xóa buổi tập
+  deleteWorkoutSession: (id) => apiClient.delete(`${endpoints.WORKOUT.SESSIONS}/${id}`),
 };
 
 export default workoutService;

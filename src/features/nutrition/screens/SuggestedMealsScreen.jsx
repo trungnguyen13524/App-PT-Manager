@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -13,6 +12,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft, Filter, Flame, Clock } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 60) / 2; // 2 columns with padding
@@ -228,11 +228,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginBottom: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 5,
   },
   imageContainer: {
     width: '100%',

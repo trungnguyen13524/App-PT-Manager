@@ -3,11 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Dimensions,
-  ScrollView,
-  Alert
+  ScrollView
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { 
@@ -24,6 +22,8 @@ import NutriInput from '../../../components/shared/NutriInput';
 import NutriCard from '../../../components/shared/NutriCard';
 import { useUserStore } from '../../../store/userStore';
 import { useAuthStore } from '../../../store/authStore';
+import { useDialogStore } from '../../../store/dialogStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -38,7 +38,11 @@ const OnboardingScreen = () => {
       if (step === 1) {
         // Validation step 1
         if (!profile.age || !profile.height || !profile.weight) {
-          Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ chỉ số cơ thể');
+          useDialogStore.getState().showDialog({
+            title: 'Thông báo',
+            message: 'Vui lòng nhập đầy đủ chỉ số cơ thể',
+            type: 'warning'
+          });
           return;
         }
         calculateStats();

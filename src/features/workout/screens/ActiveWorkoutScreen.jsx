@@ -3,11 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Image,
   Dimensions,
-  Alert,
   ActivityIndicator,
   Platform
 } from 'react-native';
@@ -15,6 +13,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { ChevronLeft, ChevronRight, Play, CheckCircle2, Clock, Flame, X } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { useWorkoutStore } from '../../../store/workoutStore';
+import { useDialogStore } from '../../../store/dialogStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -55,10 +55,11 @@ const ActiveWorkoutScreen = () => {
   };
 
   const handleFinish = () => {
-    Alert.alert(
-      'Hoàn thành?',
-      'Bạn đã hoàn thành tất cả các bài tập trong buổi hôm nay!',
-      [
+    useDialogStore.getState().showDialog({
+      title: 'Hoàn thành?',
+      message: 'Bạn đã hoàn thành tất cả các bài tập trong buổi hôm nay!',
+      type: 'success',
+      buttons: [
         { text: 'Tiếp tục tập', style: 'cancel' },
         { 
           text: 'Kết thúc buổi tập', 
@@ -69,13 +70,20 @@ const ActiveWorkoutScreen = () => {
               totalCaloriesBurned: 150 // Mock calo
             });
             if (res.success) {
-              Alert.alert('Tuyệt vời!', 'Buổi tập đã được lưu lại.');
-              navigation.navigate('Trang chủ');
+              useDialogStore.getState().showDialog({
+                title: 'Tuyệt vời!',
+                message: 'Buổi tập đã được lưu lại.',
+                type: 'success',
+                buttons: [{
+                  text: 'OK',
+                  onPress: () => navigation.navigate('Trang chủ')
+                }]
+              });
             }
           }
         }
       ]
-    );
+    });
   };
 
   if (!currentSession) {
@@ -199,7 +207,7 @@ const styles = StyleSheet.create({
   exerciseName: { fontSize: 24, fontWeight: '800', color: COLORS.text, marginBottom: 20, textAlign: 'center' },
   statsRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 30 },
   statBox: { marginHorizontal: 20, alignItems: 'center' },
-  statVal: { fontSize: 28, fontWeight: '800', color: COLORS.primary },
+  statVal: { fontSize: 28, fontWeight: '800', color: COLORS.primary, fontVariant: ['tabular-nums'] },
   statLabel: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '600' },
   instructionsBox: {
     width: '100%',

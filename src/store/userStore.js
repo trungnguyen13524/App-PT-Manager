@@ -75,15 +75,39 @@ export const useUserStore = create((set, get) => ({
     }
   },
 
-  updateAvatar: async (fileKey) => {
+  updateAvatar: async (imageUri, mimeType = 'image/jpeg', fileName = 'avatar.jpg') => {
+    set({ isLoading: true });
     try {
-      // NOTE: BE chưa hỗ trợ API Upload/Avatar. Tạm thời chặn gọi API thật để tránh 404
-      // const response = await usersService.updateAvatar(fileKey);
-      // set((state) => ({ profile: { ...state.profile, avatarUrl: response.data.avatarUrl } }));
+      const formData = new FormData();
+      formData.append('avatar', {
+        uri: imageUri,
+        type: mimeType,
+        name: fileName,
+      });
       
-      console.warn("Tính năng Upload Avatar đang tạm đóng do BE chưa hỗ trợ API.");
-      return { success: false, error: "Chức năng đổi ảnh đại diện đang được bảo trì từ hệ thống." };
+      const response = await usersService.updateAvatar(formData);
+      
+      if (response && response.data && response.data.avatarUrl) {
+        const newAvatarUrl = response.data.avatarUrl;
+        
+        // Update userStore
+        set((state) => ({ 
+          profile: { ...state.profile, avatarUrl: newAvatarUrl },
+          isLoading: false
+        }));
+        
+        // Update authStore
+        const { useAuthStore } = require('./authStore');
+        const authState = useAuthStore.getState();
+        if (authState.updateUser) {
+          await authState.updateUser({ avatarUrl: newAvatarUrl });
+        }
+        
+        return { success: true, avatarUrl: newAvatarUrl };
+      }
+      throw new Error("Không nhận được URL ảnh từ server");
     } catch (err) {
+      set({ error: err.message, isLoading: false });
       return { success: false, error: err.message };
     }
   }

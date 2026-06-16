@@ -9,7 +9,8 @@ import {
   Image,
   Dimensions,
   ActivityIndicator,
-  Alert
+  Alert,
+  StatusBar
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { 
@@ -62,6 +63,7 @@ const PTStudentDetailScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -150,7 +152,7 @@ const PTStudentDetailScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.white },
+  container: { flex: 1, backgroundColor: COLORS.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row',
@@ -176,7 +178,7 @@ const styles = StyleSheet.create({
   studentGoal: { fontSize: 14, color: COLORS.textSecondary, marginTop: 4 },
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surface,
     borderRadius: 24,
     paddingVertical: 20,
     marginBottom: 30,

@@ -1,19 +1,77 @@
-import React from 'react';
+import React, { useState, memo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   StatusBar,
-  Dimensions
+  Platform
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { GraduationCap, Dumbbell } from 'lucide-react-native';
-import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
+import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
 import { useAuthStore } from '../../../store/authStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const { width } = Dimensions.get('window');
+const AbstractBackground = memo(() => (
+  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+    <Svg width="100%" height="100%">
+      <Defs>
+        <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#0F172A" />
+          <Stop offset="100%" stopColor="#1E293B" />
+        </LinearGradient>
+        <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.15" />
+          <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.05" />
+        </LinearGradient>
+        <LinearGradient id="circleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#FF4D00" stopOpacity="0.15" />
+          <Stop offset="100%" stopColor="#FF0080" stopOpacity="0.05" />
+        </LinearGradient>
+      </Defs>
+      <Rect width="100%" height="100%" fill="url(#bgGrad)" />
+      
+      {/* 3D-like glowing abstract floating circles */}
+      <Circle cx="15%" cy="15%" r="140" fill="url(#circleGrad1)" />
+      <Circle cx="90%" cy="80%" r="180" fill="url(#circleGrad2)" />
+      <Circle cx="85%" cy="25%" r="90" fill="url(#circleGrad2)" />
+      <Circle cx="20%" cy="85%" r="120" fill="url(#circleGrad1)" />
+    </Svg>
+  </View>
+));
+
+const RoleCard = ({ title, description, icon: Icon, color, onPress }) => {
+  const [isPressed, setIsPressed] = useState(false);
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      onPressIn={() => setIsPressed(true)}
+      onPressOut={() => setIsPressed(false)}
+      activeOpacity={0.9}
+      style={[
+        styles.roleCard,
+        isPressed && { borderColor: color, transform: [{ scale: 0.98 }] },
+        Platform.OS === 'ios' && isPressed && {
+          shadowColor: color,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.6,
+          shadowRadius: 15,
+        }
+      ]}
+    >
+      {/* Subtle inner glow/tint */}
+      <View style={[styles.cardGlow, { backgroundColor: color, opacity: isPressed ? 0.08 : 0.03 }]} />
+      
+      <View style={[styles.iconContainer, { borderColor: color, backgroundColor: `${color}25` }]}>
+        <Icon size={42} color={color} strokeWidth={2.5} />
+      </View>
+      <Text style={styles.roleTitle}>{title}</Text>
+      <Text style={styles.roleDesc}>{description}</Text>
+    </TouchableOpacity>
+  );
+};
 
 const RoleSelectionScreen = () => {
   const navigation = useNavigation();
@@ -31,38 +89,33 @@ const RoleSelectionScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <AbstractBackground />
       
       <View style={styles.content}>
-        <Text style={styles.title}>Bạn là ai?</Text>
-        <Text style={styles.subtitle}>Chọn vai trò để chúng tôi cá nhân hóa trải nghiệm cho bạn</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Bạn là ai?</Text>
+          <Text style={styles.subtitle}>Chọn vai trò để chúng tôi cá nhân hóa trải nghiệm cho bạn</Text>
+        </View>
 
         <View style={styles.cardsContainer}>
           {/* Student Card */}
-          <TouchableOpacity 
-            style={styles.roleCard}
+          <RoleCard
+            title="Học viên"
+            description="Theo dõi dinh dưỡng, luyện tập và nhận tư vấn từ chuyên gia"
+            icon={GraduationCap}
+            color="#00FF66"
             onPress={() => handleSelectRole('USER')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.iconContainer, { backgroundColor: COLORS.primaryLight }]}>
-              <GraduationCap size={40} color={COLORS.primary} />
-            </View>
-            <Text style={styles.roleTitle}>Học viên</Text>
-            <Text style={styles.roleDesc}>Theo dõi dinh dưỡng, luyện tập và nhận tư vấn từ chuyên gia</Text>
-          </TouchableOpacity>
+          />
 
           {/* PT Card */}
-          <TouchableOpacity 
-            style={styles.roleCard}
+          <RoleCard
+            title="Huấn luyện viên"
+            description="Quản lý học viên, tạo khóa học và theo dõi thu nhập"
+            icon={Dumbbell}
+            color="#FF4D00"
             onPress={() => handleSelectRole('PT')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.iconContainer, { backgroundColor: '#FFF3E0' }]}>
-              <Dumbbell size={40} color={COLORS.accent} />
-            </View>
-            <Text style={styles.roleTitle}>Huấn luyện viên</Text>
-            <Text style={styles.roleDesc}>Quản lý học viên, tạo khóa học và theo dõi thu nhập</Text>
-          </TouchableOpacity>
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -72,58 +125,81 @@ const RoleSelectionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: '#0F172A', // Fallback background
   },
   content: {
     flex: 1,
-    paddingHorizontal: 30,
+    paddingHorizontal: 24,
     justifyContent: 'center',
   },
+  header: {
+    marginBottom: 40,
+    alignItems: 'center',
+  },
   title: {
-    ...TYPOGRAPHY.h1,
-    color: COLORS.text,
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
     textAlign: 'center',
+    marginBottom: 12,
   },
   subtitle: {
     fontSize: 15,
-    color: COLORS.textSecondary,
+    color: '#CBD5E1',
     textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 40,
-    lineHeight: 22,
+    lineHeight: 24,
+    paddingHorizontal: 20,
+    fontWeight: '500',
   },
   cardsContainer: {
     width: '100%',
   },
   roleCard: {
-    backgroundColor: COLORS.background,
-    borderRadius: SPACING.borderRadius.xl,
-    padding: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 24,
+    padding: 28,
     marginBottom: 20,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: COLORS.divider,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    overflow: 'hidden', // to contain the cardGlow
+  },
+  cardGlow: {
+    ...StyleSheet.absoluteFillObject,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    // Emulate 3D pop
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 5,
   },
   roleTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 8,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 10,
+    letterSpacing: 0.5,
   },
   roleDesc: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: '#CBD5E1',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
+    paddingHorizontal: 10,
   },
 });
 
 export default RoleSelectionScreen;
+

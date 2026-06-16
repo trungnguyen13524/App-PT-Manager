@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Dimensions,
@@ -13,6 +12,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { ChevronLeft, Info, CheckCircle, AlertCircle } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
+import { useDialogStore } from '../../../store/dialogStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -29,7 +30,11 @@ const ExerciseVideoScreen = () => {
   const onStateChange = useCallback((state) => {
     if (state === "ended") {
       setPlaying(false);
-      Alert.alert("Tuyệt vời!", "Bạn đã hoàn thành việc xem hướng dẫn bài tập này.");
+      useDialogStore.getState().showDialog({
+        title: "Tuyệt vời!",
+        message: "Bạn đã hoàn thành việc xem hướng dẫn bài tập này.",
+        type: 'success'
+      });
     }
   }, []);
 
@@ -147,7 +152,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   statLabel: { fontSize: 13, color: COLORS.textSecondary, marginRight: 5 },
-  statValue: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  statValue: { fontSize: 13, fontWeight: '700', color: COLORS.primary, fontVariant: ['tabular-nums'] },
   instructionBox: {
     backgroundColor: COLORS.primaryLight,
     padding: 20,

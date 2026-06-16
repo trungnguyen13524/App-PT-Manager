@@ -17,6 +17,10 @@ import PricingScreen from '../../features/users/screens/PricingScreen';
 import CheckoutScreen from '../../features/users/screens/CheckoutScreen';
 import TransactionHistoryScreen from '../../features/payment/screens/TransactionHistoryScreen';
 import BodyMetricsScreen from '../../features/users/screens/BodyMetricsScreen';
+import QuestsScreen from '../../features/gamification/screens/QuestsScreen';
+import RewardsStoreScreen from '../../features/gamification/screens/RewardsStoreScreen';
+import EditProfileScreen from '../../features/users/screens/EditProfileScreen';
+import NotificationSettingsScreen from '../../features/users/screens/NotificationSettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,6 +28,8 @@ export const StudentStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTab" component={StudentTabNavigator} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       <Stack.Screen name="ExerciseLibrary" component={ExerciseLibraryScreen} />
       <Stack.Screen name="MealLog" component={MealLogScreen} />
       <Stack.Screen name="FoodScan" component={FoodScanScreen} />
@@ -39,6 +45,8 @@ export const StudentStack = () => {
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
       <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
       <Stack.Screen name="BodyMetrics" component={BodyMetricsScreen} />
+      <Stack.Screen name="Quests" component={QuestsScreen} />
+      <Stack.Screen name="RewardsStore" component={RewardsStoreScreen} />
     </Stack.Navigator>
   );
 };

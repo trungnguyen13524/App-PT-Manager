@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -14,6 +13,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { ChevronLeft, Clock, Flame, ChevronRight, CheckCircle2, RefreshCw } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import NutriCard from '../../../components/shared/NutriCard';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.text,
     marginLeft: 8,
+    fontVariant: ['tabular-nums'],
   },
   divider: {
     width: 1,

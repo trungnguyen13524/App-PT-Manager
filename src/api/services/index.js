@@ -8,7 +8,8 @@ import paymentService from './payment.service';
 import contentService from './content.service';
 import dashboardService from './dashboard.service';
 import uploadService from './upload.service';
-import adminService from './admin.service';
+import questsService from './quests.service';
+import foodService from './food.service';
 
 export {
   authService,
@@ -21,10 +22,10 @@ export {
   contentService,
   dashboardService,
   uploadService,
-  adminService
+  questsService,
+  foodService
 };
 
-// Mặc định xuất một đối tượng chứa tất cả
 const API = {
   auth: authService,
   users: usersService,
@@ -36,7 +37,8 @@ const API = {
   content: contentService,
   dashboard: dashboardService,
   upload: uploadService,
-  admin: adminService
+  quests: questsService,
+  food: foodService
 };
 
 export default API;

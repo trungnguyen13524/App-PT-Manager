@@ -3,25 +3,53 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
+  StatusBar
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronRight, Search, Filter } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import NutriCard from '../../../components/shared/NutriCard';
 import { usePTStore } from '../../../store/ptStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PTStudentListScreen = () => {
   const navigation = useNavigation();
-  const { students, fetchStudents, isLoading } = usePTStore();
+  const { students, fetchStudents, isLoading, verificationStatus } = usePTStore();
 
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    if (verificationStatus === 'APPROVED') {
+      fetchStudents();
+    }
+  }, [verificationStatus]);
+
+  if (verificationStatus === 'PENDING_REVIEW' || verificationStatus === 'PENDING') {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{ color: '#fff', marginTop: 20, fontSize: 16 }}>Đang chờ Admin duyệt hồ sơ PT...</Text>
+      </View>
+    );
+  }
+
+  if (verificationStatus === 'NONE' || verificationStatus === null) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <Text style={{ color: '#fff', marginBottom: 20, fontSize: 16 }}>Bạn chưa đăng ký làm Huấn luyện viên</Text>
+        <TouchableOpacity 
+          style={{ backgroundColor: COLORS.primary, padding: 12, borderRadius: 8 }} 
+          onPress={() => navigation.navigate('PTVerification')}
+        >
+          <Text style={{ color: '#1E293B', fontWeight: 'bold' }}>Đăng ký ngay</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (isLoading && students.length === 0) {
     return (
@@ -33,6 +61,7 @@ const PTStudentListScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Học viên của bạn</Text>
@@ -101,7 +130,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
   },
   headerTitle: {
     ...TYPOGRAPHY.h2,
@@ -109,7 +138,7 @@ const styles = StyleSheet.create({
   },
   headerIconBtn: {
     padding: 8,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surface,
     borderRadius: 20,
   },
   scrollContent: {
@@ -122,7 +151,7 @@ const styles = StyleSheet.create({
   searchBar: {
     flex: 1,
     height: 48,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: SPACING.borderRadius.full,
     flexDirection: 'row',
     alignItems: 'center',

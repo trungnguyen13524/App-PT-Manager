@@ -6,13 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  StatusBar
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Wallet, TrendingUp, History } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import NutriButton from '../../../components/shared/NutriButton';
 import ptService from '../../../api/services/pt.service';
+import { useDialogStore } from '../../../store/dialogStore';
 
 const PTEarningsScreen = () => {
   const navigation = useNavigation();
@@ -59,15 +61,27 @@ const PTEarningsScreen = () => {
           onPress: async (amount) => {
             const amountNum = parseInt(amount, 10);
             if (isNaN(amountNum) || amountNum < 200000 || amountNum > earnings.availableBalanceVnd) {
-              Alert.alert('Lỗi', 'Số tiền không hợp lệ. Tối thiểu 200,000đ và không vượt quá số dư.');
+              useDialogStore.getState().showDialog({
+                title: 'Lỗi',
+                message: 'Số tiền không hợp lệ. Tối thiểu 200,000đ và không vượt quá số dư.',
+                type: 'error'
+              });
               return;
             }
             try {
               // await ptService.requestWithdrawal({ amountVnd: amountNum, note: "Rút tiền app" });
-              Alert.alert('Thành công', 'Đã gửi yêu cầu rút tiền. Vui lòng chờ admin duyệt.');
+              useDialogStore.getState().showDialog({
+                title: 'Thành công',
+                message: 'Đã gửi yêu cầu rút tiền. Vui lòng chờ admin duyệt.',
+                type: 'success'
+              });
               fetchEarnings();
             } catch (err) {
-              Alert.alert('Lỗi', 'Không thể gửi yêu cầu rút tiền lúc này.');
+              useDialogStore.getState().showDialog({
+                title: 'Lỗi',
+                message: 'Không thể gửi yêu cầu rút tiền lúc này.',
+                type: 'error'
+              });
             }
           }
         }
@@ -88,6 +102,7 @@ const PTEarningsScreen = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <ArrowLeft size={24} color={COLORS.text} />
@@ -189,7 +204,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: 50,
     paddingBottom: SPACING.md,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
   },
   headerTitle: {
     ...TYPOGRAPHY.h3,
@@ -222,10 +237,11 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   balanceAmount: {
-    color: COLORS.white,
     fontSize: 32,
     fontWeight: 'bold',
+    color: COLORS.white,
     marginBottom: 20,
+    fontVariant: ['tabular-nums'],
   },
   withdrawButton: {
     backgroundColor: COLORS.white,
@@ -244,7 +260,7 @@ const styles = StyleSheet.create({
   statBox: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     padding: SPACING.md,
     borderRadius: SPACING.md,
     alignItems: 'center',
@@ -258,6 +274,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: 'bold',
+    fontVariant: ['tabular-nums'],
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -270,7 +287,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   breakdownCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: SPACING.md,
     padding: SPACING.md,
     marginBottom: SPACING.md,

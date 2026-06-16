@@ -23,11 +23,15 @@ export const usePTStore = create((set, get) => ({
     }
     try {
       const response = await ptService.getVerificationStatus();
-      set({ verificationStatus: response.data.status });
-      return response.data.status;
+      // API might return data as a string or an object with status
+      const status = response.data?.status || response.data || 'NONE';
+      set({ verificationStatus: status });
+      return status;
     } catch (err) {
-      console.warn('Chưa có thông tin xác minh PT');
-      return null;
+      // API spec says 401 Unauthorized
+      console.warn('Lỗi kiểm tra xác minh PT:', err.message);
+      set({ verificationStatus: 'NONE' });
+      return 'NONE';
     }
   },
 
@@ -41,11 +45,12 @@ export const usePTStore = create((set, get) => ({
     }
     try {
       const response = await ptService.requestVerification(data);
-      set({ verificationStatus: 'PENDING', isLoading: false });
+      set({ verificationStatus: 'PENDING_REVIEW', isLoading: false });
       return { success: true };
     } catch (err) {
-      set({ error: err.message, isLoading: false });
-      return { success: false, error: err.message };
+      const errMsg = err.response?.data?.error?.message || err.message;
+      set({ error: errMsg, isLoading: false });
+      return { success: false, error: errMsg };
     }
   },
 
@@ -61,6 +66,7 @@ export const usePTStore = create((set, get) => ({
       const response = await ptService.getStudents();
       set({ students: response.data || [], isLoading: false });
     } catch (err) {
+      if (err.response?.status === 403) console.warn('Insufficient role to fetch students');
       set({ error: err.message, isLoading: false });
     }
   },
@@ -77,6 +83,7 @@ export const usePTStore = create((set, get) => ({
       const response = await ptService.getCourses();
       set({ courses: response.data || [], isLoading: false });
     } catch (err) {
+      if (err.response?.status === 403) console.warn('Insufficient role to fetch courses');
       set({ error: err.message, isLoading: false });
     }
   },
@@ -89,9 +96,13 @@ export const usePTStore = create((set, get) => ({
     }
     try {
       const response = await ptService.getEarnings();
-      set({ earnings: response.data });
+      set({ earnings: response.data || { balance: 0, history: [] } });
     } catch (err) {
-      console.error('Lỗi lấy thông tin doanh thu:', err);
+      if (err.response?.status === 403) {
+        console.warn('Lỗi lấy thông tin doanh thu: Insufficient role');
+      } else {
+        console.warn('Lỗi lấy thông tin doanh thu:', err.message || err.code || err);
+      }
     }
   }
 }));

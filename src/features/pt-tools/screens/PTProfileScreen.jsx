@@ -3,11 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   Image,
   TouchableOpacity,
   ScrollView,
-  Alert,
   StatusBar
 } from 'react-native';
 import { 
@@ -25,7 +23,9 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { useAuthStore } from '../../../store/authStore';
+import { useDialogStore } from '../../../store/dialogStore';
 import NutriCard from '../../../components/shared/NutriCard';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PTProfileScreen = () => {
   const navigation = useNavigation();
@@ -34,10 +34,11 @@ const PTProfileScreen = () => {
   const displayUser = user || {};
 
   const handleLogout = () => {
-    Alert.alert(
-      'Đăng xuất',
-      'Bạn có chắc chắn muốn đăng xuất không?',
-      [
+    useDialogStore.getState().showDialog({
+      title: 'Đăng xuất',
+      message: 'Bạn có chắc chắn muốn đăng xuất không?',
+      type: 'warning',
+      buttons: [
         { text: 'Hủy', style: 'cancel' },
         { 
           text: 'Đăng xuất', 
@@ -47,7 +48,7 @@ const PTProfileScreen = () => {
           }
         },
       ]
-    );
+    });
   };
 
   const MenuOption = ({ icon: Icon, title, onPress, iconBgColor, iconColor }) => (
@@ -157,17 +158,17 @@ const PTProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  container: { flex: 1, backgroundColor: COLORS.background },
   // Header
   headerContainer: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORS.surface,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 30,
     elevation: 5,
-    shadowColor: '#4CAF50',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
     padding: 2,
     marginRight: 16,
   },
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
   menuOptionTitle: { fontSize: 15, fontWeight: '600', color: COLORS.text },
   divider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.border,
     marginHorizontal: 16,
   },
   
@@ -253,12 +254,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF5F5',
+    backgroundColor: 'rgba(229, 57, 53, 0.1)',
     padding: 16,
     borderRadius: 20,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#FFE0E0'
+    borderColor: 'rgba(229, 57, 53, 0.3)'
   },
   logoutText: { color: '#E53935', fontSize: 16, fontWeight: '700', marginLeft: 8 },
 });

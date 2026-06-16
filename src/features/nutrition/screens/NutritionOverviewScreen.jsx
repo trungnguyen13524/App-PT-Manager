@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Dimensions,
@@ -13,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft, TrendingUp, Flame, Droplets, Target, Award } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import NutriCard from '../../../components/shared/NutriCard';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -299,20 +299,22 @@ const styles = StyleSheet.create({
     left: 24,
     right: 24,
     bottom: 95, // Adjust this based on targetCalories relative to max
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: -1,
+    zIndex: 10,
   },
   targetLine: {
-    flex: 1,
+    width: '100%',
     height: 1,
-    backgroundColor: COLORS.divider,
+    backgroundColor: COLORS.primary,
     borderStyle: 'dashed',
+    opacity: 0.5,
   },
   targetLineText: {
+    position: 'absolute',
+    right: 0,
+    top: -16,
     fontSize: 10,
-    color: COLORS.textLight,
-    marginLeft: 8,
+    color: COLORS.primary,
+    fontWeight: '600',
   },
   sectionTitle: {
     ...TYPOGRAPHY.h3,
@@ -365,16 +367,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   insightCard: {
-    backgroundColor: COLORS.text,
+    backgroundColor: COLORS.surface,
     borderRadius: 24,
     padding: 24,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    shadowColor: COLORS.text,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   insightIconWrapper: {
     width: 40,

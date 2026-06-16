@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,125 @@ import {
   Platform,
   ScrollView,
   Dimensions,
-  Alert,
-  Image
+  Image,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Mail, Lock, Leaf } from 'lucide-react-native';
-import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
-import NutriButton from '../../../components/shared/NutriButton';
-import NutriInput from '../../../components/shared/NutriInput';
+import { Mail, Lock, Leaf, Eye, EyeOff } from 'lucide-react-native';
 import { useAuthStore } from '../../../store/authStore';
+import { useDialogStore } from '../../../store/dialogStore';
+import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
 
 const { height } = Dimensions.get('window');
+
+// -------------------------------------------------------------
+// REUSABLE LOCAL COMPONENTS FOR THE REDESIGN
+// (Defined OUTSIDE the main render function to prevent re-renders and focus loss)
+// -------------------------------------------------------------
+
+const AbstractBackground = memo(() => (
+  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+    <Svg width="100%" height="100%">
+      <Defs>
+        <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#0F172A" />
+          <Stop offset="100%" stopColor="#1E293B" />
+        </LinearGradient>
+        <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.15" />
+          <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.05" />
+        </LinearGradient>
+        <LinearGradient id="circleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#FF4D00" stopOpacity="0.12" />
+          <Stop offset="100%" stopColor="#FF0080" stopOpacity="0.05" />
+        </LinearGradient>
+      </Defs>
+      <Rect width="100%" height="100%" fill="url(#bgGrad)" />
+      
+      {/* 3D-like glowing abstract floating circles */}
+      <Circle cx="15%" cy="15%" r="140" fill="url(#circleGrad1)" />
+      <Circle cx="90%" cy="75%" r="180" fill="url(#circleGrad2)" />
+      <Circle cx="80%" cy="25%" r="90" fill="url(#circleGrad2)" />
+      <Circle cx="20%" cy="85%" r="120" fill="url(#circleGrad1)" />
+    </Svg>
+  </View>
+));
+
+const GlowingInput = memo(({ icon: Icon, placeholder, value, onChangeText, secureTextEntry, keyboardType, autoCapitalize }) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = Boolean(secureTextEntry);
+
+  return (
+    <View style={styles.inputContainer}>
+      {/* Absolute overlay for background and border - prevents Android native view reconstruction on style change */}
+      <View 
+        style={[
+          StyleSheet.absoluteFillObject, 
+          styles.inputOverlay, 
+          isFocused && styles.inputOverlayFocused
+        ]} 
+        pointerEvents="none" 
+      />
+      <View style={styles.inputIcon}>
+        <Icon size={20} color={isFocused ? '#00FF66' : '#CBD5E1'} />
+      </View>
+      <TextInput
+        style={styles.input}
+        placeholder={placeholder}
+        placeholderTextColor="#CBD5E1"
+        value={value}
+        onChangeText={onChangeText}
+        secureTextEntry={isPassword && !showPassword}
+        keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+      />
+      {isPassword && (
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+          {showPassword ? (
+            <EyeOff size={20} color={isFocused ? '#00FF66' : '#CBD5E1'} />
+          ) : (
+            <Eye size={20} color={isFocused ? '#00FF66' : '#CBD5E1'} />
+          )}
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+});
+
+const GamifiedButton = memo(({ title, onPress, loading }) => (
+  <View style={styles.ctaButtonWrapper}>
+    <TouchableOpacity 
+      style={styles.ctaButton} 
+      onPress={onPress} 
+      disabled={loading}
+      activeOpacity={0.8}
+    >
+      <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+        <Defs>
+          <LinearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <Stop offset="0%" stopColor="#00FF66" stopOpacity="1" />
+            <Stop offset="100%" stopColor="#00B3FF" stopOpacity="1" />
+          </LinearGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#btnGrad)" />
+      </Svg>
+      {loading ? (
+        <ActivityIndicator color="#0A0B10" size="small" />
+      ) : (
+        <Text style={styles.ctaText}>{title}</Text>
+      )}
+    </TouchableOpacity>
+  </View>
+));
+
+// -------------------------------------------------------------
+// MAIN COMPONENT
+// -------------------------------------------------------------
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -28,7 +136,11 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ email và mật khẩu');
+      useDialogStore.getState().showDialog({
+        title: 'Thông báo',
+        message: 'Vui lòng nhập đầy đủ email và mật khẩu',
+        type: 'warning'
+      });
       return;
     }
     
@@ -36,97 +148,103 @@ const LoginScreen = () => {
   };
 
   // Hiển thị lỗi từ store nếu có
-  React.useEffect(() => {
+  useEffect(() => {
     if (error) {
-      Alert.alert('Lỗi đăng nhập', error, [{ text: 'OK', onPress: clearError }]);
+      useDialogStore.getState().showDialog({
+        title: 'Lỗi đăng nhập',
+        message: error,
+        type: 'error',
+        buttons: [{ text: 'OK', onPress: clearError }]
+      });
     }
   }, [error]);
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <AbstractBackground />
       
-      {/* Upper Section: Brand/Logo */}
-      <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <View style={styles.iconCircle}>
-            <Leaf color={COLORS.primary} size={40} fill={COLORS.primary} />
-          </View>
-          <Text style={styles.brandName}>NutriCoach</Text>
-          <Text style={styles.brandSlogan}>Sức khỏe từ chuyên gia</Text>
-        </View>
-      </View>
-
-      {/* Lower Section: Login Form */}
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.formContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
       >
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
         >
-          <Text style={styles.title}>Chào mừng trở lại!</Text>
-          <Text style={styles.subtitle}>Đăng nhập để tiếp tục hành trình của bạn</Text>
-
-          <View style={styles.form}>
-            <NutriInput
-              label="Email"
-              placeholder="example@gmail.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              icon={<Mail size={20} color={COLORS.textSecondary} />}
-            />
-
-            <NutriInput
-              label="Mật khẩu"
-              placeholder="••••••••"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              icon={<Lock size={20} color={COLORS.textSecondary} />}
-            />
-
-            <NutriButton
-              title="Quên mật khẩu?"
-              variant="text"
-              style={styles.forgotPassword}
-              textStyle={styles.forgotPasswordText}
-              onPress={() => navigation.navigate('ForgotPassword')}
-            />
-
-            <NutriButton
-              title="Đăng nhập"
-              onPress={handleLogin}
-              loading={isLoading}
-              style={styles.loginButton}
-            />
+          {/* Header Section */}
+          <View style={styles.header}>
+            <View style={styles.iconCircle}>
+              <Leaf color="#00FF66" size={40} />
+            </View>
+            <Text style={styles.brandName}>NutriCoach</Text>
+            <Text style={styles.brandSlogan}>LEVEL UP YOUR FITNESS</Text>
           </View>
 
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.orText}>Hoặc</Text>
-            <View style={styles.divider} />
-          </View>
+          {/* Form Container (Glassmorphism) */}
+          <View style={styles.glassContainer}>
+            <Text style={styles.title}>CHÀO MỪNG TRỞ LẠI</Text>
+            <Text style={styles.subtitle}>Đăng nhập để tiếp tục hành trình của bạn</Text>
 
-          <NutriButton
-            title="Tiếp tục với Google"
-            variant="outline"
-            onPress={() => {}}
-            style={styles.socialButton}
-            icon={<Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }} style={styles.googleIcon} />}
-          />
+            <View style={styles.form}>
+              <GlowingInput
+                key="email-input"
+                icon={Mail}
+                placeholder="Email của bạn"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Chưa có tài khoản? </Text>
-            <NutriButton
-              title="Đăng ký ngay"
-              variant="text"
-              onPress={() => navigation.navigate('Register')}
-              textStyle={styles.registerLink}
-            />
+              <GlowingInput
+                key="password-input"
+                icon={Lock}
+                placeholder="Mật khẩu"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+
+              <TouchableOpacity 
+                style={styles.forgotPassword}
+                onPress={() => navigation.navigate('ForgotPassword')}
+              >
+                <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
+              </TouchableOpacity>
+
+              <GamifiedButton
+                title="ĐĂNG NHẬP"
+                onPress={handleLogin}
+                loading={isLoading}
+              />
+            </View>
+
+            <View style={styles.dividerContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.orText}>HOẶC</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <TouchableOpacity 
+              style={styles.socialButton} 
+              onPress={() => {}}
+              activeOpacity={0.8}
+            >
+              <Image 
+                source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }} 
+                style={styles.googleIcon} 
+              />
+              <Text style={styles.socialButtonText}>Tiếp tục với Google</Text>
+            </TouchableOpacity>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Chưa có tài khoản? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.registerLink}>ĐĂNG KÝ NGAY</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -137,116 +255,191 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 80,
+    paddingBottom: 40,
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   header: {
-    height: height * 0.35,
-    justifyContent: 'center',
     alignItems: 'center',
-  },
-  logoContainer: {
-    alignItems: 'center',
+    marginBottom: 40,
   },
   iconCircle: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 255, 102, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 102, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.md,
-    // Shadow cho Logo
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
+    marginBottom: 16,
+    shadowColor: '#00FF66',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
     shadowRadius: 20,
-    elevation: 5,
+    elevation: 10,
   },
   brandName: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: COLORS.white,
-    letterSpacing: 1,
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   brandSlogan: {
-    fontSize: 14,
-    color: COLORS.primaryLight,
-    marginTop: 4,
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#00FF66',
+    marginTop: 6,
+    fontWeight: '700',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
   },
-  formContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-  },
-  scrollContent: {
-    paddingHorizontal: 30,
-    paddingTop: 40,
-    paddingBottom: 20,
+  glassContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 32,
+    padding: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.6,
+    shadowRadius: 40,
+    elevation: 15,
   },
   title: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.text,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 15,
-    color: COLORS.textSecondary,
-    marginTop: 8,
+    fontSize: 14,
+    color: '#CBD5E1',
     marginBottom: 32,
   },
   form: {
     width: '100%',
   },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 56,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  inputOverlay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  inputOverlayFocused: {
+    borderColor: '#00FF66',
+    backgroundColor: 'rgba(0, 255, 102, 0.08)',
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    height: '100%',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  eyeIcon: {
+    padding: 8,
+  },
   forgotPassword: {
     alignSelf: 'flex-end',
-    marginTop: -8,
-    marginBottom: 16,
+    marginBottom: 28,
   },
   forgotPasswordText: {
     fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '600',
+    color: '#00B3FF',
+    fontWeight: '700',
   },
-  loginButton: {
-    marginTop: 8,
+  ctaButtonWrapper: {
+    shadowColor: '#00FF66',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  ctaButton: {
+    height: 56,
+    borderRadius: 16,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ctaText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#0A0B10',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 28,
   },
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.divider,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   orText: {
     marginHorizontal: 16,
-    color: COLORS.textLight,
-    fontSize: 14,
+    color: '#CBD5E1',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   socialButton: {
-    borderColor: COLORS.divider,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
   googleIcon: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
+    marginRight: 12,
+  },
+  socialButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 32,
   },
   footerText: {
-    color: COLORS.textSecondary,
+    color: '#CBD5E1',
     fontSize: 14,
+    fontWeight: '500',
   },
   registerLink: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.primary,
+    fontWeight: '800',
+    color: '#00FF66',
+    letterSpacing: 0.5,
   }
 });
 

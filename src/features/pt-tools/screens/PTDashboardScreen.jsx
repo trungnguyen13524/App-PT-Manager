@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -22,38 +21,90 @@ import {
   Bell,
   Settings
 } from 'lucide-react-native';
+import Svg, { Defs, LinearGradient, Stop, Rect, Circle as SvgCircle } from 'react-native-svg';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import NutriCard from '../../../components/shared/NutriCard';
 import { usePTStore } from '../../../store/ptStore';
 import { useAuthStore } from '../../../store/authStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
+
+const AbstractBackground = React.memo(() => (
+  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+    <Svg width="100%" height="100%">
+      <Defs>
+        <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#0F172A" />
+          <Stop offset="100%" stopColor="#1E293B" />
+        </LinearGradient>
+        <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#9B59B6" stopOpacity="0.15" />
+          <Stop offset="100%" stopColor="#3498DB" stopOpacity="0.05" />
+        </LinearGradient>
+      </Defs>
+      <Rect width="100%" height="100%" fill="url(#bgGrad)" />
+      <SvgCircle cx="15%" cy="10%" r="140" fill="url(#circleGrad1)" />
+      <SvgCircle cx="90%" cy="40%" r="180" fill="url(#circleGrad1)" />
+    </Svg>
+  </View>
+));
 
 const PTDashboardScreen = () => {
   const navigation = useNavigation();
   const { user } = useAuthStore();
-  const { students, earnings, isLoading, fetchStudents, fetchEarnings } = usePTStore();
+  const { students, earnings, isLoading, verificationStatus, fetchVerificationStatus, fetchStudents, fetchEarnings } = usePTStore();
 
   useEffect(() => {
-    fetchStudents();
-    fetchEarnings();
+    fetchVerificationStatus().then((status) => {
+      if (status === 'APPROVED') {
+        fetchStudents();
+        fetchEarnings();
+      }
+    });
   }, []);
 
+  if (verificationStatus === 'PENDING_REVIEW' || verificationStatus === 'PENDING') {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{ color: '#fff', marginTop: 20, fontSize: 16 }}>Đang chờ Admin duyệt hồ sơ PT...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (verificationStatus === 'NONE' || verificationStatus === null) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <Text style={{ color: '#fff', marginBottom: 20, fontSize: 16 }}>Bạn chưa đăng ký làm Huấn luyện viên</Text>
+        <TouchableOpacity 
+          style={{ backgroundColor: COLORS.primary, padding: 12, borderRadius: 8 }} 
+          onPress={() => navigation.navigate('PTVerification')}
+        >
+          <Text style={{ color: '#1E293B', fontWeight: 'bold' }}>Đăng ký ngay</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
   const StatCard = ({ title, value, icon, color, onPress }) => (
-    <TouchableOpacity style={[styles.statCard, { backgroundColor: '#fff', borderRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 }]} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={[styles.glassCard, styles.statCard, { borderColor: color + '40' }]} onPress={onPress} activeOpacity={0.8}>
       <View style={[styles.statIcon, { backgroundColor: color + '20' }]}>
         {icon}
       </View>
       <View style={styles.statInfo}>
         <Text style={styles.statLabel}>{title}</Text>
-        <Text style={styles.statValue}>{value}</Text>
+        <Text style={[styles.statValue, { color }]}>{value}</Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <AbstractBackground />
       
       {/* Custom Header */}
       <View style={styles.header}>
@@ -129,23 +180,23 @@ const PTDashboardScreen = () => {
         {isLoading ? (
           <ActivityIndicator color={COLORS.primary} style={{ marginTop: 20 }} />
         ) : students.length === 0 ? (
-          <NutriCard style={styles.emptyCard}>
+          <View style={[styles.glassCard, styles.emptyCard]}>
             <Text style={styles.emptyText}>Chưa có học viên nào đăng ký</Text>
-          </NutriCard>
+          </View>
         ) : (
           students.slice(0, 3).map((student) => (
             <TouchableOpacity 
               key={student.id} 
               onPress={() => navigation.navigate('StudentDashboard', { isPTView: true, studentData: student })}
             >
-              <NutriCard style={styles.studentCard}>
+              <View style={[styles.glassCard, styles.studentCard]}>
                 <Image source={{ uri: student.avatar }} style={styles.studentAvatar} />
                 <View style={styles.studentInfo}>
                   <Text style={styles.studentName}>{student.fullName}</Text>
                   <Text style={styles.studentGoal}>{student.goal || 'Tăng cơ giảm mỡ'}</Text>
                 </View>
                 <ChevronRight size={20} color={COLORS.textLight} />
-              </NutriCard>
+              </View>
             </TouchableOpacity>
           ))
         )}
@@ -157,16 +208,24 @@ const PTDashboardScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.white },
+  container: { flex: 1, backgroundColor: '#0F172A' },
+  glassCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingTop: 50,
+    paddingBottom: 15,
   },
-  greeting: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '500' },
-  name: { fontSize: 20, fontWeight: '800', color: COLORS.text },
+  greeting: { fontSize: 14, color: 'rgba(255, 255, 255, 0.7)', fontWeight: '500' },
+  name: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
   headerActions: { flexDirection: 'row', alignItems: 'center' },
   headerBtn: { marginLeft: 15 },
   avatar: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: COLORS.primaryLight },
@@ -188,15 +247,15 @@ const styles = StyleSheet.create({
   },
   statInfo: { flex: 1 },
   statLabel: { fontSize: 12, color: COLORS.textSecondary, marginBottom: 2 },
-  statValue: { fontSize: 16, fontWeight: '800', color: COLORS.text },
+  statValue: { fontSize: 16, fontWeight: '800', color: COLORS.text, fontVariant: ['tabular-nums'] },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
   },
-  sectionTitle: { ...TYPOGRAPHY.h3, color: COLORS.text },
-  seeAll: { fontSize: 14, color: COLORS.primary, fontWeight: '600' },
+  sectionTitle: { ...TYPOGRAPHY.h3, color: '#FFFFFF' },
+  seeAll: { fontSize: 14, color: '#3498DB', fontWeight: '600' },
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -210,8 +269,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  actionLabel: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
+  actionLabel: { fontSize: 12, fontWeight: '600', color: 'rgba(255, 255, 255, 0.8)' },
   studentCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -220,10 +281,10 @@ const styles = StyleSheet.create({
   },
   studentAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: 15 },
   studentInfo: { flex: 1 },
-  studentName: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginBottom: 2 },
-  studentGoal: { fontSize: 12, color: COLORS.textSecondary },
-  emptyCard: { padding: 30, alignItems: 'center', backgroundColor: COLORS.background },
-  emptyText: { color: COLORS.textLight, fontSize: 14 }
+  studentName: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', marginBottom: 2 },
+  studentGoal: { fontSize: 12, color: 'rgba(255, 255, 255, 0.6)' },
+  emptyCard: { padding: 30, alignItems: 'center', marginHorizontal: 20 },
+  emptyText: { color: 'rgba(255, 255, 255, 0.6)', fontSize: 14 }
 });
 
 export default PTDashboardScreen;

@@ -16,16 +16,33 @@ export const useNutritionStore = create((set, get) => ({
 
   // Lấy nhật ký thực phẩm và tổng kết ngày
   fetchDailyLogs: async (date) => {
-    const targetDate = date || new Date().toISOString().split('T')[0];
+    let targetDate = date;
+    if (!targetDate) {
+      const now = new Date();
+      targetDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
     set({ isLoading: true, error: null });
     try {
       const [logsRes, summaryRes] = await Promise.all([
         nutritionService.getFoodLogs({ date: targetDate }),
-        nutritionService.getDailySummary(targetDate)
+        nutritionService.getDailySummary({ date: targetDate })
       ]);
 
+      // Backend trả về format mới: { date, meals: { breakfast: [], lunch: [], ... }, totals }
+      // Hoặc format cũ: [ ... ]
+      let parsedMeals = [];
+      if (Array.isArray(logsRes.data)) {
+        parsedMeals = logsRes.data;
+      } else if (logsRes.data && logsRes.data.meals) {
+        Object.values(logsRes.data.meals).forEach(mealArray => {
+          if (Array.isArray(mealArray)) {
+            parsedMeals = [...parsedMeals, ...mealArray];
+          }
+        });
+      }
+
       set({ 
-        meals: logsRes.data || [], 
+        meals: parsedMeals, 
         dailySummary: summaryRes.data || get().dailySummary,
         isLoading: false 
       });
@@ -44,7 +61,7 @@ export const useNutritionStore = create((set, get) => ({
         // Giả lập dữ liệu để không báo lỗi vàng
         responseData = { targetCalories: 2000, consumedCalories: 1250 };
       } else {
-        const response = await nutritionService.getDailySummary(dateString);
+        const response = await nutritionService.getDailySummary({ date: dateString });
         responseData = response.data;
       }
       
@@ -79,7 +96,8 @@ export const useNutritionStore = create((set, get) => ({
       const response = await nutritionService.getActiveMealPlan();
       set({ suggestedMenu: response.data || { morning: [], lunch: [], evening: [] } });
     } catch (err) {
-      console.warn('Không thể lấy thực đơn gợi ý');
+      // Đã ẩn console.warn để màn hình không bị vướng Log vàng (API chưa có)
+      // console.warn('Không thể lấy thực đơn gợi ý');
       set({ suggestedMenu: { morning: [], lunch: [], evening: [] } });
     }
   },
@@ -90,8 +108,10 @@ export const useNutritionStore = create((set, get) => ({
     try {
       const response = await nutritionService.logFood(foodData);
       if (response.success) {
-        // Tải lại dữ liệu ngày hiện tại
-        await get().fetchDailyLogs(foodData.consumedAt?.split('T')[0]);
+        // Tải lại dữ liệu ngày hiện tại theo timezone địa phương
+        const logDate = new Date(foodData.consumedAt);
+        const dateKey = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
+        await get().fetchDailyLogs(dateKey);
       }
       set({ isLoading: false });
       return { success: true };

@@ -3,60 +3,68 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
   Dimensions,
   StatusBar,
   ActivityIndicator,
-  Platform
+  Platform,
+  Alert,
+  Linking
 } from 'react-native';
-import { Search, Star, PlayCircle, Users, CheckCircle, ChevronRight } from 'lucide-react-native';
+import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
+import { AbstractBackground, GlassCard } from '../../../components/common';
+import { Search, Star, PlayCircle, Users, CheckCircle, ChevronRight, Loader2 } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { USE_MOCK } from '../../../mocks';
+import paymentService from '../../../api/services/payment.service';
+import contentService from '../../../api/services/content.service';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
-// Mock Data cho Khóa học PT
 const MOCK_COURSES = [
   {
-    id: 'course_1',
-    ptName: 'Nguyễn Trần Duy Nhất',
-    ptAvatar: 'https://i.pravatar.cc/150?img=11',
+    id: '123e4567-e89b-12d3-a456-426614174001',
+    ptFullName: 'Nguyễn Trần Duy Nhất',
+    ptAvatarUrl: 'https://i.pravatar.cc/150?img=11',
     title: 'Giảm mỡ thần tốc 21 ngày với HIIT',
     description: 'Chương trình luyện tập cường độ cao giúp đốt cháy calo tối đa, kèm theo thực đơn chi tiết từng bữa ăn.',
-    price: 499000,
+    priceVnd: 499000,
     rating: 4.8,
     students: 1240,
-    lessons: 21,
-    imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800',
+    totalLessons: 21,
+    durationDays: 21,
+    thumbnailUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800',
     tags: ['Giảm mỡ', 'Tại nhà', 'Không dụng cụ']
   },
   {
-    id: 'course_2',
-    ptName: 'Lê Thu Trang',
-    ptAvatar: 'https://i.pravatar.cc/150?img=5',
+    id: '123e4567-e89b-12d3-a456-426614174002',
+    ptFullName: 'Lê Thu Trang',
+    ptAvatarUrl: 'https://i.pravatar.cc/150?img=5',
     title: 'Yoga Pilates Trị Liệu Cổ Vai Gáy',
     description: 'Giải pháp hoàn hảo cho dân văn phòng. 15 phút mỗi ngày để xua tan cơn đau mỏi cổ vai gáy vĩnh viễn.',
-    price: 350000,
+    priceVnd: 350000,
     rating: 4.9,
     students: 3105,
-    lessons: 15,
-    imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800',
+    totalLessons: 15,
+    durationDays: 30,
+    thumbnailUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800',
     tags: ['Trị liệu', 'Yoga', 'Thư giãn']
   },
   {
-    id: 'course_3',
-    ptName: 'Phạm Minh Quân',
-    ptAvatar: 'https://i.pravatar.cc/150?img=12',
+    id: '123e4567-e89b-12d3-a456-426614174003',
+    ptFullName: 'Phạm Minh Quân',
+    ptAvatarUrl: 'https://i.pravatar.cc/150?img=12',
     title: 'Xây dựng cơ bắp toàn diện (Gym)',
     description: 'Lộ trình tăng cơ bài bản 8 tuần. Yêu cầu có thẻ thành viên phòng gym hoặc tạ đơn tại nhà.',
-    price: 899000,
+    priceVnd: 899000,
     rating: 4.7,
     students: 856,
-    lessons: 32,
-    imageUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=800',
+    totalLessons: 32,
+    durationDays: 56,
+    thumbnailUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=800',
     tags: ['Tăng cơ', 'Phòng Gym']
   }
 ];
@@ -64,6 +72,7 @@ const MOCK_COURSES = [
 const PTConnectScreen = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [purchasingId, setPurchasingId] = useState(null);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -73,12 +82,16 @@ const PTConnectScreen = () => {
           await new Promise(resolve => setTimeout(resolve, 800));
           setCourses(MOCK_COURSES);
         } else {
-          // Tương lai: const response = await contentService.getPTCourses();
-          // setCourses(response.data);
-          setCourses(MOCK_COURSES); // Tạm fallback
+          const response = await contentService.getDiscoverPTCourses({ page: 1, limit: 20 });
+          if (response && response.data) {
+            setCourses(response.data);
+          } else {
+            setCourses(MOCK_COURSES); // Fallback nếu API lỗi
+          }
         }
       } catch (error) {
         console.warn('Không thể lấy danh sách khóa học:', error);
+        setCourses(MOCK_COURSES); // Fallback
       } finally {
         setLoading(false);
       }
@@ -86,13 +99,49 @@ const PTConnectScreen = () => {
     fetchCourses();
   }, []);
 
+  const handleBuyCourse = async (courseId) => {
+    try {
+      setPurchasingId(courseId);
+      
+      // Gọi API Payment Checkout
+      const payload = {
+        productType: 'PT_COURSE',
+        productId: courseId
+      };
+      
+      const response = await paymentService.createCheckout(payload);
+      
+      // Response trả về chứa checkoutUrl (trang quét mã QR của PayOS)
+      if (response && response.data && response.data.checkoutUrl) {
+        // Mở trình duyệt ngoài hoặc in-app browser để thanh toán
+        const supported = await Linking.canOpenURL(response.data.checkoutUrl);
+        if (supported) {
+          await Linking.openURL(response.data.checkoutUrl);
+        } else {
+          Alert.alert('Lỗi', 'Không thể mở trang thanh toán.');
+        }
+      } else {
+        throw new Error('Không lấy được link thanh toán từ hệ thống.');
+      }
+    } catch (error) {
+      console.warn('Lỗi thanh toán:', error);
+      Alert.alert(
+        'Thanh toán thất bại',
+        error.message || 'Có lỗi xảy ra khi tạo giao dịch thanh toán. Vui lòng thử lại.'
+      );
+    } finally {
+      setPurchasingId(null);
+    }
+  };
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar barStyle="light-content" backgroundColor="#0B0F19" />
+      <AbstractBackground />
       
       {/* Header */}
       <View style={styles.header}>
@@ -101,7 +150,7 @@ const PTConnectScreen = () => {
           <Text style={styles.headerSubtitle}>Khóa học từ chuyên gia hàng đầu</Text>
         </View>
         <TouchableOpacity style={styles.searchBtn}>
-          <Search color={COLORS.text} size={24} />
+          <Search color="#FFFFFF" size={24} />
         </TouchableOpacity>
       </View>
 
@@ -136,15 +185,15 @@ const PTConnectScreen = () => {
           <View style={styles.listContainer}>
             {courses.map((course) => (
               <TouchableOpacity key={course.id} style={styles.courseCard} activeOpacity={0.9}>
-                <Image source={{ uri: course.imageUrl }} style={styles.courseImage} />
+                <Image source={{ uri: course.thumbnailUrl }} style={styles.courseImage} />
                 
                 <View style={styles.courseContent}>
                   {/* PT Info */}
                   <View style={styles.ptInfoRow}>
-                    <Image source={{ uri: course.ptAvatar }} style={styles.ptAvatar} />
+                    <Image source={{ uri: course.ptAvatarUrl }} style={styles.ptAvatar} />
                     <View style={styles.ptNameContainer}>
-                      <Text style={styles.ptName}>{course.ptName}</Text>
-                      <CheckCircle color={COLORS.primary} size={12} style={{ marginLeft: 4 }} />
+                      <Text style={styles.ptName}>{course.ptFullName}</Text>
+                      <CheckCircle color="#00FF66" size={12} style={{ marginLeft: 4 }} />
                     </View>
                   </View>
 
@@ -157,12 +206,12 @@ const PTConnectScreen = () => {
                       <Text style={styles.metaText}>{course.rating}</Text>
                     </View>
                     <View style={styles.metaItem}>
-                      <Users color={COLORS.textSecondary} size={14} />
-                      <Text style={styles.metaText}>{course.students.toLocaleString()}</Text>
+                      <Users color="#94A3B8" size={14} />
+                      <Text style={styles.metaText}>{course.students?.toLocaleString()}</Text>
                     </View>
                     <View style={styles.metaItem}>
-                      <PlayCircle color={COLORS.textSecondary} size={14} />
-                      <Text style={styles.metaText}>{course.lessons} bài</Text>
+                      <PlayCircle color="#94A3B8" size={14} />
+                      <Text style={styles.metaText}>{course.totalLessons} bài</Text>
                     </View>
                   </View>
 
@@ -177,11 +226,22 @@ const PTConnectScreen = () => {
 
                   {/* Price & Action */}
                   <View style={styles.priceRow}>
-                    <Text style={styles.priceText}>{formatPrice(course.price)}</Text>
-                    <View style={styles.buyBtn}>
-                      <Text style={styles.buyBtnText}>Mua ngay</Text>
-                      <ChevronRight color="#fff" size={16} />
-                    </View>
+                    <Text style={styles.priceText}>{formatPrice(course.priceVnd)}</Text>
+                    <TouchableOpacity 
+                      style={styles.buyBtn} 
+                      activeOpacity={0.8}
+                      onPress={() => handleBuyCourse(course.id)}
+                      disabled={purchasingId === course.id}
+                    >
+                      {purchasingId === course.id ? (
+                        <ActivityIndicator size="small" color="#00FF66" style={{ marginRight: 4 }} />
+                      ) : (
+                        <>
+                          <Text style={styles.buyBtnText}>Mua ngay</Text>
+                          <ChevronRight color="#00FF66" size={16} />
+                        </>
+                      )}
+                    </TouchableOpacity>
                   </View>
 
                 </View>
@@ -200,7 +260,7 @@ const PTConnectScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#0B0F19',
   },
   header: {
     flexDirection: 'row',
@@ -209,37 +269,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 40 : 10,
     paddingBottom: 15,
-    backgroundColor: '#fff',
   },
   headerTitle: {
     ...TYPOGRAPHY.h2,
-    color: COLORS.text,
+    color: '#FFFFFF',
   },
   headerSubtitle: {
     ...TYPOGRAPHY.body2,
-    color: COLORS.textSecondary,
+    color: '#94A3B8',
     marginTop: 4,
   },
   searchBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   scrollContent: {
     padding: 20,
   },
   // Banner
   bannerContainer: {
-    backgroundColor: COLORS.primaryLight || '#E8F5E9',
+    backgroundColor: 'rgba(0, 255, 102, 0.05)',
     borderRadius: 24,
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 24,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 102, 0.2)',
   },
   bannerContent: {
     flex: 1,
@@ -247,24 +310,26 @@ const styles = StyleSheet.create({
   },
   bannerTitle: {
     ...TYPOGRAPHY.h3,
-    color: COLORS.primaryDark || '#1B5E20',
+    color: '#00FF66',
     marginBottom: 8,
   },
   bannerText: {
     ...TYPOGRAPHY.body2,
-    color: COLORS.primaryDark || '#1B5E20',
+    color: '#E2E8F0',
     marginBottom: 16,
     opacity: 0.8,
   },
   bannerBtn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: 'rgba(0, 255, 102, 0.1)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 102, 0.5)',
   },
   bannerBtnText: {
-    color: '#fff',
+    color: '#00FF66',
     fontWeight: 'bold',
     fontSize: 12,
   },
@@ -285,10 +350,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...TYPOGRAPHY.h3,
-    color: COLORS.text,
+    color: '#FFFFFF',
   },
   seeAllText: {
-    color: COLORS.primary,
+    color: '#00FF66',
     fontWeight: '600',
     fontSize: 14,
   },
@@ -297,14 +362,11 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   courseCard: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(30, 41, 59, 0.7)',
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   courseImage: {
     width: '100%',
@@ -324,7 +386,7 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   ptNameContainer: {
     flexDirection: 'row',
@@ -334,12 +396,12 @@ const styles = StyleSheet.create({
   ptName: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.textSecondary,
+    color: '#E2E8F0',
   },
   courseTitle: {
     ...TYPOGRAPHY.h3,
     fontSize: 17,
-    color: COLORS.text,
+    color: '#FFFFFF',
     marginBottom: 12,
     lineHeight: 24,
   },
@@ -355,7 +417,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: '#94A3B8',
     marginLeft: 4,
     fontWeight: '500',
   },
@@ -366,14 +428,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tagPill: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   tagText: {
     fontSize: 11,
-    color: COLORS.textSecondary,
+    color: '#E2E8F0',
     fontWeight: '500',
   },
   priceRow: {
@@ -381,23 +445,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: 'rgba(255, 255, 255, 0.05)',
     paddingTop: 16,
   },
   priceText: {
     ...TYPOGRAPHY.h3,
-    color: COLORS.primary,
+    color: '#00FF66',
   },
   buyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
+    backgroundColor: 'rgba(0, 255, 102, 0.1)',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 102, 0.3)',
   },
   buyBtnText: {
-    color: '#fff',
+    color: '#00FF66',
     fontWeight: 'bold',
     fontSize: 14,
     marginRight: 4,

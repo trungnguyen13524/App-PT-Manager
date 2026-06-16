@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import {
   View,
   Text,
@@ -7,16 +7,115 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
-  TouchableOpacity
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { MailCheck, Key, ArrowLeft } from 'lucide-react-native';
-import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
-import NutriButton from '../../../components/shared/NutriButton';
-import NutriInput from '../../../components/shared/NutriInput';
 import authService from '../../../api/services/auth.service';
 import { useAuthStore } from '../../../store/authStore';
+import { useDialogStore } from '../../../store/dialogStore';
+import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
+
+// -------------------------------------------------------------
+// REUSABLE LOCAL COMPONENTS (Consistent with LoginScreen)
+// -------------------------------------------------------------
+
+const AbstractBackground = memo(() => (
+  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+    <Svg width="100%" height="100%">
+      <Defs>
+        <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#0F172A" />
+          <Stop offset="100%" stopColor="#1E293B" />
+        </LinearGradient>
+        <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.15" />
+          <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.05" />
+        </LinearGradient>
+        <LinearGradient id="circleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#FF4D00" stopOpacity="0.12" />
+          <Stop offset="100%" stopColor="#FF0080" stopOpacity="0.05" />
+        </LinearGradient>
+      </Defs>
+      <Rect width="100%" height="100%" fill="url(#bgGrad)" />
+      
+      {/* 3D-like glowing abstract floating circles */}
+      <Circle cx="15%" cy="15%" r="140" fill="url(#circleGrad1)" />
+      <Circle cx="90%" cy="75%" r="180" fill="url(#circleGrad2)" />
+      <Circle cx="80%" cy="25%" r="90" fill="url(#circleGrad2)" />
+      <Circle cx="20%" cy="85%" r="120" fill="url(#circleGrad1)" />
+    </Svg>
+  </View>
+));
+
+const GlowingInput = memo(({ icon: Icon, placeholder, value, onChangeText, keyboardType, autoCapitalize }) => {
+  const [isFocused, setIsFocused] = useState(false);
+
+  return (
+    <View style={styles.inputContainer}>
+      <View 
+        style={[
+          StyleSheet.absoluteFillObject, 
+          styles.inputOverlay, 
+          isFocused && styles.inputOverlayFocused
+        ]} 
+        pointerEvents="none" 
+      />
+      <View style={styles.inputIcon}>
+        <Icon size={20} color={isFocused ? '#00FF66' : '#CBD5E1'} />
+      </View>
+      <TextInput
+        style={styles.input}
+        placeholder={placeholder}
+        placeholderTextColor="#CBD5E1"
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+      />
+    </View>
+  );
+});
+
+const GamifiedButton = memo(({ title, onPress, loading, variant = 'primary' }) => {
+  const isOutline = variant === 'outline';
+  
+  return (
+    <View style={styles.ctaButtonWrapper}>
+      <TouchableOpacity 
+        style={[styles.ctaButton, isOutline && styles.ctaButtonOutline]} 
+        onPress={onPress} 
+        disabled={loading}
+        activeOpacity={0.8}
+      >
+        {!isOutline && (
+          <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+            <Defs>
+              <LinearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <Stop offset="0%" stopColor="#00FF66" stopOpacity="1" />
+                <Stop offset="100%" stopColor="#00B3FF" stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+            <Rect width="100%" height="100%" fill="url(#btnGrad)" />
+          </Svg>
+        )}
+        {loading ? (
+          <ActivityIndicator color={isOutline ? "#00FF66" : "#0A0B10"} size="small" />
+        ) : (
+          <Text style={[styles.ctaText, isOutline && { color: '#00FF66' }]}>{title}</Text>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+});
+
+// -------------------------------------------------------------
+// MAIN COMPONENT
+// -------------------------------------------------------------
 
 const VerifyEmailScreen = () => {
   const navigation = useNavigation();
@@ -33,7 +132,11 @@ const VerifyEmailScreen = () => {
 
   const handleVerify = async () => {
     if (!token) {
-      Alert.alert('Thông báo', 'Vui lòng nhập mã xác thực.');
+      useDialogStore.getState().showDialog({
+        title: 'Thông báo',
+        message: 'Vui lòng nhập mã xác thực.',
+        type: 'warning'
+      });
       return;
     }
 
@@ -41,16 +144,21 @@ const VerifyEmailScreen = () => {
     try {
       const response = await authService.verifyEmail(token);
       if (response.success) {
-        Alert.alert(
-          'Thành công', 
-          'Email của bạn đã được xác thực thành công!',
-          [
+        useDialogStore.getState().showDialog({
+          title: 'Thành công', 
+          message: 'Email của bạn đã được xác thực thành công!',
+          type: 'success',
+          buttons: [
             { text: 'Tiếp tục', onPress: () => navigation.navigate('RoleSelection') }
           ]
-        );
+        });
       }
     } catch (error) {
-      Alert.alert('Lỗi', error.message || 'Mã xác thực không hợp lệ hoặc đã hết hạn.');
+      useDialogStore.getState().showDialog({
+        title: 'Lỗi',
+        message: error.message || 'Mã xác thực không hợp lệ hoặc đã hết hạn.',
+        type: 'error'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -61,10 +169,18 @@ const VerifyEmailScreen = () => {
     try {
       const response = await authService.resendVerification();
       if (response.success) {
-        Alert.alert('Thành công', 'Đã gửi lại mã xác thực, vui lòng kiểm tra email của bạn.');
+        useDialogStore.getState().showDialog({
+          title: 'Thành công',
+          message: 'Đã gửi lại mã xác thực, vui lòng kiểm tra email của bạn.',
+          type: 'success'
+        });
       }
     } catch (error) {
-      Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra, vui lòng thử lại sau.');
+      useDialogStore.getState().showDialog({
+        title: 'Lỗi',
+        message: error.message || 'Có lỗi xảy ra, vui lòng thử lại sau.',
+        type: 'error'
+      });
     } finally {
       setIsResending(false);
     }
@@ -72,54 +188,66 @@ const VerifyEmailScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <AbstractBackground />
       
       <TouchableOpacity 
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
-        <ArrowLeft size={24} color={COLORS.text} />
+        <View style={styles.backButtonBg} />
+        <ArrowLeft size={24} color="#FFFFFF" />
       </TouchableOpacity>
 
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.content}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
       >
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.iconContainer}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
+        >
+          <View style={styles.header}>
             <View style={styles.iconCircle}>
-              <MailCheck size={48} color={COLORS.primary} />
+              <MailCheck color="#00FF66" size={40} />
             </View>
+            <Text style={styles.brandName}>XÁC THỰC</Text>
+            <Text style={styles.brandSlogan}>EMAIL CỦA BẠN</Text>
           </View>
-          
-          <Text style={styles.title}>Xác thực Email</Text>
-          <Text style={styles.subtitle}>
-            Vui lòng nhập mã xác thực (token) gồm các ký tự đã được gửi đến email của bạn để bảo vệ tài khoản.
-          </Text>
 
-          <View style={styles.form}>
-            <NutriInput
-              label="Mã xác thực"
-              placeholder="Nhập mã xác thực"
-              value={token}
-              onChangeText={setToken}
-              icon={<Key size={20} color={COLORS.textSecondary} />}
-            />
+          <View style={styles.glassContainer}>
+            <Text style={styles.title}>MÃ BẢO MẬT</Text>
+            <Text style={styles.subtitle}>
+              Vui lòng nhập mã xác thực (token) gồm các ký tự đã được gửi đến email của bạn để bảo vệ tài khoản.
+            </Text>
 
-            <NutriButton
-              title="Xác thực ngay"
-              onPress={handleVerify}
-              loading={isLoading}
-              style={styles.submitButton}
-            />
-            
-            <NutriButton
-              title="Gửi lại mã"
-              variant="outline"
-              onPress={handleResend}
-              loading={isResending}
-              style={styles.resendButton}
-            />
+            <View style={styles.form}>
+              <GlowingInput
+                icon={Key}
+                placeholder="Nhập mã xác thực"
+                value={token}
+                onChangeText={setToken}
+                autoCapitalize="none"
+              />
+
+              <View style={{ marginTop: 8 }}>
+                <GamifiedButton
+                  title="XÁC THỰC NGAY"
+                  onPress={handleVerify}
+                  loading={isLoading}
+                />
+                
+                <View style={{ marginTop: 12 }}>
+                  <GamifiedButton
+                    title="GỬI LẠI MÃ"
+                    variant="outline"
+                    onPress={handleResend}
+                    loading={isResending}
+                  />
+                </View>
+              </View>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -130,55 +258,149 @@ const VerifyEmailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 80,
+    paddingBottom: 40,
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   backButton: {
-    marginTop: 50,
-    marginLeft: 20,
-    width: 40,
-    height: 40,
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 30,
-    paddingTop: 10,
+  backButtonBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  iconContainer: {
+  header: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 40,
   },
   iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: COLORS.primaryLight,
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 255, 102, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 102, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#00FF66',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  brandName: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  brandSlogan: {
+    fontSize: 13,
+    color: '#00FF66',
+    marginTop: 6,
+    fontWeight: '700',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+  },
+  glassContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 32,
+    padding: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.6,
+    shadowRadius: 40,
+    elevation: 15,
   },
   title: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.text,
-    textAlign: 'center',
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 15,
-    color: COLORS.textSecondary,
-    marginTop: 8,
+    fontSize: 14,
+    color: '#CBD5E1',
     marginBottom: 32,
     lineHeight: 22,
-    textAlign: 'center',
   },
   form: {
     width: '100%',
   },
-  submitButton: {
-    marginTop: 16,
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 56,
+    marginBottom: 16,
+    paddingHorizontal: 16,
   },
-  resendButton: {
-    marginTop: 16,
+  inputOverlay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
+  inputOverlayFocused: {
+    borderColor: '#00FF66',
+    backgroundColor: 'rgba(0, 255, 102, 0.08)',
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    height: '100%',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  ctaButtonWrapper: {
+    shadowColor: '#00FF66',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  ctaButton: {
+    height: 56,
+    borderRadius: 16,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ctaButtonOutline: {
+    backgroundColor: 'rgba(0, 255, 102, 0.05)',
+    borderWidth: 1,
+    borderColor: '#00FF66',
+  },
+  ctaText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#0A0B10',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  }
 });
 
 export default VerifyEmailScreen;

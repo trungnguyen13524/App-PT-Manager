@@ -1,4 +1,4 @@
-export const USE_MOCK = true; // Bật lại mock data trong lúc chờ BE code xong API
+export const USE_MOCK = false; // Chuyển sang dùng API thật
 
 // Export tất cả mock data từ đây
 export * from './data/user.mock';

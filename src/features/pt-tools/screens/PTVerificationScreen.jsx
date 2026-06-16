@@ -3,81 +3,135 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Image,
-  Alert,
-  ActivityIndicator
+  TextInput,
+  ActivityIndicator,
+  StatusBar
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { 
-  Camera, 
-  FileCheck, 
-  Upload, 
   ChevronLeft,
   Shield,
-  CheckCircle,
   Clock as ClockIcon,
-  Video,
-  User as UserIcon
+  CheckCircle,
+  Zap
 } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import NutriButton from '../../../components/shared/NutriButton';
 import NutriCard from '../../../components/shared/NutriCard';
 import { useAuthStore } from '../../../store/authStore';
 import { usePTStore } from '../../../store/ptStore';
+import { useDialogStore } from '../../../store/dialogStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PTVerificationScreen = () => {
   const navigation = useNavigation();
   const { completeOnboarding } = useAuthStore();
   const { verificationStatus, fetchVerificationStatus, submitVerification, isLoading } = usePTStore();
   
-  const [idCardFront, setIdCardFront] = useState(null);
-  const [idCardBack, setIdCardBack] = useState(null);
-  const [certificates, setCertificates] = useState([]);
-  const [facePhoto, setFacePhoto] = useState(null);
-  const [introVideo, setIntroVideo] = useState(null);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    dateOfBirth: '',
+    citizenIdNumber: '',
+    citizenIdFrontKey: '',
+    citizenIdBackKey: '',
+    certificates: [],
+    specialties: [],
+    yearsOfExperience: '',
+    bio: '',
+    bankAccount: {
+      bankCode: '',
+      accountNumber: '',
+      accountHolder: ''
+    }
+  });
 
   useEffect(() => {
-    fetchVerificationStatus();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+      const checkStatus = async () => {
+        const status = await fetchVerificationStatus();
+        const upperStatus = typeof status === 'string' ? status.toUpperCase() : status;
+        if (upperStatus === 'APPROVED') {
+          await completeOnboarding();
+        }
+      };
+      checkStatus();
+    });
+    return unsubscribe;
+  }, [navigation, fetchVerificationStatus]);
 
-  const handlePickImage = (type) => {
-    // Tạm thời giả lập chọn ảnh (Vì chưa cài expo-image-picker)
-    const mockUri = 'https://via.placeholder.com/400';
-    if (type === 'id_front') setIdCardFront(mockUri);
-    else if (type === 'id_back') setIdCardBack(mockUri);
-    else if (type === 'cert') setCertificates([...certificates, mockUri]);
-    else if (type === 'face') setFacePhoto(mockUri);
-    else if (type === 'video') setIntroVideo(mockUri);
+  const handleAutoFill = () => {
+    setFormData({
+      fullName: 'Nguyễn Văn HLV',
+      dateOfBirth: '1995-05-20',
+      citizenIdNumber: '079123456789',
+      citizenIdFrontKey: 'mock_front_key.jpg',
+      citizenIdBackKey: 'mock_back_key.jpg',
+      certificates: [
+        {
+          name: 'NASM Certified Personal Trainer',
+          issuedBy: 'NASM',
+          issuedAt: '2022-01-10',
+          fileKey: 'mock_cert_nasm.jpg'
+        }
+      ],
+      specialties: ['WEIGHT_LOSS', 'MUSCLE_GAIN'],
+      yearsOfExperience: '5',
+      bio: 'Tôi có hơn 5 năm kinh nghiệm giúp học viên đạt được mục tiêu thay đổi vóc dáng nhanh chóng và an toàn.',
+      bankAccount: {
+        bankCode: 'VCB',
+        accountNumber: '0123456789',
+        accountHolder: 'NGUYEN VAN HLV'
+      }
+    });
+  };
+
+  const updateField = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const updateBank = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      bankAccount: {
+        ...prev.bankAccount,
+        [field]: value
+      }
+    }));
   };
 
   const handleSubmit = async () => {
-    if (!idCardFront || !idCardBack || !facePhoto || !introVideo) {
-      Alert.alert('Thông báo', 'Vui lòng cung cấp đầy đủ CCCD, ảnh khuôn mặt và video giới thiệu.');
+    if (!formData.fullName || !formData.citizenIdNumber) {
+      useDialogStore.getState().showDialog({
+        title: 'Thiếu thông tin',
+        message: 'Vui lòng điền tối thiểu Họ tên và CCCD.',
+        type: 'warning'
+      });
       return;
     }
     
+    // Prepare payload (convert years to number)
     const payload = {
-      idCardFrontUrl: idCardFront,
-      idCardBackUrl: idCardBack,
-      certificates: certificates,
-      facePhotoUrl: facePhoto,
-      introVideoUrl: introVideo
+      ...formData,
+      yearsOfExperience: parseInt(formData.yearsOfExperience) || 0
     };
 
     const res = await submitVerification(payload);
     if (res.success) {
-      // Gọi completeOnboarding để chuyển sang PTStack
       await completeOnboarding();
-      Alert.alert(
-        'Gửi xác minh thành công!',
-        'Hồ sơ của bạn đang được Admin xem xét.',
-        [{ text: 'Đồng ý' }]
-      );
+      useDialogStore.getState().showDialog({
+        title: 'Gửi xác minh thành công!',
+        message: 'Hồ sơ của bạn đang được Admin xem xét.',
+        type: 'success',
+        buttons: [{ text: 'Đồng ý' }]
+      });
     } else {
-      Alert.alert('Lỗi', res.error || 'Không thể gửi hồ sơ');
+      useDialogStore.getState().showDialog({
+        title: 'Lỗi',
+        message: res.error || 'Không thể gửi hồ sơ',
+        type: 'error'
+      });
     }
   };
 
@@ -85,10 +139,12 @@ const PTVerificationScreen = () => {
     await completeOnboarding();
   };
 
-  // Giao diện khi đang chờ duyệt
-  if (verificationStatus === 'PENDING') {
+  const upperStatus = typeof verificationStatus === 'string' ? verificationStatus.toUpperCase() : verificationStatus;
+
+  if (upperStatus === 'PENDING_REVIEW' || upperStatus === 'PENDING') {
     return (
       <SafeAreaView style={styles.centerContainer}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
         <ClockIcon size={80} color={COLORS.primary} style={{ marginBottom: 20 }} />
         <Text style={styles.pendingTitle}>Đang chờ duyệt hồ sơ</Text>
         <Text style={styles.pendingDesc}>
@@ -96,8 +152,8 @@ const PTVerificationScreen = () => {
           Vui lòng quay lại sau nhé!
         </Text>
         <NutriButton 
-          title="Quay lại" 
-          onPress={() => navigation.goBack()} 
+          title="Vào giao diện chờ" 
+          onPress={handleBypass} 
           style={{ width: '80%', marginTop: 30 }}
         />
       </SafeAreaView>
@@ -106,328 +162,223 @@ const PTVerificationScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <ChevronLeft color={COLORS.text} size={28} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Xác minh PT</Text>
+        <Text style={styles.headerTitle}>Hồ Sơ HLV</Text>
         <TouchableOpacity onPress={handleBypass} style={styles.bypassBtn}>
           <Text style={styles.bypassText}>Bỏ qua</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Info Banner */}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <NutriCard style={styles.infoBanner}>
           <View style={styles.bannerRow}>
             <Shield size={24} color={COLORS.primary} />
             <View style={styles.bannerTextContainer}>
               <Text style={styles.bannerTitle}>Xác minh danh tính</Text>
               <Text style={styles.bannerDesc}>
-                Để đảm bảo an toàn cho học viên, chúng tôi cần xác minh thông tin của bạn trước khi kích hoạt tài khoản PT.
+                Hoàn thiện hồ sơ để có thể quản lý học viên và thu nhập.
               </Text>
             </View>
           </View>
         </NutriCard>
 
-        {/* CCCD Section */}
-        <Text style={styles.sectionTitle}>1. Căn cước công dân (CCCD)</Text>
-        
-        <View style={styles.uploadRow}>
-          <TouchableOpacity 
-            style={styles.uploadCard} 
-            onPress={() => handlePickImage('id_front')}
-          >
-            {idCardFront ? (
-              <View style={styles.uploadedContainer}>
-                <Image source={{ uri: idCardFront }} style={styles.uploadedImage} />
-                <View style={styles.checkBadge}>
-                  <CheckCircle size={20} color={COLORS.white} />
-                </View>
-              </View>
-            ) : (
-              <>
-                <Camera size={28} color={COLORS.textLight} />
-                <Text style={styles.uploadLabel}>Mặt trước</Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.uploadCard}
-            onPress={() => handlePickImage('id_back')}
-          >
-            {idCardBack ? (
-              <View style={styles.uploadedContainer}>
-                <Image source={{ uri: idCardBack }} style={styles.uploadedImage} />
-                <View style={styles.checkBadge}>
-                  <CheckCircle size={20} color={COLORS.white} />
-                </View>
-              </View>
-            ) : (
-              <>
-                <Camera size={28} color={COLORS.textLight} />
-                <Text style={styles.uploadLabel}>Mặt sau</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Face Photo Section */}
-        <Text style={styles.sectionTitle}>2. Ảnh khuôn mặt hiện tại</Text>
-        <Text style={styles.sectionSubtitle}>
-          Ảnh rõ mặt, chụp trong vòng 6 tháng gần nhất để xác minh danh tính.
-        </Text>
-        <TouchableOpacity 
-          style={[styles.uploadCard, { width: '100%', height: 160, marginBottom: 28 }]} 
-          onPress={() => handlePickImage('face')}
-        >
-          {facePhoto ? (
-            <View style={styles.uploadedContainer}>
-              <Image source={{ uri: facePhoto }} style={styles.uploadedImage} />
-              <View style={styles.checkBadge}>
-                <CheckCircle size={20} color={COLORS.white} />
-              </View>
-            </View>
-          ) : (
-            <>
-              <UserIcon size={36} color={COLORS.textLight} />
-              <Text style={styles.uploadLabel}>Tải lên ảnh khuôn mặt</Text>
-            </>
-          )}
+        <TouchableOpacity style={styles.autoFillBtn} onPress={handleAutoFill}>
+          <Zap size={16} color="#FFF" style={{ marginRight: 6 }} />
+          <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Auto-fill Dữ liệu mẫu (Test)</Text>
         </TouchableOpacity>
 
-        {/* Intro Video Section */}
-        <Text style={styles.sectionTitle}>3. Video giới thiệu bản thân</Text>
-        <Text style={styles.sectionSubtitle}>
-          Một video ngắn (30s - 1 phút) giới thiệu về bản thân và kinh nghiệm huấn luyện.
-        </Text>
-        <TouchableOpacity 
-          style={[styles.uploadCard, { width: '100%', height: 160, marginBottom: 28 }]} 
-          onPress={() => handlePickImage('video')}
-        >
-          {introVideo ? (
-            <View style={[styles.uploadedContainer, { backgroundColor: COLORS.primaryLight, justifyContent: 'center', alignItems: 'center' }]}>
-              <Video size={48} color={COLORS.primary} />
-              <Text style={{ color: COLORS.primary, marginTop: 10, fontWeight: '600' }}>Video đã được tải lên</Text>
-              <View style={styles.checkBadge}>
-                <CheckCircle size={20} color={COLORS.white} />
-              </View>
-            </View>
-          ) : (
-            <>
-              <Video size={36} color={COLORS.textLight} />
-              <Text style={styles.uploadLabel}>Tải lên video giới thiệu</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
-        {/* Certificates Section */}
-        <Text style={styles.sectionTitle}>4. Bằng cấp / Chứng chỉ chuyên môn</Text>
-        <Text style={styles.sectionSubtitle}>
-          Tải lên bằng cấp hoặc chứng chỉ liên quan đến thể hình, dinh dưỡng
-        </Text>
-
-        <View style={styles.certGrid}>
-          {certificates.map((cert, index) => (
-            <View key={index} style={styles.certCard}>
-              <Image source={{ uri: cert }} style={styles.certImage} />
-              <View style={styles.checkBadge}>
-                <CheckCircle size={16} color={COLORS.white} />
-              </View>
-            </View>
-          ))}
-
-          <TouchableOpacity 
-            style={styles.addCertCard}
-            onPress={() => handlePickImage('cert')}
-          >
-            <Upload size={24} color={COLORS.primary} />
-            <Text style={styles.addCertText}>Thêm</Text>
-          </TouchableOpacity>
+        {/* Thông tin cơ bản */}
+        <Text style={styles.sectionTitle}>1. Thông tin cơ bản</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Họ và tên</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.fullName}
+            onChangeText={(t) => updateField('fullName', t)}
+            placeholder="Ví dụ: Nguyễn Văn A"
+            placeholderTextColor={COLORS.textLight}
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Ngày sinh (YYYY-MM-DD)</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.dateOfBirth}
+            onChangeText={(t) => updateField('dateOfBirth', t)}
+            placeholder="1995-05-20"
+            placeholderTextColor={COLORS.textLight}
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Số CCCD</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.citizenIdNumber}
+            onChangeText={(t) => updateField('citizenIdNumber', t)}
+            placeholder="Nhập 12 số CCCD"
+            placeholderTextColor={COLORS.textLight}
+            keyboardType="numeric"
+          />
         </View>
 
-        {/* Submit */}
+        {/* Chuyên môn */}
+        <Text style={styles.sectionTitle}>2. Chuyên môn & Kinh nghiệm</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Số năm kinh nghiệm</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.yearsOfExperience}
+            onChangeText={(t) => updateField('yearsOfExperience', t)}
+            placeholder="Ví dụ: 5"
+            placeholderTextColor={COLORS.textLight}
+            keyboardType="numeric"
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Giới thiệu ngắn (Bio)</Text>
+          <TextInput
+            style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+            value={formData.bio}
+            onChangeText={(t) => updateField('bio', t)}
+            placeholder="Mô tả về phong cách huấn luyện của bạn..."
+            placeholderTextColor={COLORS.textLight}
+            multiline
+          />
+        </View>
+
+        {/* Thanh toán */}
+        <Text style={styles.sectionTitle}>3. Tài khoản nhận tiền</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Mã ngân hàng (Bank Code)</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.bankAccount.bankCode}
+            onChangeText={(t) => updateBank('bankCode', t)}
+            placeholder="Ví dụ: VCB, TCB..."
+            placeholderTextColor={COLORS.textLight}
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Số tài khoản</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.bankAccount.accountNumber}
+            onChangeText={(t) => updateBank('accountNumber', t)}
+            placeholder="Nhập số tài khoản"
+            placeholderTextColor={COLORS.textLight}
+            keyboardType="numeric"
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Tên chủ tài khoản</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.bankAccount.accountHolder}
+            onChangeText={(t) => updateBank('accountHolder', t)}
+            placeholder="Viết hoa không dấu"
+            placeholderTextColor={COLORS.textLight}
+          />
+        </View>
+
         <NutriButton
-          title="Gửi hồ sơ xác minh"
+          title={isLoading ? "Đang gửi..." : "Gửi yêu cầu xét duyệt"}
           onPress={handleSubmit}
           style={styles.submitBtn}
-          loading={isLoading}
-          icon={!isLoading && <FileCheck size={20} color={COLORS.white} />}
+          disabled={isLoading}
         />
+        
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
   centerContainer: {
     flex: 1,
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 30,
-    backgroundColor: COLORS.white,
+    padding: 24,
   },
   pendingTitle: {
     ...TYPOGRAPHY.h2,
     color: COLORS.text,
-    textAlign: 'center',
     marginBottom: 12,
   },
   pendingDesc: {
-    ...TYPOGRAPHY.body1,
+    fontSize: 15,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingTop: 50,
+    paddingBottom: 15,
+    backgroundColor: COLORS.surface,
   },
-  backBtn: {
-    padding: 4,
-  },
-  headerTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.text,
-  },
-  bypassBtn: {
-    padding: 4,
-  },
-  bypassText: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '700',
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
+  backBtn: { padding: 4 },
+  headerTitle: { ...TYPOGRAPHY.h3, color: COLORS.text },
+  bypassBtn: { padding: 4 },
+  bypassText: { fontSize: 14, color: COLORS.textLight },
+  scrollContent: { padding: 20 },
   infoBanner: {
-    backgroundColor: COLORS.primaryLight,
-    marginBottom: 24,
     padding: 16,
+    marginBottom: 24,
+    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    borderColor: 'rgba(0, 255, 102, 0.3)',
+    borderWidth: 1,
   },
-  bannerRow: {
+  bannerRow: { flexDirection: 'row', alignItems: 'center' },
+  bannerTextContainer: { flex: 1, marginLeft: 16 },
+  bannerTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
+  bannerDesc: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+  autoFillBtn: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  bannerTextContainer: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  bannerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.primary,
-    marginBottom: 4,
-  },
-  bannerDesc: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    lineHeight: 18,
+    backgroundColor: '#3498DB',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: COLORS.text,
-    marginBottom: 8,
-    marginTop: 8,
-  },
-  sectionSubtitle: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
+    marginTop: 10,
     marginBottom: 16,
-    lineHeight: 18,
   },
-  uploadRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 28,
+  inputGroup: {
+    marginBottom: 16,
   },
-  uploadCard: {
-    width: '48%',
-    height: 120,
-    backgroundColor: COLORS.background,
-    borderRadius: SPACING.borderRadius.xl,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: COLORS.divider,
-    borderStyle: 'dashed',
-    overflow: 'hidden',
+  label: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginBottom: 8,
   },
-  uploadLabel: {
-    fontSize: 13,
-    color: COLORS.textLight,
-    marginTop: 8,
-    fontWeight: '500',
-  },
-  uploadedContainer: {
-    width: '100%',
-    height: '100%',
-  },
-  uploadedImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  checkBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: COLORS.success,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  certGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 24,
-  },
-  certCard: {
-    width: 100,
-    height: 100,
-    borderRadius: SPACING.borderRadius.lg,
-    marginRight: 12,
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  certImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  addCertCard: {
-    width: 100,
-    height: 100,
-    borderRadius: SPACING.borderRadius.lg,
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: COLORS.primary,
-    borderStyle: 'dashed',
-  },
-  addCertText: {
-    fontSize: 12,
-    color: COLORS.primary,
-    marginTop: 4,
-    fontWeight: '600',
+  input: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    color: COLORS.text,
+    fontSize: 15,
   },
   submitBtn: {
-    marginTop: 16,
-    height: 56,
+    marginTop: 20,
+    marginBottom: 40,
   }
 });
 

@@ -3,18 +3,18 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
   Dimensions,
-  ActivityIndicator,
-  Alert
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ChevronLeft, Play, Info, CheckCircle2, Circle } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { useWorkoutStore } from '../../../store/workoutStore';
+import { useDialogStore } from '../../../store/dialogStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -34,7 +34,11 @@ const WorkoutDetailScreen = () => {
     if (res.success) {
       navigation.navigate('ActiveWorkout');
     } else {
-      Alert.alert('Lỗi', res.error || 'Không thể bắt đầu buổi tập');
+      useDialogStore.getState().showDialog({
+        title: 'Lỗi',
+        message: res.error || 'Không thể bắt đầu buổi tập',
+        type: 'error'
+      });
     }
   };
 
