@@ -8,11 +8,14 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  StatusBar
+  StatusBar,
+  Image,
+  ActivityIndicator
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, User, Phone, Save } from 'lucide-react-native';
+import { ChevronLeft, User, Phone, Save, Camera } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY } from '../../../theme';
 import { useUserStore } from '../../../store/userStore';
 import { useDialogStore } from '../../../store/dialogStore';
@@ -21,7 +24,8 @@ import NutriButton from '../../../components/shared/NutriButton';
 
 const EditProfileScreen = () => {
   const navigation = useNavigation();
-  const { profile, updateProfile, isLoading } = useUserStore();
+  const { profile, updateProfile, updateAvatar, isLoading } = useUserStore();
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -36,6 +40,45 @@ const EditProfileScreen = () => {
       });
     }
   }, [profile]);
+
+  const handlePickAvatar = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setIsUploadingAvatar(true);
+        const asset = result.assets[0];
+        const uri = asset.uri;
+        const extension = uri.split('.').pop() || 'jpg';
+        const mimeType = `image/${extension}`;
+        const fileName = `avatar.${extension}`;
+
+        const res = await updateAvatar(uri, mimeType, fileName);
+        if (res.success) {
+          useDialogStore.getState().showDialog({
+            title: 'Thành công',
+            message: 'Đã cập nhật ảnh đại diện mới',
+            type: 'success'
+          });
+        } else {
+          useDialogStore.getState().showDialog({
+            title: 'Lỗi',
+            message: res.error || 'Lỗi khi upload ảnh',
+            type: 'error'
+          });
+        }
+      }
+    } catch (error) {
+      console.warn(error);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!formData.fullName.trim()) {
@@ -92,6 +135,25 @@ const EditProfileScreen = () => {
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
+          {/* Avatar Section */}
+          <View style={{ alignItems: 'center', marginBottom: 24 }}>
+            <TouchableOpacity onPress={handlePickAvatar} disabled={isUploadingAvatar || isLoading} style={{ position: 'relative' }}>
+              <Image 
+                source={{ uri: profile?.avatarUrl || 'https://i.pravatar.cc/150' }}
+                style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.1)' }}
+              />
+              <View style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: COLORS.primary, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: COLORS.background }}>
+                <Camera color="#000" size={16} />
+              </View>
+              {isUploadingAvatar && (
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}>
+                  <ActivityIndicator size="small" color="#FFF" />
+                </View>
+              )}
+            </TouchableOpacity>
+            <Text style={{ color: COLORS.textSecondary, fontSize: 12, marginTop: 12 }}>Nhấn để thay đổi ảnh đại diện</Text>
+          </View>
+
           <View style={styles.formCard}>
             <Text style={styles.cardTitle}>Thông tin cơ bản</Text>
             

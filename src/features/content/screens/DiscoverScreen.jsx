@@ -74,9 +74,14 @@ const DiscoverScreen = () => {
     }
   };
 
+  const getCategoryName = (category) => {
+    if (!category) return 'Chưa phân loại';
+    return typeof category === 'object' ? category.name : category;
+  };
+
   const filteredArticles = activeCategory === 'Tất cả' 
     ? articles 
-    : articles.filter(a => a.category === activeCategory);
+    : articles.filter(a => getCategoryName(a.category) === activeCategory);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -140,7 +145,7 @@ const DiscoverScreen = () => {
                 </View>
                 <View style={styles.featuredOverlay}>
                   <View style={styles.tagBadge}>
-                    <Text style={styles.tagText}>{filteredArticles[0].category}</Text>
+                    <Text style={styles.tagText}>{getCategoryName(filteredArticles[0].category)}</Text>
                   </View>
                   <Text style={styles.featuredTitle} numberOfLines={2}>{filteredArticles[0].title}</Text>
                   <View style={styles.featuredMeta}>
@@ -166,7 +171,7 @@ const DiscoverScreen = () => {
                 >
                   <Image source={{ uri: article.imageUrl }} style={styles.articleImage} />
                   <View style={styles.articleContent}>
-                    <Text style={styles.articleCategory}>{article.category}</Text>
+                    <Text style={styles.articleCategory}>{getCategoryName(article.category)}</Text>
                     <Text style={styles.articleTitle} numberOfLines={2}>{article.title}</Text>
                     <View style={styles.articleFooter}>
                       <Text style={styles.articleMeta}>{article.date}</Text>

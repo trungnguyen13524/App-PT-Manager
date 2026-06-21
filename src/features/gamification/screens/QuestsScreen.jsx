@@ -84,31 +84,13 @@ const QuestsScreen = () => {
         </View>
       </View>
 
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'daily' && styles.activeTab]}
-          onPress={() => setActiveTab('daily')}
-        >
-          <Text style={[styles.tabText, activeTab === 'daily' && styles.activeTabText]}>Hàng ngày</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'challenge' && styles.activeTab]}
-          onPress={() => setActiveTab('challenge')}
-        >
-          <Text style={[styles.tabText, activeTab === 'challenge' && styles.activeTabText]}>Thử thách</Text>
-        </TouchableOpacity>
-      </View>
-
       {/* List */}
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>
-          {activeTab === 'daily' ? 'Nhiệm vụ hôm nay' : 'Nhiệm vụ đặc biệt'}
-        </Text>
+        <Text style={styles.sectionTitle}>Nhiệm vụ hôm nay</Text>
         
-        {activeTab === 'daily' 
-          ? (dailyQuests.length > 0 ? dailyQuests.map(renderQuestCard) : <Text style={{color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 20}}>Chưa có nhiệm vụ</Text>)
-          : (challengeQuests.length > 0 ? challengeQuests.map(renderQuestCard) : <Text style={{color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 20}}>Chưa có thử thách</Text>)
+        {dailyQuests.length > 0 
+          ? dailyQuests.map(renderQuestCard) 
+          : <Text style={{color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 20}}>Chưa có nhiệm vụ</Text>
         }
         
         <View style={{ height: 100 }} />

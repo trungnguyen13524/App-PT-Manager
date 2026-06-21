@@ -129,7 +129,7 @@ const PTDashboardScreen = () => {
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Profile')}>
             <Image 
-              source={{ uri: user?.avatar || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48' }} 
+              source={{ uri: user?.avatarUrl || user?.avatar || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48' }} 
               style={styles.avatar} 
             />
           </TouchableOpacity>
@@ -204,7 +204,7 @@ const PTDashboardScreen = () => {
                 <Image source={{ uri: student.avatar }} style={styles.studentAvatar} />
                 <View style={styles.studentInfo}>
                   <Text style={styles.studentName}>{student.fullName}</Text>
-                  <Text style={styles.studentGoal}>{student.goal || 'Tăng cơ giảm mỡ'}</Text>
+                  <Text style={styles.studentGoal}>{(typeof student.goal === 'object' && student.goal !== null) ? student.goal.name : (student.goal || 'Tăng cơ giảm mỡ')}</Text>
                 </View>
                 <ChevronRight size={20} color={COLORS.textLight} />
               </View>

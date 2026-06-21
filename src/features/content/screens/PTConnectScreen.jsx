@@ -322,71 +322,53 @@ const PTConnectScreen = () => {
                 {/* PT Info Area */}
                 <View style={styles.modalSection}>
                   <Text style={styles.modalSectionTitle}>Thông tin Huấn luyện viên</Text>
-                  <TouchableOpacity 
-                    style={styles.ptProfileHeaderLarge} 
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      const ptData = courseDetail?.pt || selectedCourse?.pt;
-                      if (ptData) {
-                        setModalVisible(false);
-                        setTimeout(() => navigation.navigate('PublicPTProfile', { pt: ptData }), 300);
-                      }
-                    }}
-                  >
-                    <View style={styles.ptProfileHeader}>
-                      {/* Avatar */}
-                      <Image 
-                        source={{ uri: courseDetail.pt?.avatar || courseDetail.pt?.avatarUrl || selectedCourse?.ptAvatarUrl || 'https://i.pravatar.cc/150' }} 
-                        style={styles.ptProfileAvatarLarge} 
-                      />
-                      <View style={styles.ptProfileNameContainer}>
-                        {/* Name */}
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Text style={styles.ptProfileNameLarge}>
-                            {courseDetail.pt?.fullName || (courseDetail.pt?.firstName ? `${courseDetail.pt.firstName} ${courseDetail.pt.lastName}` : null) || selectedCourse?.ptFullName || 'Huấn luyện viên'}
-                          </Text>
-                          <CheckCircle color="#00FF66" size={16} style={{ marginLeft: 6 }} />
-                        </View>
-                        {/* Email or Phone */}
-                        {(courseDetail.pt?.email || courseDetail.pt?.phoneNumber) && (
-                          <Text style={{ color: '#A0A0A0', fontSize: 13, marginTop: 4 }}>
-                            {courseDetail.pt?.email} {courseDetail.pt?.phoneNumber && `• ${courseDetail.pt?.phoneNumber}`}
-                          </Text>
-                        )}
-                        {/* Experience */}
-                        {(courseDetail.pt?.yearsOfExperience || courseDetail.pt?.experienceYears) && (
-                          <View style={styles.expBadge}>
-                            <Star color="#F5A623" size={12} style={{ marginRight: 4 }} />
-                            <Text style={styles.expBadgeText}>{(courseDetail.pt?.yearsOfExperience || courseDetail.pt?.experienceYears)} năm kinh nghiệm</Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                    <ChevronRight size={20} color={COLORS.textLight} />
-                  </TouchableOpacity>
                   
-                  <View style={styles.ptBioContainerLarge}>
-                    {/* Bio */}
-                    {(courseDetail.pt?.description || courseDetail.pt?.bio) && (
-                      <View style={{ marginTop: 12 }}>
-                        <Text style={styles.ptBioTextLarge}>{courseDetail.pt?.description || courseDetail.pt?.bio}</Text>
-                      </View>
-                    )}
-                    
-                    {/* Specialties / Tags */}
-                    {courseDetail.pt?.specialties && courseDetail.pt.specialties.length > 0 && (
-                      <View style={{ marginTop: 12 }}>
-                        <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 'bold', marginBottom: 8 }}>Chuyên môn:</Text>
-                        <View style={styles.tagsRowLarge}>
+                  {/* Khung đầu tiên: Profile Header */}
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 }}>
+                    <Image 
+                      source={{ uri: courseDetail.pt?.avatarUrl || selectedCourse?.ptAvatarUrl || 'https://i.pravatar.cc/150' }} 
+                      style={{ width: 60, height: 60, borderRadius: 30, marginRight: 12, backgroundColor: '#333' }} 
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>
+                        {courseDetail.pt?.fullName || selectedCourse?.ptFullName || 'Huấn luyện viên'}
+                      </Text>
+                      {/* Specialties */}
+                      {courseDetail.pt?.specialties && courseDetail.pt.specialties.length > 0 && (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                           {courseDetail.pt.specialties.map((spec, idx) => (
-                            <View key={idx} style={styles.tagPillLarge}>
-                              <Text style={styles.tagTextLarge}>{typeof spec === 'string' ? spec : spec.name}</Text>
+                            <View key={idx} style={{ backgroundColor: 'rgba(52, 152, 219, 0.2)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
+                              <Text style={{ color: '#3498DB', fontSize: 10, fontWeight: 'bold' }}>{typeof spec === 'string' ? spec : spec.name}</Text>
                             </View>
                           ))}
                         </View>
-                      </View>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Khung liên hệ: Contact Info */}
+                  <View style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+                    {courseDetail.pt?.email && (
+                      <Text style={{ color: '#E2E8F0', fontSize: 14, marginBottom: 8 }} selectable>
+                        📧  {courseDetail.pt.email}
+                      </Text>
+                    )}
+                    {courseDetail.pt?.phone && (
+                      <Text style={{ color: '#E2E8F0', fontSize: 14 }} selectable>
+                        📞  {courseDetail.pt.phone}
+                      </Text>
                     )}
                   </View>
+
+                  {/* Khung tiểu sử: Bio Description */}
+                  {courseDetail.pt?.bioExcerpt && (
+                    <View>
+                      <Text style={{ color: '#FFF', fontSize: 16, fontWeight: 'bold', marginBottom: 8 }}>Về Huấn Luyện Viên</Text>
+                      <Text style={{ color: '#94A3B8', fontSize: 14, lineHeight: 22 }} selectable>
+                        {courseDetail.pt.bioExcerpt}
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
                 {/* Course Details */}

@@ -92,7 +92,7 @@ const PTStudentListScreen = () => {
                 <Image source={{ uri: student.avatar || 'https://via.placeholder.com/150' }} style={styles.studentAvatar} />
                 <View style={styles.studentInfo}>
                   <Text style={styles.studentName}>{student.fullName}</Text>
-                  <Text style={styles.studentGoal}>{student.goal || 'Giảm mỡ'}</Text>
+                  <Text style={styles.studentGoal}>{(typeof student.goal === 'object' && student.goal !== null) ? student.goal.name : (student.goal || 'Giảm mỡ')}</Text>
                   
                   <View style={styles.studentMeta}>
                     <Text style={styles.metaText}>{student.weight || '--'} kg</Text>

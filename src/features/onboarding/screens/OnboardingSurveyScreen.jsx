@@ -104,6 +104,7 @@ const OnboardingSurveyScreen = () => {
     { id: 'metrics', title: 'Chỉ số cơ thể', subtitle: 'Chiều cao và cân nặng hiện tại' },
     { id: 'goal', title: 'Mục tiêu của bạn?', subtitle: 'Bạn muốn đạt được điều gì?' },
     { id: 'activity', title: 'Mức độ vận động?', subtitle: 'Tần suất tập luyện hàng tuần của bạn' },
+    { id: 'optionals', title: 'Thông tin bổ sung', subtitle: 'Tùy chọn: Để gợi ý thực đơn phù hợp nhất' },
     { id: 'results', title: 'Phân tích cơ thể', subtitle: 'Kết quả tính toán và gợi ý cho bạn' }
   ];
 
@@ -315,9 +316,10 @@ const OnboardingSurveyScreen = () => {
     <View style={styles.stepContainer}>
       {[
         { id: 'SEDENTARY', label: 'Ít vận động', desc: 'Làm việc văn phòng, ít đi lại' },
-        { id: 'MODERATE', label: 'Vận động vừa', desc: 'Tập thể dục 3-5 buổi/tuần' },
-        { id: 'ACTIVE', label: 'Vận động nhiều', desc: 'Tập luyện hàng ngày' },
-        { id: 'VERY_ACTIVE', label: 'Vận động cực độ', desc: 'Vận động viên, làm việc nặng' }
+        { id: 'LIGHT', label: 'Vận động nhẹ', desc: 'Tập thể dục 1-2 buổi/tuần' },
+        { id: 'MODERATE', label: 'Vận động vừa phải', desc: 'Tập thể dục 3-5 buổi/tuần' },
+        { id: 'ACTIVE', label: 'Vận động nhiều', desc: 'Tập luyện hàng ngày 6-7 buổi/tuần' },
+        { id: 'VERY_ACTIVE', label: 'Vận động cực nhiều', desc: 'Vận động viên, làm việc nặng' }
       ].map((a) => (
         <TouchableOpacity
           key={a.id}
@@ -370,6 +372,36 @@ const OnboardingSurveyScreen = () => {
     );
   };
 
+  const renderOptionalsStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.inputLabel}>Cân nặng mục tiêu (kg) - Không bắt buộc</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        placeholder="Ví dụ: 55"
+        placeholderTextColor="#6B7280"
+        value={formData.targetWeightKg ? formData.targetWeightKg.toString() : ''}
+        onChangeText={(val) => setFormData({ ...formData, targetWeightKg: parseFloat(val) || 0 })}
+      />
+      <Text style={[styles.inputLabel, { marginTop: 24 }]}>Dị ứng thức ăn (cách nhau bởi dấu phẩy)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Ví dụ: Hải sản, Đậu phộng"
+        placeholderTextColor="#6B7280"
+        value={formData.allergies.join(', ')}
+        onChangeText={(val) => setFormData({ ...formData, allergies: val.split(',').map(s => s.trim()).filter(Boolean) })}
+      />
+      <Text style={[styles.inputLabel, { marginTop: 24 }]}>Hạn chế chế độ ăn (cách nhau bởi dấu phẩy)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Ví dụ: Ăn chay, Keto"
+        placeholderTextColor="#6B7280"
+        value={formData.dietaryRestrictions.join(', ')}
+        onChangeText={(val) => setFormData({ ...formData, dietaryRestrictions: val.split(',').map(s => s.trim()).filter(Boolean) })}
+      />
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -404,6 +436,7 @@ const OnboardingSurveyScreen = () => {
         <View style={styles.slide}>{renderMetricsStep()}</View>
         <View style={styles.slide}>{renderGoalStep()}</View>
         <View style={styles.slide}>{renderActivityStep()}</View>
+        <View style={styles.slide}>{renderOptionalsStep()}</View>
         <View style={styles.slide}>{renderResultsStep()}</View>
       </Animated.View>
 
