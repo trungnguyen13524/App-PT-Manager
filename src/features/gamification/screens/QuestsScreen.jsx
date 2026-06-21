@@ -9,7 +9,7 @@ const { width } = Dimensions.get('window');
 
 const QuestsScreen = () => {
   const navigation = useNavigation();
-  const { totalPoints, dailyQuests, challengeQuests } = useMissionStore();
+  const { totalPoints, dailyQuests, challengeQuests, triggerMissionAction } = useMissionStore();
   const [activeTab, setActiveTab] = useState('daily'); // 'daily' | 'challenge'
 
   const getIconForQuest = (id) => {
@@ -26,26 +26,39 @@ const QuestsScreen = () => {
   };
 
   const renderQuestCard = (quest) => {
+    const isCompleted = quest.status === 'COMPLETED' || quest.status === 'completed' || quest.isCompleted === true || quest.completed === true || (quest.progress !== undefined && quest.target !== undefined && quest.progress >= quest.target);
+    const points = quest.points || quest.reward || quest.pointsAwarded || quest.xp || 50;
+
     return (
-      <View key={quest.id} style={[styles.questCard, quest.completed && styles.questCardCompleted]}>
+      <TouchableOpacity 
+        key={quest.id || Math.random().toString()} 
+        style={[styles.questCard, isCompleted && styles.questCardCompleted]}
+        activeOpacity={0.8}
+        onPress={() => {
+          if (!isCompleted) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            triggerMissionAction(quest.id || quest.type || quest.questId, null, todayStr);
+          }
+        }}
+      >
         <View style={styles.questIconContainer}>
-          {getIconForQuest(quest.id)}
+          {getIconForQuest(quest.id || quest.type)}
         </View>
         <View style={styles.questInfo}>
-          <Text style={[styles.questTitle, quest.completed && styles.questTitleCompleted]}>
+          <Text style={[styles.questTitle, isCompleted && styles.questTitleCompleted]}>
             {quest.title}
           </Text>
           <View style={styles.rewardRow}>
-            <Text style={styles.questReward}>+{quest.xp} XP</Text>
-            {quest.max && (
+            <Text style={styles.questReward}>+{points} XP</Text>
+            {(quest.max || quest.target) && (
               <Text style={styles.progressText}>
-                {quest.progress}/{quest.max}
+                {quest.progress || 0}/{quest.max || quest.target}
               </Text>
             )}
           </View>
         </View>
         <View style={styles.statusContainer}>
-          {quest.completed ? (
+          {isCompleted ? (
             <CheckCircle color="#00FF66" size={28} />
           ) : (
             <View style={styles.pendingCircle}>
@@ -53,7 +66,7 @@ const QuestsScreen = () => {
             </View>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

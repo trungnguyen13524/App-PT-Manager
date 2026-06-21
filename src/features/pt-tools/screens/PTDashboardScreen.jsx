@@ -56,8 +56,10 @@ const PTDashboardScreen = () => {
   const { students, earnings, isLoading, verificationStatus, fetchVerificationStatus, fetchStudents, fetchEarnings } = usePTStore();
 
   useEffect(() => {
-    fetchVerificationStatus().then((status) => {
+    fetchVerificationStatus().then(async (status) => {
       if (status === 'APPROVED') {
+        // Force refresh token to ensure role is updated in JWT
+        await useAuthStore.getState().syncProfileAndToken();
         fetchStudents();
         fetchEarnings();
       }
@@ -74,7 +76,16 @@ const PTDashboardScreen = () => {
     );
   }
 
-  if (verificationStatus === 'NONE' || verificationStatus === null) {
+  if (verificationStatus === null) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </SafeAreaView>
+    );
+  }
+
+  if (verificationStatus === 'NONE') {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -149,7 +160,7 @@ const PTDashboardScreen = () => {
         </View>
         
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('CourseManagement')}>
+          <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('CourseMeta')}>
             <View style={[styles.actionIcon, { backgroundColor: '#3498DB20' }]}>
               <Plus size={24} color="#3498DB" />
             </View>

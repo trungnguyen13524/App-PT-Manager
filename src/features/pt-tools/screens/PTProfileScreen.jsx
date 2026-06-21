@@ -100,7 +100,7 @@ const PTProfileScreen = () => {
               title="Thông tin cá nhân" 
               iconBgColor="#E8F5E9"
               iconColor="#4CAF50"
-              onPress={() => {}} 
+              onPress={() => navigation.navigate('PTEditProfile')} 
             />
             <View style={styles.divider} />
             <MenuOption 
@@ -126,7 +126,7 @@ const PTProfileScreen = () => {
               title="Thông báo" 
               iconBgColor="#F5F6F8"
               iconColor="#4A5568"
-              onPress={() => {}} 
+              onPress={() => navigation.navigate('NotificationSettings')} 
             />
             <View style={styles.divider} />
             <MenuOption 

@@ -73,6 +73,9 @@ export const endpoints = {
     TRIGGER: '/quests/trigger',
     DIARY_LOCK: '/quests/diary-lock',
     POINTS: '/quests/points',
+    REWARDS: '/quests/rewards',
+    REDEEM: '/quests/redeem',
+    REDEMPTIONS: '/quests/redemptions',
   }
 };
 

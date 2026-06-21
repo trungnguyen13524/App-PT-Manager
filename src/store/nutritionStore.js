@@ -54,16 +54,8 @@ export const useNutritionStore = create((set, get) => ({
   // Lấy tóm tắt tuần (Fallback: Vì BE chưa có API Weekly, ta gọi Daily cho hôm nay để vẽ biểu đồ)
   fetchWeeklySummary: async (dateString) => {
     try {
-      const { USE_MOCK } = require('../mocks');
-      let responseData;
-      
-      if (USE_MOCK) {
-        // Giả lập dữ liệu để không báo lỗi vàng
-        responseData = { targetCalories: 2000, consumedCalories: 1250 };
-      } else {
-        const response = await nutritionService.getDailySummary({ date: dateString });
-        responseData = response.data;
-      }
+      const response = await nutritionService.getDailySummary({ date: dateString });
+      let responseData = response.data;
       
       const currentDay = new Date(dateString).getDay();
       const mappedTodayIdx = currentDay === 0 ? 6 : currentDay - 1;
@@ -84,15 +76,6 @@ export const useNutritionStore = create((set, get) => ({
   // Lấy thực đơn gợi ý (Meal Plan)
   fetchActiveMealPlan: async () => {
     try {
-      const { USE_MOCK } = require('../mocks');
-      if (USE_MOCK) {
-        set({ suggestedMenu: {
-          morning: [{ id: 1, title: 'Phở gà', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80', calories: 350, protein: 20 }],
-          lunch: [{ id: 2, title: 'Cơm gà gạo lứt', image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=400&q=80', calories: 420, protein: 30 }],
-          evening: [{ id: 3, title: 'Salad cá hồi', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80', calories: 310, protein: 25 }]
-        }});
-        return;
-      }
       const response = await nutritionService.getActiveMealPlan();
       set({ suggestedMenu: response.data || { morning: [], lunch: [], evening: [] } });
     } catch (err) {

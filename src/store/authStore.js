@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import authService from '../api/services/auth.service';
 import storage from '../utils/storage';
-import { USE_MOCK, MOCK_LOGIN_RESPONSE } from '../mocks';
 
 export const useAuthStore = create((set, get) => ({
   user: null,         
@@ -42,7 +41,6 @@ export const useAuthStore = create((set, get) => ({
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      // Ép dùng API thật để test (bỏ qua USE_MOCK cho riêng login)
       console.log('--- GỌI API LOGIN THẬT ĐỂ TEST ---');
       const response = await authService.login(email, password);
       console.log('Login Response:', response);
@@ -74,8 +72,8 @@ export const useAuthStore = create((set, get) => ({
           user = { 
             ...user, 
             ...meResponse.data,
-            // Đảm bảo cập nhật trạng thái nếu user đã có metrics
-            onboardingCompleted: meResponse.data.onboardingCompleted || !!meResponse.data.metrics 
+            // Bỏ qua Onboarding/KYC ngay lập tức nếu user là PT (bởi vì Admin đã duyệt trên Web)
+            onboardingCompleted: meResponse.data.role === 'PT' || meResponse.data.onboardingCompleted || !!meResponse.data.metrics 
           };
         }
       } catch (meErr) {
@@ -97,10 +95,13 @@ export const useAuthStore = create((set, get) => ({
       return { success: true };
     } catch (err) {
       console.error('Login Error Caught:', err);
+      let errorMsg = err.message || 'Đăng nhập thất bại';
+      if (err.code === 'INVALID_CREDENTIALS' || errorMsg.includes('Invalid email or password')) {
+        errorMsg = 'Tài khoản chưa được đăng ký hoặc sai mật khẩu!';
+      }
       set({ 
-        error: err.message || 'Đăng nhập thất bại', 
+        error: errorMsg, 
         isLoading: false 
-
       });
       return { success: false };
     }
@@ -163,6 +164,39 @@ export const useAuthStore = create((set, get) => ({
   },
 
   // --- Các actions khác ---
+  syncProfileAndToken: async () => {
+    try {
+      // 1. Force refresh token to get new roles in JWT payload
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://test-nutricoach.onrender.com/api/v1';
+      const axios = require('axios').default;
+      const response = await axios.post(`${baseUrl}/auth/refresh`, {
+        refreshToken: get().refreshToken,
+      });
+      const { accessToken, refreshToken: newRefreshToken } = response.data.data || response.data;
+      if (accessToken) {
+        await storage.saveTokens(accessToken, newRefreshToken || get().refreshToken);
+        set({ token: accessToken, refreshToken: newRefreshToken || get().refreshToken });
+      }
+
+      // 2. Fetch new profile data
+      const { default: usersService } = require('../api/services/users.service');
+      // Pass token explicitly to ensure we use the fresh one
+      const meResponse = await usersService.getMe();
+      if (meResponse && meResponse.data) {
+        const updatedUser = { 
+          ...get().user, 
+          ...meResponse.data,
+          onboardingCompleted: meResponse.data.role === 'PT' || meResponse.data.onboardingCompleted || !!meResponse.data.metrics 
+        };
+        await storage.saveUser(updatedUser);
+        set({ user: updatedUser, isOnboardingComplete: updatedUser.onboardingCompleted });
+      }
+      return true;
+    } catch (e) {
+      console.warn('Failed to sync profile and token', e);
+      return false;
+    }
+  },
   setUserRole: async (role) => {
     const updatedUser = { ...get().user, role };
     await storage.saveUser(updatedUser);

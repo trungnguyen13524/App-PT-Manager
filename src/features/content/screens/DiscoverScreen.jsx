@@ -16,44 +16,9 @@ import { Search, Compass, ExternalLink, Bookmark, Clock } from 'lucide-react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
-import { USE_MOCK } from '../../../mocks';
 import contentService from '../../../api/services/content.service';
 
 const { width } = Dimensions.get('window');
-
-// Mock Data cho Bài báo
-const MOCK_ARTICLES = [
-  {
-    id: 'art_1',
-    title: '5 nguyên tắc vàng để giảm mỡ bụng hiệu quả mà không cần nhịn ăn',
-    excerpt: 'Nhịn ăn không phải là cách tốt nhất để giảm mỡ. Hãy cùng tìm hiểu 5 nguyên tắc khoa học giúp bạn...',
-    imageUrl: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=800',
-    category: 'Dinh dưỡng',
-    readTime: '5 phút',
-    date: '15 Th05, 2026',
-    url: 'https://nutricoach.vn/blog/5-nguyen-tac-giam-mo'
-  },
-  {
-    id: 'art_2',
-    title: 'Cách tính Macro (Đạm, Tinh bột, Béo) chuẩn cho người mới bắt đầu tập gym',
-    excerpt: 'Đừng chỉ đếm Calo, tỷ lệ Macro mới quyết định bạn sẽ tăng cơ hay tăng mỡ. Hướng dẫn chi tiết cách tính...',
-    imageUrl: 'https://images.unsplash.com/photo-1543362906-acfc16c67564?auto=format&fit=crop&q=80&w=800',
-    category: 'Kiến thức',
-    readTime: '8 phút',
-    date: '14 Th05, 2026',
-    url: 'https://nutricoach.vn/blog/cach-tinh-macro'
-  },
-  {
-    id: 'art_3',
-    title: 'Top 10 loại thực phẩm giàu Protein tự nhiên giá rẻ cho sinh viên',
-    excerpt: 'Không cần dùng Whey Protein đắt đỏ, bạn vẫn có thể nạp đủ lượng Đạm cần thiết từ những thực phẩm quen thuộc này.',
-    imageUrl: 'https://images.unsplash.com/photo-1615486171448-4af4d3752766?auto=format&fit=crop&q=80&w=800',
-    category: 'Thực đơn',
-    readTime: '4 phút',
-    date: '10 Th05, 2026',
-    url: 'https://nutricoach.vn/blog/top-thuc-pham-protein'
-  }
-];
 
 const AbstractBackground = React.memo(() => (
   <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
@@ -91,14 +56,8 @@ const DiscoverScreen = () => {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        if (USE_MOCK) {
-          // Giả lập delay mạng
-          await new Promise(resolve => setTimeout(resolve, 800));
-          setArticles(MOCK_ARTICLES);
-        } else {
-          const response = await contentService.getArticles();
-          setArticles(response.data || []);
-        }
+        const response = await contentService.getArticles();
+        setArticles(response.data || []);
       } catch (error) {
         // console.warn('Không thể lấy bài viết:', error);
       } finally {

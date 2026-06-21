@@ -14,6 +14,15 @@ const questsService = {
   // GET /quests/points
   getPoints: (params) => apiClient.get(endpoints.QUESTS.POINTS, { params }),
 
+  // GET /quests/rewards
+  getRewards: (params) => apiClient.get(endpoints.QUESTS.REWARDS, { params }),
+  
+  // POST /quests/redeem
+  redeemReward: (data) => apiClient.post(endpoints.QUESTS.REDEEM, data),
+  
+  // GET /quests/redemptions
+  getRedemptions: (params) => apiClient.get(endpoints.QUESTS.REDEMPTIONS, { params }),
+
   // --- Admin Quests ---
   // GET /admin/quests
   getAdminQuests: (params) => apiClient.get(endpoints.ADMIN.QUESTS, { params }),

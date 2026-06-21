@@ -57,48 +57,58 @@ export const useMissionStore = create((set, get) => ({
   fetchDailyMissions: async (date) => {
     set({ isLoadingMissions: true });
     try {
-      const { USE_MOCK } = require('../mocks');
-      if (USE_MOCK) {
-        set({
-          totalPoints: 1250,
-          dailyQuests: [
-            { id: 1, title: 'Scan bữa sáng', status: 'COMPLETED', reward: 50 },
-            { id: 2, title: 'Scan bữa trưa', status: 'PENDING', reward: 50 }
-          ],
-          challengeQuests: []
-        });
-        return;
-      }
 
       const res = await questsService.getDailyQuests({ date });
-      if (res.data) {
-        set({
-          totalPoints: res.data.totalPoints,
-          dailyQuests: res.data.dailyQuests || [],
-          challengeQuests: res.data.challengeQuests || []
-        });
+      
+      let parsedQuests = [];
+      let parsedPoints = get().totalPoints;
+      
+      if (Array.isArray(res)) {
+        parsedQuests = res;
+      } else if (Array.isArray(res.data)) {
+        parsedQuests = res.data;
+      } else if (res.data) {
+        parsedQuests = res.data.dailyQuests || res.data.quests || res.data.data || [];
+        parsedPoints = res.data.totalPoints ?? parsedPoints;
+      }
 
-        if (res.data.dailyLoginTriggered) {
-          get().showReward('Điểm danh mỗi ngày', 10);
-        }
+      set({
+        totalPoints: parsedPoints,
+        dailyQuests: parsedQuests,
+        challengeQuests: res.data?.challengeQuests || [],
+        isLoadingMissions: false
+      });
+
+      const isDailyLoginTriggered = res.dailyLoginTriggered || (res.data && res.data.dailyLoginTriggered);
+      if (isDailyLoginTriggered) {
+        get().showReward('Điểm danh mỗi ngày', 10);
       }
     } catch (error) {
-      // Ẩn log báo lỗi đỏ vì backend đang crash API daily quests
-      // console.warn('Error fetching missions:', error);
+      console.warn('Error fetching missions:', error);
       set({ isLoadingMissions: false });
     }
   },
 
   triggerMissionAction: async (missionId, referenceId, date) => {
     try {
-      const { USE_MOCK } = require('../mocks');
-      if (USE_MOCK) {
-        get().fetchDailyMissions(date);
-        return true;
-      }
+      const res = await questsService.triggerQuest({ questId: missionId, referenceId, date });
+      
+      const isTriggered = res.data?.triggered || res.triggered;
+      if (isTriggered) {
+        const points = res.data?.pointsAwarded || res.pointsAwarded || 0;
+        const newTotal = res.data?.totalPoints || res.totalPoints;
+        if (newTotal !== undefined) {
+           set({ totalPoints: newTotal });
+        }
 
-      const res = await questsService.triggerQuest({ missionId, referenceId, date });
-      if (res.data && res.data.successTriggered) {
+        // Lấy thông tin tên nhiệm vụ để thông báo
+        const quest = get().dailyQuests.find(q => q.id === missionId || q.type === missionId);
+        if (quest) {
+           get().showReward(`Hoàn thành: ${quest.title}`, points);
+        } else {
+           get().showReward('Nhiệm vụ hoàn thành', points);
+        }
+
         get().fetchDailyMissions(date);
         return true;
       }
@@ -111,18 +121,20 @@ export const useMissionStore = create((set, get) => ({
 
   lockDailyDiaryAction: async (date) => {
     try {
-      const { USE_MOCK } = require('../mocks');
-      if (USE_MOCK) {
-        get().fetchDailyMissions(date);
-        return true;
-      }
-
       const res = await questsService.lockDiary({ date });
-      if (res.data && res.data.success) {
-        if (res.data.missionsCompleted && res.data.missionsCompleted.includes('PERFECT_DIARY')) {
-          get().showReward('Nhật ký hoàn hảo', 30);
+      
+      const completed = res.data?.missionsCompleted || res.missionsCompleted;
+      if (completed && completed.length > 0) {
+        const points = res.data?.pointsAwarded || res.pointsAwarded || 0;
+        const newTotal = res.data?.totalPoints || res.totalPoints;
+        if (newTotal !== undefined) {
+           set({ totalPoints: newTotal });
         }
-        if (res.data.missionsCompleted && res.data.missionsCompleted.includes('DISCIPLINE_MASTER')) {
+
+        if (completed.includes('PERFECT_DIARY')) {
+          get().showReward('Nhật ký hoàn hảo', points > 0 ? points : 30);
+        }
+        if (completed.includes('DISCIPLINE_MASTER')) {
           setTimeout(() => {
              get().showReward('Kỷ luật', 50);
           }, 3500);

@@ -26,6 +26,16 @@ const ptService = {
   publishCourse: (id) => apiClient.post(`${endpoints.PT.COURSES}/${id}/publish`),
   // POST /pt/courses/{id}/archive
   archiveCourse: (id) => apiClient.post(`${endpoints.PT.COURSES}/${id}/archive`),
+  // POST /pt/courses/{id}/thumbnail
+  uploadCourseThumbnail: (id, formData) => apiClient.post(`${endpoints.PT.COURSES}/${id}/thumbnail`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  // POST /pt/courses/{id}/lessons/{lessonId}/video
+  uploadLessonVideo: (id, lessonId, formData) => apiClient.post(`${endpoints.PT.COURSES}/${id}/lessons/${lessonId}/video`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  // PATCH /pt/courses/{id}/lessons/{lessonId}/preview
+  toggleLessonPreview: (id, lessonId, data) => apiClient.patch(`${endpoints.PT.COURSES}/${id}/lessons/${lessonId}/preview`, data),
 
   // GET /pt/students
   getStudents: (params) => apiClient.get(endpoints.PT.STUDENTS, { params }),
@@ -39,7 +49,9 @@ const ptService = {
   // GET /pt/earnings
   getEarnings: (params) => apiClient.get(endpoints.PT.EARNINGS, { params }),
   // POST /pt/withdrawals
-  requestWithdrawal: (data) => apiClient.post(endpoints.PT.WITHDRAWALS, data),
+  requestWithdrawal: (data, idempotencyKey) => apiClient.post(endpoints.PT.WITHDRAWALS, data, {
+    headers: { 'Idempotency-Key': idempotencyKey }
+  }),
   // GET /pt/withdrawals
   getWithdrawals: (params) => apiClient.get(endpoints.PT.WITHDRAWALS, { params }),
 };

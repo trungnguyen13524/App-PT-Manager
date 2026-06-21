@@ -8,10 +8,11 @@ import {
   Image,
   Dimensions,
   StatusBar,
-  Modal
+  Modal,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { Bell, ChevronRight, Zap, ChevronLeft, CheckCircle, Shield, Share2, X, Dumbbell } from 'lucide-react-native';
@@ -56,7 +57,7 @@ const StudentDashboardScreen = () => {
   const { user } = useAuthStore();
   const { profile, metrics: storeMetrics, fetchProfile } = useUserStore();
   const { weeklySummary, fetchWeeklySummary } = useNutritionStore();
-  const { totalPoints, showReward, fetchDailyMissions, triggerMissionAction } = useMissionStore();
+  const { totalPoints, showReward, fetchDailyMissions, triggerMissionAction, dailyQuests } = useMissionStore();
   
   const [dashboardData, setDashboardData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -70,64 +71,72 @@ const StudentDashboardScreen = () => {
 
   const executeShare = async () => {
     try {
-      if (!viewShotRef.current) return;
-      const uri = await viewShotRef.current.capture();
-      
-      setIsShareModalVisible(false);
-      
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (!isAvailable) {
-        alert("Chia sẻ không khả dụng trên thiết bị của bạn");
-        return;
+      let uri = null;
+      if (Platform.OS !== 'web' && viewShotRef.current) {
+        uri = await viewShotRef.current.capture();
       }
       
-      await Sharing.shareAsync(uri, { dialogTitle: 'Khoe thành tích NutriCoach của bạn!' });
+      if (uri) {
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          await Sharing.shareAsync(uri, { 
+            mimeType: 'image/png', 
+            dialogTitle: 'Khoe thành tích NutriCoach của bạn!',
+            UTI: 'public.image' 
+          });
+        } else {
+          alert("Chia sẻ không khả dụng trên thiết bị của bạn, nhưng hệ thống vẫn sẽ ghi nhận nhiệm vụ cho bạn nhé!");
+        }
+      } else if (Platform.OS === 'web') {
+        alert("Tính năng chia sẻ ảnh chưa hỗ trợ trên Web, nhưng hệ thống vẫn sẽ ghi nhận nhiệm vụ cho bạn nhé!");
+      }
+      
+      // Đóng modal sau khi share xong
+      setIsShareModalVisible(false);
       
       // Trigger mission
       const todayStr = new Date().toISOString().split('T')[0];
       await triggerMissionAction('DAILY_SHARE', 'dashboard', todayStr);
     } catch (error) {
       console.log('Share error:', error);
+      setIsShareModalVisible(false);
+      
+      // Vẫn trigger nhiệm vụ nếu có lỗi capture (do web/simulator)
+      const todayStr = new Date().toISOString().split('T')[0];
+      await triggerMissionAction('DAILY_SHARE', 'dashboard', todayStr);
     }
   };
 
-  React.useEffect(() => {
-    fetchProfile(); 
-    
-    const todayStr = new Date().toISOString().split('T')[0];
-    fetchWeeklySummary(todayStr);
 
-    if (!isPTView) {
-      fetchDailyMissions(todayStr);
-    }
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProfile(); 
+      
+      const todayStr = new Date().toISOString().split('T')[0];
+      fetchWeeklySummary(todayStr);
 
-    const fetchDashboard = async () => {
-      try {
-        const { USE_MOCK } = require('../../../mocks');
-        let responseData;
-        
-        if (USE_MOCK) {
-          await new Promise(resolve => setTimeout(resolve, 800));
-          responseData = {
-            todayCalories: { consumed: 1250, target: 2000 },
-            todayMacros: { proteinG: 85, carbsG: 120, fatG: 45 }
-          };
-        } else {
-          const response = await dashboardService.getUserDashboard();
-          responseData = response.data;
-        }
-        
-        if (responseData) {
-          setDashboardData(responseData);
-        }
-      } catch (error) {
-        console.warn('Không thể lấy dữ liệu dashboard:', error.message || error);
-      } finally {
-        setLoading(false);
+      if (!isPTView) {
+        fetchDailyMissions(todayStr);
       }
-    };
-    fetchDashboard();
-  }, []);
+
+      const fetchDashboard = async () => {
+        try {
+          const response = await dashboardService.getUserDashboard();
+          let responseData = response.data;
+          
+          if (responseData) {
+            setDashboardData(responseData);
+          }
+        } catch (error) {
+          console.warn('Không thể lấy dữ liệu dashboard:', error.message || error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchDashboard();
+    }, [isPTView])
+  );
 
   const displayUser = isPTView ? studentData : (profile || user);
   const metrics = storeMetrics || displayUser?.metrics || {};
@@ -180,10 +189,6 @@ const StudentDashboardScreen = () => {
               </View>
             </View>
             <View style={styles.headerRight}>
-              <View style={styles.rankBadge}>
-                <Shield color="#00FF66" size={12} strokeWidth={3} />
-                <Text style={styles.rankText}>LV.12</Text>
-              </View>
               <TouchableOpacity style={styles.walletBadge} activeOpacity={0.8} onPress={() => navigation.navigate('RewardsStore')}>
                 <Text style={styles.walletIcon}>🪙</Text>
                 <Text style={styles.walletText}>{totalPoints.toLocaleString('en-US')}</Text>
@@ -263,60 +268,46 @@ const StudentDashboardScreen = () => {
           </TouchableOpacity>
         </View>
         <View style={[styles.questsContainer, { marginBottom: 32 }]}>
-          <TouchableOpacity style={styles.questCard} activeOpacity={0.8}>
-            <View style={styles.questIconCompleted}>
-              <CheckCircle color="#0F172A" size={20} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.questTitleCompleted}>Scan bữa sáng</Text>
-              <Text style={styles.questReward}>+50 XP (Đã nhận)</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.questCard} activeOpacity={0.8}>
-            <View style={styles.questIconPending}>
-              <View style={styles.questDot} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.questTitle}>Scan bữa trưa</Text>
-              <Text style={styles.questRewardActive}>+50 XP</Text>
-            </View>
-          </TouchableOpacity>
+          {dailyQuests && dailyQuests.length > 0 ? (
+            dailyQuests.slice(0, 3).map((quest) => {
+              const isCompleted = quest.status === 'COMPLETED' || quest.status === 'completed' || quest.isCompleted === true || quest.completed === true || (quest.progress !== undefined && quest.target !== undefined && quest.progress >= quest.target);
+              return (
+              <TouchableOpacity 
+                key={quest.id} 
+                style={styles.questCard} 
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (!isCompleted) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    triggerMissionAction(quest.id || quest.type || quest.questId, null, todayStr);
+                  }
+                }}
+              >
+                {isCompleted ? (
+                  <View style={styles.questIconCompleted}>
+                    <CheckCircle color="#0F172A" size={20} />
+                  </View>
+                ) : (
+                  <View style={styles.questIconPending}>
+                    <View style={styles.questDot} />
+                  </View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={isCompleted ? styles.questTitleCompleted : styles.questTitle}>
+                    {quest.title}
+                  </Text>
+                  <Text style={isCompleted ? styles.questReward : styles.questRewardActive}>
+                    +{quest.points || quest.reward || quest.pointsAwarded || 50} XP {isCompleted ? '(Đã nhận)' : ''}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )})
+          ) : (
+             <Text style={{color: '#94A3B8', textAlign: 'center'}}>Chưa có nhiệm vụ hôm nay</Text>
+          )}
         </View>
 
-        {/* ===== Gợi ý bữa ăn ===== */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Gợi ý bữa ăn</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SuggestedMeals')}>
-            <Text style={styles.viewAllLink}>Xem tất cả</Text>
-          </TouchableOpacity>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-          <TouchableOpacity style={styles.suggestionCard}>
-            <Image source={{ uri: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80' }} style={styles.suggestionImg} />
-            <View style={styles.calorieTag}><Text style={styles.tagText}>350 kcal</Text></View>
-            <View style={styles.suggestionInfo}>
-              <Text style={styles.foodName}>Phở gà</Text>
-              <Text style={styles.foodDesc}>Giàu đạm, ít béo</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.suggestionCard}>
-            <Image source={{ uri: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80' }} style={styles.suggestionImg} />
-            <View style={styles.calorieTag}><Text style={styles.tagText}>280 kcal</Text></View>
-            <View style={styles.suggestionInfo}>
-              <Text style={styles.foodName}>Gỏi cuốn</Text>
-              <Text style={styles.foodDesc}>Nhiều rau xanh</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.suggestionCard}>
-            <Image source={{ uri: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=400&q=80' }} style={styles.suggestionImg} />
-            <View style={styles.calorieTag}><Text style={styles.tagText}>420 kcal</Text></View>
-            <View style={styles.suggestionInfo}>
-              <Text style={styles.foodName}>Cơm gà</Text>
-              <Text style={styles.foodDesc}>Cân bằng dinh dưỡng</Text>
-            </View>
-          </TouchableOpacity>
-        </ScrollView>
+
 
         {/* ===== PRO Upgrade Banner ===== */}
         {displayUser?.tier !== 'PRO' && (

@@ -11,13 +11,16 @@ import {
   ActivityIndicator,
   Platform,
   Alert,
-  Linking
+  Linking,
+  Modal
 } from 'react-native';
 import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
 import { AbstractBackground, GlassCard } from '../../../components/common';
-import { Search, Star, PlayCircle, Users, CheckCircle, ChevronRight, Loader2 } from 'lucide-react-native';
+import { Search, Star, PlayCircle, Users, CheckCircle, ChevronRight, Loader2, Shield, Award, X, Lock } from 'lucide-react-native';
+import YoutubePlayer from 'react-native-youtube-iframe';
+import NativeVideoPlayer from '../../../components/shared/NativeVideoPlayer';
+import { useNavigation } from '@react-navigation/native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
-import { USE_MOCK } from '../../../mocks';
 import paymentService from '../../../api/services/payment.service';
 import contentService from '../../../api/services/content.service';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -70,24 +73,25 @@ const MOCK_COURSES = [
 ];
 
 const PTConnectScreen = () => {
+  const navigation = useNavigation();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [purchasingId, setPurchasingId] = useState(null);
 
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [courseDetail, setCourseDetail] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [playingLessonDemo, setPlayingLessonDemo] = useState(null);
+
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        if (USE_MOCK) {
-          // Giả lập delay mạng
-          await new Promise(resolve => setTimeout(resolve, 800));
-          setCourses(MOCK_COURSES);
+        const response = await contentService.getDiscoverPTCourses({ page: 1, limit: 20 });
+        if (response && response.data) {
+          setCourses(response.data);
         } else {
-          const response = await contentService.getDiscoverPTCourses({ page: 1, limit: 20 });
-          if (response && response.data) {
-            setCourses(response.data);
-          } else {
-            setCourses(MOCK_COURSES); // Fallback nếu API lỗi
-          }
+          setCourses(MOCK_COURSES); // Fallback nếu API lỗi
         }
       } catch (error) {
         console.warn('Không thể lấy danh sách khóa học:', error);
@@ -99,36 +103,39 @@ const PTConnectScreen = () => {
     fetchCourses();
   }, []);
 
-  const handleBuyCourse = async (courseId) => {
+  const handleOpenDetail = async (course) => {
+    setSelectedCourse(course);
+    setModalVisible(true);
+    setLoadingDetail(true);
     try {
-      setPurchasingId(courseId);
-      
-      // Gọi API Payment Checkout
-      const payload = {
-        productType: 'PT_COURSE',
-        productId: courseId
-      };
-      
-      const response = await paymentService.createCheckout(payload);
-      
-      // Response trả về chứa checkoutUrl (trang quét mã QR của PayOS)
-      if (response && response.data && response.data.checkoutUrl) {
-        // Mở trình duyệt ngoài hoặc in-app browser để thanh toán
-        const supported = await Linking.canOpenURL(response.data.checkoutUrl);
-        if (supported) {
-          await Linking.openURL(response.data.checkoutUrl);
-        } else {
-          Alert.alert('Lỗi', 'Không thể mở trang thanh toán.');
-        }
+      const response = await contentService.getPTCourseDetail(course.id);
+      if (response && response.data) {
+        setCourseDetail(response.data);
       } else {
-        throw new Error('Không lấy được link thanh toán từ hệ thống.');
+        // Fallback to basic info if response is empty
+        setCourseDetail({ ...course, modules: [] });
+      }
+    } catch (error) {
+      console.warn('Lỗi lấy chi tiết khóa học:', error?.response?.data || error);
+      // Fallback to allow testing UI even if backend crashes
+      setCourseDetail({ ...course, modules: [] });
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const handleBuyCourse = async (courseId) => {
+    setPurchasingId(courseId);
+    try {
+      const response = await paymentService.createCheckoutSession(courseId);
+      if (response.success && response.data?.checkoutUrl) {
+        Linking.openURL(response.data.checkoutUrl);
+      } else {
+        Alert.alert('Lỗi', 'Không thể tạo phiên thanh toán.');
       }
     } catch (error) {
       console.warn('Lỗi thanh toán:', error);
-      Alert.alert(
-        'Thanh toán thất bại',
-        error.message || 'Có lỗi xảy ra khi tạo giao dịch thanh toán. Vui lòng thử lại.'
-      );
+      Alert.alert('Lỗi', 'Đã có lỗi xảy ra. Vui lòng thử lại sau.');
     } finally {
       setPurchasingId(null);
     }
@@ -184,7 +191,12 @@ const PTConnectScreen = () => {
         ) : (
           <View style={styles.listContainer}>
             {courses.map((course) => (
-              <TouchableOpacity key={course.id} style={styles.courseCard} activeOpacity={0.9}>
+              <TouchableOpacity 
+                key={course.id} 
+                style={styles.courseCard} 
+                activeOpacity={0.9}
+                onPress={() => handleOpenDetail(course)}
+              >
                 <Image source={{ uri: course.thumbnailUrl }} style={styles.courseImage} />
                 
                 <View style={styles.courseContent}>
@@ -253,6 +265,194 @@ const PTConnectScreen = () => {
         {/* Padding cho Bottom Tabs */}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Course Detail Modal */}
+      <Modal visible={isModalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle} numberOfLines={1}>{selectedCourse?.title}</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
+                <X color="#FFF" size={24} />
+              </TouchableOpacity>
+            </View>
+            
+            {loadingDetail ? (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#00FF66" />
+              </View>
+            ) : courseDetail ? (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Video Demo Area */}
+                {(() => {
+                  if (playingLessonDemo) {
+                    if (playingLessonDemo.type === 'cloudinary') {
+                      return <NativeVideoPlayer sourceUri={playingLessonDemo.url} style={styles.demoVideo} />;
+                    } else if (playingLessonDemo.type === 'youtube') {
+                      return (
+                        <View style={styles.demoVideo}>
+                          <YoutubePlayer height={200} play={false} videoId={playingLessonDemo.url} />
+                        </View>
+                      );
+                    }
+                  }
+
+                  const ytTag = courseDetail?.tags?.find(t => t.startsWith('YT_'));
+                  let parsedYtId = ytTag ? ytTag.replace('YT_', '') : courseDetail?.youtubeVideoId;
+                  if (parsedYtId) {
+                    const match = parsedYtId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+                    if (match) parsedYtId = match[1];
+                  }
+                  
+                  if (courseDetail?.cloudinaryVideoUrl) {
+                    return <NativeVideoPlayer sourceUri={courseDetail.cloudinaryVideoUrl} style={styles.demoVideo} />;
+                  } else if (parsedYtId) {
+                    return (
+                      <View style={styles.demoVideo}>
+                        <YoutubePlayer height={200} play={false} videoId={parsedYtId} />
+                      </View>
+                    );
+                  } else if (courseDetail?.demoVideoUrl) {
+                    return <NativeVideoPlayer sourceUri={courseDetail.demoVideoUrl} style={styles.demoVideo} />;
+                  } else {
+                    return <Image source={{ uri: courseDetail?.thumbnailUrl || selectedCourse?.thumbnailUrl }} style={styles.demoVideo} />;
+                  }
+                })()}
+
+                {/* PT Info Area */}
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>Thông tin Huấn luyện viên</Text>
+                  <TouchableOpacity 
+                    style={styles.ptProfileHeaderLarge} 
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      const ptData = courseDetail?.pt || selectedCourse?.pt;
+                      if (ptData) {
+                        setModalVisible(false);
+                        setTimeout(() => navigation.navigate('PublicPTProfile', { pt: ptData }), 300);
+                      }
+                    }}
+                  >
+                    <View style={styles.ptProfileHeader}>
+                      {/* Avatar */}
+                      <Image 
+                        source={{ uri: courseDetail.pt?.avatar || courseDetail.pt?.avatarUrl || selectedCourse?.ptAvatarUrl || 'https://i.pravatar.cc/150' }} 
+                        style={styles.ptProfileAvatarLarge} 
+                      />
+                      <View style={styles.ptProfileNameContainer}>
+                        {/* Name */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text style={styles.ptProfileNameLarge}>
+                            {courseDetail.pt?.fullName || (courseDetail.pt?.firstName ? `${courseDetail.pt.firstName} ${courseDetail.pt.lastName}` : null) || selectedCourse?.ptFullName || 'Huấn luyện viên'}
+                          </Text>
+                          <CheckCircle color="#00FF66" size={16} style={{ marginLeft: 6 }} />
+                        </View>
+                        {/* Email or Phone */}
+                        {(courseDetail.pt?.email || courseDetail.pt?.phoneNumber) && (
+                          <Text style={{ color: '#A0A0A0', fontSize: 13, marginTop: 4 }}>
+                            {courseDetail.pt?.email} {courseDetail.pt?.phoneNumber && `• ${courseDetail.pt?.phoneNumber}`}
+                          </Text>
+                        )}
+                        {/* Experience */}
+                        {(courseDetail.pt?.yearsOfExperience || courseDetail.pt?.experienceYears) && (
+                          <View style={styles.expBadge}>
+                            <Star color="#F5A623" size={12} style={{ marginRight: 4 }} />
+                            <Text style={styles.expBadgeText}>{(courseDetail.pt?.yearsOfExperience || courseDetail.pt?.experienceYears)} năm kinh nghiệm</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                    <ChevronRight size={20} color={COLORS.textLight} />
+                  </TouchableOpacity>
+                  
+                  <View style={styles.ptBioContainerLarge}>
+                    {/* Bio */}
+                    {(courseDetail.pt?.description || courseDetail.pt?.bio) && (
+                      <View style={{ marginTop: 12 }}>
+                        <Text style={styles.ptBioTextLarge}>{courseDetail.pt?.description || courseDetail.pt?.bio}</Text>
+                      </View>
+                    )}
+                    
+                    {/* Specialties / Tags */}
+                    {courseDetail.pt?.specialties && courseDetail.pt.specialties.length > 0 && (
+                      <View style={{ marginTop: 12 }}>
+                        <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 'bold', marginBottom: 8 }}>Chuyên môn:</Text>
+                        <View style={styles.tagsRowLarge}>
+                          {courseDetail.pt.specialties.map((spec, idx) => (
+                            <View key={idx} style={styles.tagPillLarge}>
+                              <Text style={styles.tagTextLarge}>{typeof spec === 'string' ? spec : spec.name}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* Course Details */}
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>Giới thiệu khóa học</Text>
+                  <Text style={styles.courseDescription}>{courseDetail.description || 'Chưa có mô tả chi tiết cho khóa học này.'}</Text>
+                </View>
+
+                {/* Curriculum / Modules */}
+                {courseDetail.modules && courseDetail.modules.length > 0 && (
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalSectionTitle}>Nội dung giáo trình</Text>
+                    {courseDetail.modules.map((mod, mIdx) => (
+                      <View key={mod.id || mIdx} style={styles.curriculumModule}>
+                        <Text style={styles.curriculumModuleTitle}>{mod.title}</Text>
+                        <View style={styles.curriculumLessons}>
+                          {mod.lessons && mod.lessons.map((lesson, lIdx) => {
+                            const hasVideo = lesson.cloudinaryVideoUrl || lesson.youtubeVideoId;
+                            const canPreview = lesson.isPreview && hasVideo;
+                            return (
+                              <View key={lesson.id || lIdx} style={styles.curriculumLessonItem}>
+                                <View style={styles.curriculumLessonInfo}>
+                                  <Text style={styles.curriculumLessonName}>Bài {lIdx + 1}: {lesson.title}</Text>
+                                </View>
+                                {canPreview ? (
+                                  <TouchableOpacity 
+                                    style={styles.previewBtn}
+                                    onPress={() => {
+                                      if (lesson.cloudinaryVideoUrl) setPlayingLessonDemo({ type: 'cloudinary', url: lesson.cloudinaryVideoUrl });
+                                      else if (lesson.youtubeVideoId) {
+                                        let ytId = lesson.youtubeVideoId;
+                                        const match = ytId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+                                        if (match) ytId = match[1];
+                                        setPlayingLessonDemo({ type: 'youtube', url: ytId });
+                                      }
+                                    }}
+                                  >
+                                    <PlayCircle size={16} color={COLORS.primary} style={{ marginRight: 4 }} />
+                                    <Text style={styles.previewBtnText}>Xem thử</Text>
+                                  </TouchableOpacity>
+                                ) : (
+                                  <View style={styles.lockedBtn}><Lock size={14} color={COLORS.textLight} /></View>
+                                )}
+                              </View>
+                            );
+                          })}
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                <View style={{ height: 100 }} />
+              </ScrollView>
+            ) : null}
+
+            {/* Bottom Bar */}
+            <View style={styles.modalBottomBar}>
+              <Text style={styles.modalPriceText}>{formatPrice(selectedCourse?.priceVnd || 0)}</Text>
+              <TouchableOpacity style={styles.buyBtnLarge} onPress={() => { setModalVisible(false); handleBuyCourse(selectedCourse?.id); }}>
+                <Text style={styles.buyBtnLargeText}>Đăng ký ngay</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 };
@@ -467,7 +667,43 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
     marginRight: 4,
-  }
+  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#0F172A', borderTopLeftRadius: 24, borderTopRightRadius: 24, height: '90%', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  modalTitle: { ...TYPOGRAPHY.h3, color: '#FFF', flex: 1, marginRight: 10 },
+  closeBtn: { padding: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20 },
+  demoVideo: { width: '100%', height: 200, backgroundColor: '#000' },
+  modalSection: { padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  modalSectionTitle: { ...TYPOGRAPHY.h3, color: '#FFF', marginBottom: 16 },
+  ptProfileHeaderLarge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)', marginBottom: 16 },
+  ptProfileAvatarContainerLarge: { marginRight: 16 },
+  ptProfileAvatarLarge: { width: 70, height: 70, borderRadius: 35, borderWidth: 2, borderColor: '#00FF66' },
+  ptProfileInfoLarge: { flex: 1 },
+  ptProfileNameLarge: { ...TYPOGRAPHY.h2, fontSize: 20, color: '#FFF' },
+  expBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0, 255, 102, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginTop: 8, borderWidth: 1, borderColor: 'rgba(0, 255, 102, 0.3)' },
+  expBadgeText: { color: '#00FF66', fontSize: 12, fontWeight: '600', marginLeft: 4 },
+  ptBioContainerLarge: { backgroundColor: 'rgba(0,0,0,0.2)', padding: 14, borderRadius: 12, marginBottom: 16 },
+  bioLabel: { fontSize: 13, color: '#94A3B8', fontWeight: '600', marginBottom: 6, textTransform: 'uppercase' },
+  ptBioTextLarge: { color: '#F8FAFC', fontSize: 15, lineHeight: 24 },
+  specialtiesWrapper: { marginTop: 4 },
+  tagsRowLarge: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tagPillLarge: { backgroundColor: 'rgba(255, 255, 255, 0.08)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.15)' },
+  tagTextLarge: { fontSize: 13, color: '#E2E8F0', fontWeight: '500' },
+  courseDescription: { color: '#E2E8F0', fontSize: 15, lineHeight: 24 },
+  modalBottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#0F172A', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingBottom: Platform.OS === 'ios' ? 30 : 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' },
+  modalPriceText: { ...TYPOGRAPHY.h2, color: '#00FF66' },
+  buyBtnLarge: { backgroundColor: '#00FF66', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16 },
+  buyBtnLargeText: { color: '#0B0F19', fontWeight: 'bold', fontSize: 16 },
+  curriculumModule: { marginBottom: 16, backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  curriculumModuleTitle: { ...TYPOGRAPHY.subtitle, color: '#FFF', marginBottom: 12 },
+  curriculumLessons: { paddingLeft: 4 },
+  curriculumLessonItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  curriculumLessonInfo: { flex: 1, paddingRight: 16 },
+  curriculumLessonName: { fontSize: 14, color: '#E2E8F0' },
+  previewBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0, 255, 102, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(0, 255, 102, 0.2)' },
+  previewBtnText: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
+  lockedBtn: { padding: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20 }
 });
 
 export default PTConnectScreen;

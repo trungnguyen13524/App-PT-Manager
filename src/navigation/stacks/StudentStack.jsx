@@ -21,6 +21,7 @@ import QuestsScreen from '../../features/gamification/screens/QuestsScreen';
 import RewardsStoreScreen from '../../features/gamification/screens/RewardsStoreScreen';
 import EditProfileScreen from '../../features/users/screens/EditProfileScreen';
 import NotificationSettingsScreen from '../../features/users/screens/NotificationSettingsScreen';
+import PublicPTProfileScreen from '../../features/content/screens/PublicPTProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -47,6 +48,7 @@ export const StudentStack = () => {
       <Stack.Screen name="BodyMetrics" component={BodyMetricsScreen} />
       <Stack.Screen name="Quests" component={QuestsScreen} />
       <Stack.Screen name="RewardsStore" component={RewardsStoreScreen} />
+      <Stack.Screen name="PublicPTProfile" component={PublicPTProfileScreen} />
     </Stack.Navigator>
   );
 };

@@ -14,15 +14,23 @@ import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import NutriButton from '../../../components/shared/NutriButton';
 import { usePTStore } from '../../../store/ptStore';
 import { useDialogStore } from '../../../store/dialogStore';
+import ptService from '../../../api/services/pt.service';
 
 const CourseManagementScreen = () => {
   const navigation = useNavigation();
-  const { courses, isLoading, verificationStatus, fetchCourses } = usePTStore();
+  const { courses, isLoading, verificationStatus, fetchCourses, error } = usePTStore();
 
   useEffect(() => {
-    if (verificationStatus === 'APPROVED') {
-      fetchCourses();
-    }
+    const init = async () => {
+      let currentStatus = verificationStatus;
+      if (!currentStatus) {
+        currentStatus = await usePTStore.getState().fetchVerificationStatus();
+      }
+      if (currentStatus === 'APPROVED') {
+        fetchCourses();
+      }
+    };
+    init();
   }, [verificationStatus]);
 
   if (verificationStatus === 'PENDING_REVIEW' || verificationStatus === 'PENDING') {
@@ -52,17 +60,87 @@ const CourseManagementScreen = () => {
 
   const handlePublish = async (courseId) => {
     try {
-      // Gọi API publish thực tế, ví dụ: await ptService.publishCourse(courseId);
+      // Gọi API lấy detail để kiểm tra xem có bài học nào chưa
+      const detailRes = await ptService.getCourseDetail(courseId);
+      const courseDetail = detailRes.data;
+      const hasLessons = courseDetail.modules && courseDetail.modules.some(m => m.lessons && m.lessons.length > 0);
+
+      if (!hasLessons) {
+        useDialogStore.getState().showDialog({
+          title: 'Giáo trình trống',
+          message: 'Khóa học chưa có bài học nào. Vui lòng soạn giáo trình trước khi xuất bản.',
+          type: 'error',
+          buttons: [
+            {
+              text: 'Soạn giáo trình',
+              onPress: () => navigation.navigate('CurriculumBuilder', { courseId })
+            },
+            { text: 'Đóng', style: 'cancel' }
+          ]
+        });
+        return;
+      }
+
+      // Pre-check frontend: Tìm chính xác bài học nào đang thiếu video
+      const missingLessons = [];
+      courseDetail.modules?.forEach(m => {
+        m.lessons?.forEach(l => {
+          if (!l.videoUrl && !l.youtubeVideoId) {
+            missingLessons.push(`- ${m.title}: ${l.title}`);
+          }
+        });
+      });
+
+      if (missingLessons.length > 0) {
+        useDialogStore.getState().showDialog({
+          title: 'Chưa đủ điều kiện xuất bản',
+          message: 'Hệ thống phát hiện các bài học sau CHƯA CÓ VIDEO trên Cloud:\n' + missingLessons.join('\n') + '\n\nVui lòng vào Soạn Giáo Trình để tải lại video cho các bài này.',
+          type: 'error',
+          buttons: [
+            {
+              text: 'Sửa giáo trình',
+              onPress: () => navigation.navigate('CurriculumBuilder', { courseId })
+            },
+            { text: 'Đóng', style: 'cancel' }
+          ]
+        });
+        return;
+      }
+
+      const result = await usePTStore.getState().publishCourse(courseId);
+    if (result.success) {
       useDialogStore.getState().showDialog({
         title: 'Thành công',
-        message: 'Chức năng xuất bản đang kết nối API.',
+        message: 'Khóa học đã được xuất bản.',
         type: 'success'
       });
-      fetchCourses();
-    } catch (error) {
+    } else {
+      if (result.payload && result.payload.code === 'CURRICULUM_INCOMPLETE') {
+        const missingInfo = result.payload.details ? JSON.stringify(result.payload.details) : '';
+        useDialogStore.getState().showDialog({
+          title: 'Giáo trình chưa hoàn thiện',
+          message: `Còn bài học thiếu Video. Vui lòng kiểm tra lại giáo trình.\nChi tiết: ${missingInfo}`,
+          type: 'error',
+          buttons: [
+            {
+              text: 'Sửa giáo trình',
+              onPress: () => navigation.navigate('CurriculumBuilder', { courseId })
+            },
+            { text: 'Đóng', style: 'cancel' }
+          ]
+        });
+      } else {
+        useDialogStore.getState().showDialog({
+          title: 'Lỗi',
+          message: result.error || 'Không thể xuất bản khóa học.',
+          type: 'error'
+        });
+      }
+    }
+  } catch (error) {
       useDialogStore.getState().showDialog({
         title: 'Lỗi',
-        message: 'Không thể xuất bản khóa học.',
+        message: (error.response?.data?.error?.message) || error.message || 'Lỗi hệ thống khi kết nối.',
         type: 'error'
       });
     }
@@ -84,17 +162,32 @@ const CourseManagementScreen = () => {
           <ArrowLeft size={24} color={COLORS.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Quản lý khóa học</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('CourseMeta')}>
           <Plus size={24} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
-        {courses.length === 0 ? (
+        {error ? (
+          <View style={styles.emptyState}>
+            <Text style={{ color: COLORS.error, marginTop: 10, textAlign: 'center' }}>
+              Lỗi từ Backend khi tải khóa học: {typeof error === 'object' ? JSON.stringify(error) : String(error)}
+            </Text>
+            <NutriButton 
+              title="Thử lại" 
+              style={[styles.createButton, { marginTop: 20 }]} 
+              onPress={() => fetchCourses()}
+            />
+          </View>
+        ) : courses.length === 0 ? (
           <View style={styles.emptyState}>
             <BookOpen size={48} color={COLORS.textLight} />
             <Text style={styles.emptyText}>Bạn chưa có khóa học nào</Text>
-            <NutriButton title="Tạo khóa học mới" style={styles.createButton} />
+            <NutriButton 
+              title="Tạo khóa học mới" 
+              style={styles.createButton} 
+              onPress={() => navigation.navigate('CourseMeta')}
+            />
           </View>
         ) : (
           courses.map(course => (
@@ -102,10 +195,10 @@ const CourseManagementScreen = () => {
               <View style={styles.courseInfo}>
                 <Text style={styles.courseTitle}>{course.title}</Text>
                 <Text style={styles.coursePrice}>
-                  {course.priceVnd.toLocaleString('vi-VN')} đ
+                  {((course.priceVnd ?? course.price_vnd ?? 0)).toLocaleString('vi-VN')} đ
                 </Text>
                 <View style={styles.statsRow}>
-                  <Text style={styles.statText}>Học viên: {course.enrolled}</Text>
+                  <Text style={styles.statText}>Học viên: {course.enrolled || course.total_students || 0}</Text>
                   <View style={[
                     styles.statusBadge, 
                     { backgroundColor: course.status === 'PUBLISHED' ? COLORS.successLight : COLORS.warningLight }
@@ -121,7 +214,18 @@ const CourseManagementScreen = () => {
               </View>
               
               <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.actionButton}>
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={() => navigation.navigate('CurriculumBuilder', { courseId: course.id })}
+                >
+                  <BookOpen size={16} color={COLORS.primary} />
+                  <Text style={styles.actionText}>Giáo trình</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={() => navigation.navigate('CourseMeta', { course })}
+                >
                   <Edit2 size={16} color={COLORS.primary} />
                   <Text style={styles.actionText}>Sửa</Text>
                 </TouchableOpacity>

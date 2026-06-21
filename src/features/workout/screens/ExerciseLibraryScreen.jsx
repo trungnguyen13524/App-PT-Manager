@@ -19,13 +19,6 @@ import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg'
 import { Modal } from 'react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { useWorkoutStore } from '../../../store/workoutStore';
-import { USE_MOCK } from '../../../mocks';
-
-const MOCK_FALLBACK_EXERCISES = [
-  { id: 'ex_pushup_standard', nameVi: 'Hít đất tiêu chuẩn', nameEn: 'Standard Push-Up', muscleGroups: ['CHEST', 'TRICEPS'], equipment: 'BODYWEIGHT', difficulty: 'BEGINNER', caloriesPerMinute: 7.5, thumbnailUrl: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800', youtubeVideoId: 'IODxDxX7oi4' },
-  { id: 'ex_crunch', nameVi: 'Gập bụng', nameEn: 'Crunch', muscleGroups: ['CORE'], equipment: 'BODYWEIGHT', difficulty: 'BEGINNER', caloriesPerMinute: 5.0, thumbnailUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800', youtubeVideoId: 'Xyd_fa5zoEU' },
-  { id: 'ex_squat', nameVi: 'Squat', nameEn: 'Squat', muscleGroups: ['LEGS', 'GLUTES'], equipment: 'BODYWEIGHT', difficulty: 'INTERMEDIATE', caloriesPerMinute: 10.0, thumbnailUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800', youtubeVideoId: 'YaXPRqUwItQ' }
-];
 
 const TRANSLATIONS = {
   muscleGroups: {
@@ -88,7 +81,7 @@ const ExerciseLibraryScreen = () => {
   // Bảo vệ fallback data
   const safeLibrary = (library && library.length > 0 && library[0]?.title) 
     ? library 
-    : MOCK_FALLBACK_EXERCISES;
+    : [];
 
   // Cập nhật categories theo cấu trúc mới
   const categories = ['Tất cả', 'Ngực', 'Lưng', 'Chân', 'Vai', 'Bụng/Lõi', 'Toàn thân'];
