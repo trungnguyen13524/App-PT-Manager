@@ -289,10 +289,16 @@ const PTConnectScreen = () => {
                     if (playingLessonDemo.type === 'cloudinary') {
                       return <NativeVideoPlayer sourceUri={playingLessonDemo.url} style={styles.demoVideo} />;
                     } else if (playingLessonDemo.type === 'youtube') {
+                      // This branch might not be hit anymore if we open links directly,
+                      // but keeping it just in case.
                       return (
-                        <View style={styles.demoVideo}>
-                          <YoutubePlayer height={200} play={false} videoId={playingLessonDemo.url} />
-                        </View>
+                        <TouchableOpacity 
+                          style={[styles.demoVideo, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }]}
+                          onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${playingLessonDemo.url}`)}
+                        >
+                          <Image source={{ uri: `https://img.youtube.com/vi/${playingLessonDemo.url}/hqdefault.jpg` }} style={[StyleSheet.absoluteFill, { opacity: 0.6 }]} />
+                          <PlayCircle color="#FFF" size={64} />
+                        </TouchableOpacity>
                       );
                     }
                   }
@@ -308,9 +314,13 @@ const PTConnectScreen = () => {
                     return <NativeVideoPlayer sourceUri={courseDetail.cloudinaryVideoUrl} style={styles.demoVideo} />;
                   } else if (parsedYtId) {
                     return (
-                      <View style={styles.demoVideo}>
-                        <YoutubePlayer height={200} play={false} videoId={parsedYtId} />
-                      </View>
+                      <TouchableOpacity 
+                        style={[styles.demoVideo, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }]}
+                        onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${parsedYtId}`)}
+                      >
+                        <Image source={{ uri: `https://img.youtube.com/vi/${parsedYtId}/hqdefault.jpg` }} style={[StyleSheet.absoluteFill, { opacity: 0.6 }]} />
+                        <PlayCircle color="#FFF" size={64} />
+                      </TouchableOpacity>
                     );
                   } else if (courseDetail?.demoVideoUrl) {
                     return <NativeVideoPlayer sourceUri={courseDetail.demoVideoUrl} style={styles.demoVideo} />;
@@ -402,7 +412,11 @@ const PTConnectScreen = () => {
                                         let ytId = lesson.youtubeVideoId;
                                         const match = ytId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
                                         if (match) ytId = match[1];
-                                        setPlayingLessonDemo({ type: 'youtube', url: ytId });
+                                        
+                                        // Open youtube link directly instead of playing inline
+                                        Linking.openURL(`https://www.youtube.com/watch?v=${ytId}`).catch(() => {
+                                          Linking.openURL(lesson.youtubeVideoId);
+                                        });
                                       }
                                     }}
                                   >

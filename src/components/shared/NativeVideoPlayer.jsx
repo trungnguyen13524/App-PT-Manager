@@ -5,6 +5,7 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 const NativeVideoPlayer = ({ sourceUri, style }) => {
   const player = useVideoPlayer(sourceUri, player => {
     player.loop = false;
+    player.play();
   });
 
   return (
@@ -12,8 +13,7 @@ const NativeVideoPlayer = ({ sourceUri, style }) => {
       <VideoView
         style={styles.video}
         player={player}
-        allowsFullscreen
-        allowsPictureInPicture
+        nativeControls={true}
       />
     </View>
   );
