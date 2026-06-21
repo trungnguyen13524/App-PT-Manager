@@ -63,6 +63,12 @@ const ScanResultScreen = () => {
           foodName: foodData.name,
           notes: notes
         });
+        
+        // Trigger AI_SCAN mission
+        const { useMissionStore } = require('../../../store/missionStore');
+        const todayStr = new Date().toISOString().split('T')[0];
+        useMissionStore.getState().triggerMissionAction('AI_SCAN', undefined, todayStr);
+
         useDialogStore.getState().showDialog({
           title: 'Thành công',
           message: 'Đã lưu vào nhật ký dinh dưỡng qua AI Scan!',
@@ -84,6 +90,11 @@ const ScanResultScreen = () => {
         };
         const result = await addFoodLog(fallbackPayload);
         if (result.success) {
+          // Trigger AI_SCAN mission
+          const { useMissionStore } = require('../../../store/missionStore');
+          const todayStr = new Date().toISOString().split('T')[0];
+          useMissionStore.getState().triggerMissionAction('AI_SCAN', undefined, todayStr);
+
           useDialogStore.getState().showDialog({
             title: 'Thành công',
             message: 'Đã lưu vào nhật ký dinh dưỡng!',

@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, CheckCircle, Zap, Star, Shield, Target } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useMissionStore } from '../../../store/missionStore';
 
 const { width } = Dimensions.get('window');
 
 const QuestsScreen = () => {
   const navigation = useNavigation();
-  const { totalPoints, dailyQuests, challengeQuests, triggerMissionAction } = useMissionStore();
+  const { totalPoints, dailyQuests, challengeQuests, triggerMissionAction, fetchDailyMissions } = useMissionStore();
   const [activeTab, setActiveTab] = useState('daily'); // 'daily' | 'challenge'
+
+  useFocusEffect(
+    useCallback(() => {
+      const todayStr = new Date().toISOString().split('T')[0];
+      fetchDailyMissions(todayStr);
+    }, [fetchDailyMissions])
+  );
 
   const getIconForQuest = (id) => {
     switch (id) {
@@ -37,7 +44,7 @@ const QuestsScreen = () => {
         onPress={() => {
           if (!isCompleted) {
             const todayStr = new Date().toISOString().split('T')[0];
-            triggerMissionAction(quest.id || quest.type || quest.questId, null, todayStr);
+            triggerMissionAction(quest.type || quest.id || quest.questId, undefined, todayStr);
           }
         }}
       >

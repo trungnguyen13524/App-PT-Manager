@@ -20,6 +20,20 @@ const PublicPTProfileScreen = () => {
   // Lấy dữ liệu PT từ màn hình trước truyền sang
   const pt = route.params?.pt || {};
 
+  React.useEffect(() => {
+    const triggerMission = async () => {
+      try {
+        const { useMissionStore } = require('../../../store/missionStore');
+        const todayStr = new Date().toISOString().split('T')[0];
+        // referenceId should be undefined instead of null to avoid VALIDATION_ERROR "Expected string, received null"
+        await useMissionStore.getState().triggerMissionAction('PT_VISIT', undefined, todayStr);
+      } catch (error) {
+        console.warn('Cannot trigger PT_VISIT mission', error);
+      }
+    };
+    triggerMission();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -55,18 +69,6 @@ const PublicPTProfileScreen = () => {
           <Text style={styles.subtitle}>
             PT Chuyên nghiệp • {(pt.yearsOfExperience || pt.experienceYears) ? `${(pt.yearsOfExperience || pt.experienceYears)} năm kinh nghiệm` : 'NutriCoach Gold'}
           </Text>
-          
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>10+</Text>
-              <Text style={styles.statLabel}>Khóa học</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>Đang cập nhật</Text>
-              <Text style={styles.statLabel}>Đánh giá</Text>
-            </View>
-          </View>
         </View>
 
         {/* Chuyên môn */}
@@ -87,7 +89,7 @@ const PublicPTProfileScreen = () => {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Giới thiệu bản thân</Text>
           <Text style={styles.bioText}>
-            {pt.description || pt.bio || 'Huấn luyện viên này chưa cập nhật phần giới thiệu bản thân.'}
+            {pt.bio || pt.description || pt.bioExcerpt || 'Huấn luyện viên này chưa cập nhật phần giới thiệu bản thân.'}
           </Text>
         </View>
 
