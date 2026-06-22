@@ -90,6 +90,11 @@ export const useMissionStore = create((set, get) => ({
   },
 
   triggerMissionAction: async (missionId, referenceId, date) => {
+    // Không trigger thủ công các nhiệm vụ do backend tự quản lý
+    if (['DAILY_LOGIN', 'PERFECT_DIARY', 'DISCIPLINE_MASTER'].includes(missionId)) {
+      return false;
+    }
+    
     try {
       const res = await questsService.triggerQuest({ questId: missionId, referenceId, date });
       

@@ -86,7 +86,7 @@ const PTStudentListScreen = () => {
           {students.map((student) => (
             <TouchableOpacity 
               key={student.id} 
-              onPress={() => navigation.navigate('StudentDashboard', { isPTView: true, studentData: student })}
+              onPress={() => navigation.navigate('StudentDetail', { studentId: student.id })}
             >
               <NutriCard style={styles.studentCard}>
                 <Image source={{ uri: student.avatar || 'https://via.placeholder.com/150' }} style={styles.studentAvatar} />
@@ -106,6 +106,27 @@ const PTStudentListScreen = () => {
               </NutriCard>
             </TouchableOpacity>
           ))}
+
+          {/* Fake Test Student */}
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('StudentDetail', { studentId: 'test_student_123' })}
+          >
+            <NutriCard style={[styles.studentCard, { borderColor: COLORS.primary, borderWidth: 1, backgroundColor: 'rgba(52, 152, 219, 0.05)' }]}>
+              <Image source={{ uri: 'https://i.pravatar.cc/150?img=11' }} style={styles.studentAvatar} />
+              <View style={styles.studentInfo}>
+                <Text style={styles.studentName}>[TEST] Học viên ảo</Text>
+                <Text style={styles.studentGoal}>Bấm vào để test tính năng Giao bài</Text>
+                <View style={styles.studentMeta}>
+                  <Text style={styles.metaText}>70 kg</Text>
+                  <View style={styles.dot} />
+                  <Text style={styles.metaText}>175 cm</Text>
+                </View>
+              </View>
+              <View style={styles.progressCircle}>
+                <Text style={styles.progressText}>0%</Text>
+              </View>
+            </NutriCard>
+          </TouchableOpacity>
         </View>
 
         <View style={{ height: 100 }} />

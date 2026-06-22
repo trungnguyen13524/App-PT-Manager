@@ -19,7 +19,7 @@ export const useNutritionStore = create((set, get) => ({
     let targetDate = date;
     if (!targetDate) {
       const now = new Date();
-      targetDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      targetDate = now.toISOString().split('T')[0];
     }
     set({ isLoading: true, error: null });
     try {
@@ -31,19 +31,25 @@ export const useNutritionStore = create((set, get) => ({
       // Backend trả về format mới: { date, meals: { breakfast: [], lunch: [], ... }, totals }
       // Hoặc format cũ: [ ... ]
       let parsedMeals = [];
-      if (Array.isArray(logsRes.data)) {
-        parsedMeals = logsRes.data;
-      } else if (logsRes.data && logsRes.data.meals) {
-        Object.values(logsRes.data.meals).forEach(mealArray => {
-          if (Array.isArray(mealArray)) {
-            parsedMeals = [...parsedMeals, ...mealArray];
-          }
-        });
+      const data = logsRes.data || logsRes; // Xử lý nếu API client trả về obj unwrapped
+
+      if (Array.isArray(data)) {
+        parsedMeals = data;
+      } else if (data && data.meals) {
+        if (Array.isArray(data.meals)) {
+          parsedMeals = data.meals;
+        } else {
+          Object.values(data.meals).forEach(mealArray => {
+            if (Array.isArray(mealArray)) {
+              parsedMeals = [...parsedMeals, ...mealArray];
+            }
+          });
+        }
       }
 
       set({ 
         meals: parsedMeals, 
-        dailySummary: summaryRes.data || get().dailySummary,
+        dailySummary: summaryRes.data || summaryRes || get().dailySummary,
         isLoading: false 
       });
     } catch (err) {
@@ -51,25 +57,37 @@ export const useNutritionStore = create((set, get) => ({
     }
   },
 
-  // Lấy tóm tắt tuần (Fallback: Vì BE chưa có API Weekly, ta gọi Daily cho hôm nay để vẽ biểu đồ)
-  fetchWeeklySummary: async (dateString) => {
+  // Lấy tóm tắt tuần bằng cách gọi 7 lần API Daily cho tuần hiện tại (Từ T2 đến CN)
+  fetchWeeklySummary: async () => {
     try {
-      const response = await nutritionService.getDailySummary({ date: dateString });
-      let responseData = response.data;
-      
-      const currentDay = new Date(dateString).getDay();
-      const mappedTodayIdx = currentDay === 0 ? 6 : currentDay - 1;
-      
-      // Tạo mảng tuần rỗng
-      const fakeWeek = Array(7).fill({ targetCalories: 0, consumedCalories: 0 });
-      if (responseData) {
-        fakeWeek[mappedTodayIdx] = responseData;
+      const now = new Date();
+      // Lấy ngày hiện tại theo chuẩn UTC để đồng bộ với Backend
+      const utcNow = new Date(now.toISOString().split('T')[0] + 'T12:00:00Z');
+      const currentDay = utcNow.getUTCDay();
+      const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+      const monday = new Date(utcNow);
+      monday.setUTCDate(utcNow.getUTCDate() + diffToMonday);
+
+      const promises = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setUTCDate(monday.getUTCDate() + i);
+        
+        // Only fetch if date is not in the future (relative to utcNow)
+        if (d > utcNow && d.getUTCDate() !== utcNow.getUTCDate() && d.getUTCMonth() !== utcNow.getUTCMonth()) {
+          promises.push(Promise.resolve({ data: { consumed: {}, target: {} } }));
+        } else {
+          const dateStr = d.toISOString().split('T')[0];
+          promises.push(nutritionService.getDailySummary({ date: dateStr }).catch(() => ({ data: { consumed: {}, target: {} } })));
+        }
       }
+
+      const results = await Promise.all(promises);
+      const weeklyData = results.map(res => res.data || res || { consumed: {}, target: {} });
       
-      set({ weeklySummary: fakeWeek });
+      set({ weeklySummary: weeklyData });
     } catch (err) {
-      // Đã ẩn console.warn để màn hình không bị vướng Log vàng khi lỗi mạng
-      // console.warn('Lỗi kéo tóm tắt dinh dưỡng (daily fallback):', err.message);
+      console.warn('Lỗi kéo tóm tắt dinh dưỡng tuần:', err.message);
     }
   },
 
@@ -93,7 +111,7 @@ export const useNutritionStore = create((set, get) => ({
       if (response.success) {
         // Tải lại dữ liệu ngày hiện tại theo timezone địa phương
         const logDate = new Date(foodData.consumedAt);
-        const dateKey = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
+        const dateKey = logDate.toISOString().split('T')[0];
         await get().fetchDailyLogs(dateKey);
       }
       set({ isLoading: false });

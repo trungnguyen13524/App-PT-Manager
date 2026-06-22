@@ -9,7 +9,14 @@ const contentService = {
   getPTCourseDetail: (id) => apiClient.get(`${endpoints.CONTENT.PT_COURSES}/${id}`),
 
   // GET /content/articles
-  getArticles: (params) => apiClient.get(endpoints.CONTENT.ARTICLES, { params }),
+  getArticles: (params) => {
+    const finalParams = { ...params };
+    if (finalParams.categoryId) {
+      finalParams.category = finalParams.categoryId;
+      delete finalParams.categoryId;
+    }
+    return apiClient.get(endpoints.CONTENT.ARTICLES, { params: finalParams });
+  },
 
   // GET /content/categories
   getCategories: (params) => apiClient.get(endpoints.CONTENT.CATEGORIES, { params }),

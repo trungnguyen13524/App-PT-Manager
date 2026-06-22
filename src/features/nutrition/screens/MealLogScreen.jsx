@@ -14,16 +14,19 @@ import {
   Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { ChevronLeft, Plus, Clock, ChevronRight, Utensils, Moon, Sun, Trash2, X } from 'lucide-react-native';
 import { useNutritionStore } from '../../../store/nutritionStore';
 import { useMissionStore } from '../../../store/missionStore';
 import { AbstractBackground } from '../../../components/common/AbstractBackground';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import foodsData from '../../../assets/foods.json';
+import { FOOD_IMAGES, toImageKey } from '../../../assets';
+import ptService from '../../../api/services/pt.service';
 
 const { width } = Dimensions.get('window');
 
-const MealLogScreen = () => {
+const MealLogScreen = ({ route }) => {
   const navigation = useNavigation();
   const { 
     meals, 
@@ -44,9 +47,146 @@ const MealLogScreen = () => {
   const [editingMeal, setEditingMeal] = useState(null);
   const [editCalories, setEditCalories] = useState('');
 
+  // PT Assignment State
+  const [selectedDay, setSelectedDay] = useState(1); // 1 to 7
+  const [ptMealPlan, setPtMealPlan] = useState([]);
+  const [loadingPtPlan, setLoadingPtPlan] = useState(false);
+
+  // Search Modal State
+  const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+
   useEffect(() => {
-    loadData();
-  }, []);
+    if (searchQuery.length >= 2) {
+      const lowerQuery = searchQuery.toLowerCase();
+      const results = foodsData.filter(item => 
+        (item.Food_Name_VN && item.Food_Name_VN.toLowerCase().includes(lowerQuery)) ||
+        (item.Description_VN && item.Description_VN.toLowerCase().includes(lowerQuery))
+      ).slice(0, 15);
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
+
+  const handleSelectSearchedFood = (item) => {
+    setIsSearchModalVisible(false);
+    setSearchQuery('');
+    const calories = Math.round(Number(item.Calories) || 0);
+    const protein = Math.round(Number(item.Protein_g) || 0);
+    const carbs = Math.round(Number(item.Carbs_g) || 0);
+    const fat = Math.round(Number(item.Fat_g) || 0);
+    const imageSource = FOOD_IMAGES[toImageKey(item.Description_VN)];
+
+    const payloadItem = {
+      id: item.Food_Name_VN,
+      title: item.Description_VN || item.Food_Name_VN,
+      calories,
+      protein,
+      carbs,
+      fat,
+      image: imageSource,
+      description: item.Description_VN || '',
+      rawItem: item
+    };
+    navigation.navigate('MealDetail', { meal: payloadItem });
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+      fetchPtMealPlan();
+    }, [])
+  );
+
+  const fetchPtMealPlan = async () => {
+    setLoadingPtPlan(true);
+    try {
+      const res = await ptService.getAssignments('MEAL_PLAN');
+      if (res.success && res.data) {
+        setPtMealPlan(res.data);
+      }
+    } catch (err) {
+      console.warn('Lỗi lấy giáo án dinh dưỡng:', err);
+    } finally {
+      setLoadingPtPlan(false);
+    }
+  };
+
+  const getMealsForDay = (dayIndex) => {
+    if (!ptMealPlan || ptMealPlan.length === 0) return { morning: [], lunch: [], evening: [] };
+    
+    // Find assignment for the specific day (day 1 to 7)
+    const dayAssignment = ptMealPlan.find(p => p.dayOfWeek === dayIndex || p.day === dayIndex);
+    if (!dayAssignment) return { morning: [], lunch: [], evening: [] };
+
+    // Parse the textual assignment and lookup foods
+    const parseMeals = (mealString, mealType) => {
+      if (!mealString) return [];
+      const items = mealString.split(',').map(s => s.trim()).filter(Boolean);
+      return items.map(itemName => {
+        // Exact match or contains
+        const lowerName = itemName.toLowerCase();
+        let matchedFood = foodsData.find(f => 
+          (f.Description_VN && f.Description_VN.toLowerCase() === lowerName) ||
+          (f.Food_Name_VN && f.Food_Name_VN.toLowerCase() === lowerName)
+        );
+        
+        if (!matchedFood) {
+          matchedFood = foodsData.find(f => 
+            (f.Description_VN && f.Description_VN.toLowerCase().includes(lowerName)) ||
+            (f.Food_Name_VN && f.Food_Name_VN.toLowerCase().includes(lowerName))
+          );
+        }
+
+        if (matchedFood) {
+          return {
+            id: itemName,
+            title: matchedFood.Description_VN || matchedFood.Food_Name_VN,
+            calories: Math.round(Number(matchedFood.Calories) || 0),
+            protein: Math.round(Number(matchedFood.Protein_g) || 0),
+            carbs: Math.round(Number(matchedFood.Carbs_g) || 0),
+            fat: Math.round(Number(matchedFood.Fat_g) || 0),
+            image: FOOD_IMAGES[toImageKey(matchedFood.Description_VN)],
+            description: matchedFood.Description_VN || '',
+            rawItem: matchedFood,
+            mealType: mealType
+          };
+        }
+        
+        // Fallback if not found
+        return {
+          id: itemName,
+          title: itemName,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+          image: null,
+          description: itemName,
+          rawItem: null,
+          mealType: mealType
+        };
+      });
+    };
+
+    return {
+      morning: parseMeals(dayAssignment.breakfast, 'BREAKFAST'),
+      lunch: parseMeals(dayAssignment.lunch, 'LUNCH'),
+      evening: parseMeals(dayAssignment.dinner, 'DINNER')
+    };
+  };
+
+  const currentMeals = activeTab === 'menu' ? getMealsForDay(selectedDay) : null;
+
+  useEffect(() => {
+    if (route?.params?.mealType) {
+      setActiveTab('menu');
+    } else if (route?.params?.goToDiary) {
+      setActiveTab('diary');
+    }
+  }, [route?.params]);
 
   const loadData = async () => {
     await Promise.all([
@@ -83,6 +223,10 @@ const MealLogScreen = () => {
                 <Text style={styles.menuStatText}>{item.calories} kcal</Text>
                 <Text style={styles.statDot}>•</Text>
                 <Text style={styles.menuStatText}>P: {item.protein}g</Text>
+                <Text style={styles.statDot}>•</Text>
+                <Text style={styles.menuStatText}>C: {item.carbs}g</Text>
+                <Text style={styles.statDot}>•</Text>
+                <Text style={styles.menuStatText}>F: {item.fat}g</Text>
               </View>
             </View>
             <ChevronRight size={18} color="#9CA3AF" />
@@ -161,26 +305,26 @@ const MealLogScreen = () => {
             <View style={styles.glassCard}>
               <View style={styles.statsHeader}>
                 <Text style={styles.statsTitle}>Tổng quát hôm nay</Text>
-                <Text style={styles.statsCal}>{dailySummary.calories || 0} kcal</Text>
+                <Text style={styles.statsCal}>{dailySummary?.consumed?.calories || 0} kcal</Text>
               </View>
               <View style={styles.macroProgressWrapper}>
                 <View style={styles.macroMiniItem}>
                   <Text style={styles.macroMiniLabel}>Carbs</Text>
-                  <Text style={styles.macroMiniValue}>{dailySummary.carbs || 0}g</Text>
+                  <Text style={styles.macroMiniValue}>{dailySummary?.consumed?.carbsG || 0}g</Text>
                   <View style={[styles.macroMiniBarBase]}>
                      <View style={[styles.macroMiniBarFill, { backgroundColor: '#FF8A65', width: '60%' }]} />
                   </View>
                 </View>
                 <View style={styles.macroMiniItem}>
                   <Text style={styles.macroMiniLabel}>Protein</Text>
-                  <Text style={styles.macroMiniValue}>{dailySummary.protein || 0}g</Text>
+                  <Text style={styles.macroMiniValue}>{dailySummary?.consumed?.proteinG || 0}g</Text>
                   <View style={[styles.macroMiniBarBase]}>
                      <View style={[styles.macroMiniBarFill, { backgroundColor: '#00FF66', width: '40%' }]} />
                   </View>
                 </View>
                 <View style={styles.macroMiniItem}>
                   <Text style={styles.macroMiniLabel}>Fat</Text>
-                  <Text style={styles.macroMiniValue}>{dailySummary.fat || 0}g</Text>
+                  <Text style={styles.macroMiniValue}>{dailySummary?.consumed?.fatG || 0}g</Text>
                   <View style={[styles.macroMiniBarBase]}>
                      <View style={[styles.macroMiniBarFill, { backgroundColor: '#FFC107', width: '30%' }]} />
                   </View>
@@ -192,7 +336,7 @@ const MealLogScreen = () => {
               <Text style={styles.sectionTitle}>Bữa ăn đã ghi</Text>
               <TouchableOpacity 
                 style={styles.addSmallBtn}
-                onPress={() => navigation.navigate('FoodScan')}
+                onPress={() => setIsSearchModalVisible(true)}
               >
                 <Plus size={16} color="#0A0B10" strokeWidth={3} />
                 <Text style={styles.addSmallText}>THÊM</Text>
@@ -219,13 +363,13 @@ const MealLogScreen = () => {
                         <View style={styles.timeTag}>
                           <Clock size={12} color="#9CA3AF" />
                           <Text style={styles.timeText}>
-                            {meal.loggedAt ? new Date(meal.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                            {(meal.consumedAt || meal.loggedAt) ? new Date(meal.consumedAt || meal.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                           </Text>
                         </View>
                       </View>
                       <Text style={styles.foodName} numberOfLines={1}>{meal.foodName}</Text>
                       <Text style={styles.foodStats}>
-                        {meal.calories} kcal • P:{meal.proteinG}g C:{meal.carbsG}g F:{meal.fatG}g
+                        {meal.calories} kcal • P:{meal.proteinG ?? meal.macros?.proteinG ?? meal.macros?.protein ?? 0}g C:{meal.carbsG ?? meal.macros?.carbsG ?? meal.macros?.carbs ?? 0}g F:{meal.fatG ?? meal.macros?.fatG ?? meal.macros?.fat ?? 0}g
                       </Text>
                     </View>
                     <TouchableOpacity onPress={() => deleteFoodLog(meal.id)} style={styles.deleteBtn}>
@@ -263,15 +407,38 @@ const MealLogScreen = () => {
         ) : (
           <>
             <View style={styles.menuHeaderRow}>
-              <Text style={styles.menuMainTitle}>Thực đơn hôm nay</Text>
-              <View style={styles.dateBadge}>
-                <Text style={styles.dateBadgeText}>14 Th5</Text>
-              </View>
+              <Text style={styles.menuMainTitle}>Thực đơn cá nhân hóa</Text>
             </View>
 
-            {renderSuggestedSection('Bữa sáng', <Sun size={20} color="#FF9800" />, suggestedMenu.morning)}
-            {renderSuggestedSection('Bữa trưa', <Utensils size={20} color="#00FF66" />, suggestedMenu.lunch)}
-            {renderSuggestedSection('Bữa tối', <Moon size={20} color="#00B3FF" />, suggestedMenu.evening)}
+            {/* Horizontal Day Selector */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24 }}>
+              {[1, 2, 3, 4, 5, 6, 7].map(day => (
+                <TouchableOpacity 
+                  key={day}
+                  style={[styles.dayBadge, selectedDay === day && styles.dayBadgeActive]}
+                  onPress={() => setSelectedDay(day)}
+                >
+                  <Text style={[styles.dayBadgeText, selectedDay === day && styles.dayBadgeTextActive]}>
+                    Ngày {day}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {loadingPtPlan ? (
+              <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />
+            ) : (!currentMeals.morning.length && !currentMeals.lunch.length && !currentMeals.evening.length) ? (
+              <View style={styles.emptyState}>
+                <Utensils size={48} color="rgba(255,255,255,0.2)" />
+                <Text style={styles.emptyText}>PT chưa giao giáo án dinh dưỡng cho ngày này.</Text>
+              </View>
+            ) : (
+              <>
+                {currentMeals.morning.length > 0 && renderSuggestedSection('Bữa sáng', <Sun size={20} color="#FF9800" />, currentMeals.morning)}
+                {currentMeals.lunch.length > 0 && renderSuggestedSection('Bữa trưa', <Utensils size={20} color="#00FF66" />, currentMeals.lunch)}
+                {currentMeals.evening.length > 0 && renderSuggestedSection('Bữa tối', <Moon size={20} color="#00B3FF" />, currentMeals.evening)}
+              </>
+            )}
           </>
         )}
         <View style={{ height: 100 }} />
@@ -304,6 +471,62 @@ const MealLogScreen = () => {
               <TouchableOpacity style={styles.saveEditBtn} onPress={handleSaveEdit}>
                 <Text style={styles.saveEditBtnText}>CẬP NHẬT</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Search Modal */}
+      {isSearchModalVisible && (
+        <View style={StyleSheet.absoluteFill}>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.editModalContainer, { height: '80%' }]}>
+              <View style={styles.editModalHeader}>
+                <Text style={styles.editModalTitle}>Tìm món ăn</Text>
+                <TouchableOpacity onPress={() => setIsSearchModalVisible(false)}>
+                  <X color="#FFFFFF" size={24} />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.editInputWrapper}>
+                <TextInput
+                  style={styles.editInput}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Gõ tên món ăn (VD: Phở, Bánh mì...)"
+                  placeholderTextColor="#6B7280"
+                  autoFocus
+                />
+              </View>
+
+              <ScrollView style={{ flex: 1, marginTop: 10 }} showsVerticalScrollIndicator={false}>
+                {searchResults.map((item, index) => {
+                  const imageSource = FOOD_IMAGES[toImageKey(item.Description_VN)];
+                  const cal = Math.round(Number(item.Calories) || 0);
+                  return (
+                    <TouchableOpacity 
+                      key={index} 
+                      style={styles.glassCardMenu}
+                      onPress={() => handleSelectSearchedFood(item)}
+                    >
+                      {imageSource ? (
+                        <Image source={imageSource} style={styles.menuImage} />
+                      ) : (
+                        <View style={[styles.menuImage, { backgroundColor: '#333' }]} />
+                      )}
+                      <View style={styles.menuInfo}>
+                        <Text style={styles.menuTitle}>{item.Description_VN}</Text>
+                        <Text style={styles.menuStatText}>{cal} kcal</Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+                {searchQuery.length >= 2 && searchResults.length === 0 && (
+                  <Text style={{ color: '#9CA3AF', textAlign: 'center', marginTop: 20 }}>
+                    Không tìm thấy món ăn phù hợp
+                  </Text>
+                )}
+              </ScrollView>
             </View>
           </View>
         </View>
@@ -592,6 +815,27 @@ const styles = StyleSheet.create({
   statDot: {
     marginHorizontal: 8,
     color: 'rgba(255,255,255,0.2)',
+  },
+  dayBadge: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  dayBadgeActive: {
+    backgroundColor: 'rgba(0, 255, 102, 0.15)',
+    borderColor: 'rgba(0, 255, 102, 0.5)',
+  },
+  dayBadgeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#9CA3AF',
+  },
+  dayBadgeTextActive: {
+    color: '#00FF66',
   },
   emptyState: {
     alignItems: 'center',

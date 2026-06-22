@@ -16,6 +16,13 @@ import NutriButton from '../../../components/shared/NutriButton';
 import ptService from '../../../api/services/pt.service';
 import { useDialogStore } from '../../../store/dialogStore';
 
+const generateUUIDv4 = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 const PTEarningsScreen = () => {
   const navigation = useNavigation();
   const [earnings, setEarnings] = useState(null);
@@ -69,7 +76,10 @@ const PTEarningsScreen = () => {
               return;
             }
             try {
-              // await ptService.requestWithdrawal({ amountVnd: amountNum, note: "Rút tiền app" });
+              const idempotencyKey = generateUUIDv4();
+              // NOTE: When connecting to real backend, uncomment the line below.
+              // await ptService.requestWithdrawal({ amountVnd: amountNum, note: "Rút tiền app" }, { 'Idempotency-Key': idempotencyKey });
+              
               useDialogStore.getState().showDialog({
                 title: 'Thành công',
                 message: 'Đã gửi yêu cầu rút tiền. Vui lòng chờ admin duyệt.',

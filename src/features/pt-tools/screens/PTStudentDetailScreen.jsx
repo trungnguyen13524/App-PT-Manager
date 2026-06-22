@@ -43,11 +43,24 @@ const PTStudentDetailScreen = () => {
   const loadStudentDetail = async () => {
     setIsLoading(true);
     try {
+      if (studentId === 'test_student_123') {
+        // Bypass API for fake test student
+        setStudent({
+          id: 'test_student_123',
+          fullName: '[TEST] Học viên ảo',
+          avatar: 'https://i.pravatar.cc/150?img=11',
+          goal: 'Giảm mỡ',
+          metrics: { weightKg: 70, targetWeightKg: 65 },
+          activeMealPlan: null,
+          activeWorkout: null
+        });
+        setIsLoading(false);
+        return;
+      }
       const response = await ptService.getStudentDetail(studentId);
       setStudent(response.data);
     } catch (err) {
-      console.error(err);
-      Alert.alert('Lỗi', 'Không thể tải thông tin học viên');
+      console.error(err.response?.data || err.message);
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +131,7 @@ const PTStudentDetailScreen = () => {
               </View>
               <Text style={styles.assignTitle}>Thực đơn dinh dưỡng</Text>
             </View>
-            <TouchableOpacity style={styles.addBtn}>
+            <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('PTPlanBuilder', { studentId, planType: 'MEAL_PLAN' })}>
               <Plus size={18} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
@@ -136,7 +149,7 @@ const PTStudentDetailScreen = () => {
               </View>
               <Text style={styles.assignTitle}>Bài tập luyện</Text>
             </View>
-            <TouchableOpacity style={styles.addBtn}>
+            <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('PTPlanBuilder', { studentId, planType: 'WORKOUT_PLAN' })}>
               <Plus size={18} color={COLORS.primary} />
             </TouchableOpacity>
           </View>

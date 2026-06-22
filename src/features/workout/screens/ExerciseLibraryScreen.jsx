@@ -1,286 +1,322 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  TextInput,
-  Dimensions,
-  StatusBar,
-  Linking
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  Image, Dimensions, StatusBar, ActivityIndicator, TextInput
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import YoutubePlayer from 'react-native-youtube-iframe';
-import { ChevronLeft, Search, Filter, Play, Clock, Flame, Activity, Dumbbell, Zap, X } from 'lucide-react-native';
-import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
-import { Modal } from 'react-native';
-import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
-import { useWorkoutStore } from '../../../store/workoutStore';
-
-const TRANSLATIONS = {
-  muscleGroups: {
-    CHEST: 'Ngực',
-    BACK: 'Lưng',
-    SHOULDERS: 'Vai',
-    BICEPS: 'Tay trước',
-    TRICEPS: 'Tay sau',
-    LEGS: 'Chân',
-    GLUTES: 'Mông',
-    CORE: 'Bụng/Lõi',
-    CARDIO: 'Cardio',
-    FULL_BODY: 'Toàn thân'
-  },
-  difficulty: {
-    BEGINNER: 'Cơ bản',
-    INTERMEDIATE: 'Nâng cao',
-    ADVANCED: 'Chuyên gia'
-  }
-};
-
-const AbstractBackground = React.memo(() => (
-  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-    <Svg width="100%" height="100%">
-      <Defs>
-        <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#0F172A" />
-          <Stop offset="100%" stopColor="#1E293B" />
-        </LinearGradient>
-        <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.1" />
-          <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.02" />
-        </LinearGradient>
-        <LinearGradient id="circleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#FF4D00" stopOpacity="0.1" />
-          <Stop offset="100%" stopColor="#FF0080" stopOpacity="0.02" />
-        </LinearGradient>
-      </Defs>
-      <Rect width="100%" height="100%" fill="url(#bgGrad)" />
-      
-      <Circle cx="80%" cy="10%" r="150" fill="url(#circleGrad1)" />
-      <Circle cx="10%" cy="50%" r="200" fill="url(#circleGrad2)" />
-    </Svg>
-  </View>
-));
+import { ChevronLeft, Flame, Library, Clock } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { WORKOUT_IMAGES, toImageKey } from '../../../assets';
+import exercisesData from '../../../assets/exercises.json';
+import workoutService from '../../../api/services/workout.service';
+import dashboardService from '../../../api/services/dashboard.service';
+import ptService from '../../../api/services/pt.service';
+import { useDialogStore } from '../../../store/dialogStore';
 
 const { width } = Dimensions.get('window');
+const cardWidth = (width - 60) / 2;
 
 const ExerciseLibraryScreen = () => {
   const navigation = useNavigation();
-  const { library = [], fetchExercises } = useWorkoutStore();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Tất cả');
+  const [isLogging, setIsLogging] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState(null);
+  
+  // PT Assignment & Library States
+  const [isLibraryMode, setIsLibraryMode] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(1);
+  const [ptWorkoutPlan, setPtWorkoutPlan] = useState([]);
+  const [loadingPtPlan, setLoadingPtPlan] = useState(false);
 
-  React.useEffect(() => {
-    fetchExercises();
+  // Duration State for Modal
+  const [durationMinutes, setDurationMinutes] = useState('15');
+
+  useEffect(() => {
+    fetchPtWorkoutPlan();
   }, []);
 
-  // Bảo vệ fallback data
-  const safeLibrary = (library && library.length > 0 && library[0]?.title) 
-    ? library 
-    : [];
-
-  // Cập nhật categories theo cấu trúc mới
-  const categories = ['Tất cả', 'Ngực', 'Lưng', 'Chân', 'Vai', 'Bụng/Lõi', 'Toàn thân'];
-
-  const filteredExercises = safeLibrary.filter(ex => {
-    const title = ex?.nameVi || ex?.nameEn || '';
-    const matchesSearch = title.toLowerCase().includes((searchQuery || '').toLowerCase());
-    
-    let matchesCategory = true;
-    if (activeCategory !== 'Tất cả') {
-      // Dịch từ tiếng Anh sang tiếng Việt để so sánh với activeCategory
-      const muscleGroupVi = ex?.muscleGroups?.[0] 
-        ? (TRANSLATIONS.muscleGroups[ex.muscleGroups[0]] || 'Khác') 
-        : 'Chung';
-      matchesCategory = muscleGroupVi === activeCategory;
+  const fetchPtWorkoutPlan = async () => {
+    setLoadingPtPlan(true);
+    try {
+      const res = await ptService.getAssignments('EXERCISE_ADDITION');
+      if (res.success && res.data) {
+        setPtWorkoutPlan(res.data);
+      }
+    } catch (err) {
+      console.warn('Lỗi lấy giáo án thể dục:', err);
+    } finally {
+      setLoadingPtPlan(false);
     }
-    
-    return matchesSearch && matchesCategory;
-  });
+  };
 
-  const handleOpenVideo = (url) => {
-    if (url) {
-      Linking.openURL(url).catch(err => console.error("Không thể mở video:", err));
+  const getExercisesForDay = (dayIndex) => {
+    // 1. Lấy bài tập AI gợi ý (Giả lập logic bằng cách hash dayIndex vào mảng exercisesData)
+    // Tạm thời lấy 4 bài ngẫu nhiên theo dayIndex
+    const aiBase = [
+      exercisesData[(dayIndex * 2) % exercisesData.length],
+      exercisesData[(dayIndex * 3 + 1) % exercisesData.length],
+      exercisesData[(dayIndex * 4 + 2) % exercisesData.length],
+      exercisesData[(dayIndex * 5 + 3) % exercisesData.length],
+    ].filter(Boolean);
+
+    // 2. Lấy bài tập do PT giao (Tích lũy - Không ghi đè)
+    const ptAssigned = [];
+    if (ptWorkoutPlan && Array.isArray(ptWorkoutPlan)) {
+      ptWorkoutPlan.forEach(p => {
+        // Find matching exercise in library or use custom
+        let matchedEx = exercisesData.find(e => e.ID === p.exerciseId || `ex_${e.ID}` === p.exerciseId);
+        if (!matchedEx) {
+          // Fallback if custom
+          matchedEx = { 
+            Exercise_Name_VN: p.name || 'Bài tập PT giao', 
+            Target_Muscle_Group: 'Theo yêu cầu PT',
+            Est_Calories_Burned_Per_30_Min: 150 
+          };
+        }
+        ptAssigned.push({
+          ...matchedEx,
+          isPTAssigned: true,
+          ptDetails: p // contains sets, reps, durationSec, notes
+        });
+      });
     }
+
+    return [...ptAssigned, ...aiBase];
+  };
+
+  const currentExercises = isLibraryMode ? exercisesData : getExercisesForDay(selectedDay);
+
+  const handleLogExercise = async (item) => {
+    setIsLogging(true);
+    try {
+      const minutes = Number(durationMinutes) || 15;
+      const caloriesPer30Min = Number(item.Est_Calories_Burned_Per_30_Min) || 150;
+      const caloriesPerMin = caloriesPer30Min / 30;
+      const durationSec = minutes * 60; 
+      const caloriesBurned = Math.round(caloriesPerMin * minutes);
+
+      const slug = item.Exercise_Name_EN 
+        ? 'ex_' + item.Exercise_Name_EN.toLowerCase().replace(/[^a-z0-9]+/g, '_')
+        : 'ex_custom_exercise';
+
+      const payload = {
+        name: item.Exercise_Name_VN || 'Bài tập tự do',
+        performedAt: new Date().toISOString(),
+        durationSec: durationSec,
+        caloriesBurned: caloriesBurned,
+        notes: item.Target_Muscle_Group || '',
+        logs: [{
+          exerciseId: slug,
+          orderIndex: 0,
+          setNumber: 1,
+          reps: 15,
+          weightKg: 0,
+          restSec: 30,
+          notes: ''
+        }]
+      };
+
+      await workoutService.createSession(payload);
+
+      // Đồng bộ Dashboard
+      try {
+        await dashboardService.getUserDashboard();
+      } catch (e) {}
+
+      setSelectedExercise(null);
+      useDialogStore.getState().showDialog({
+        title: 'Tuyệt vời!',
+        message: `Đã ghi nhận bài tập ${item.Exercise_Name_VN} (+${caloriesBurned} kcal).`,
+        type: 'success',
+      });
+    } catch (err) {
+      console.warn('Lỗi ghi nhận bài tập:', err);
+      useDialogStore.getState().showDialog({
+        title: 'Lỗi',
+        message: 'Không thể ghi nhận bài tập lúc này.',
+        type: 'error',
+      });
+    } finally {
+      setIsLogging(false);
+    }
+  };
+
+  const renderModal = () => {
+    if (!selectedExercise) return null;
+    
+    const key = toImageKey(selectedExercise.Exercise_Name_VN);
+    const imageSource = WORKOUT_IMAGES[key];
+    const calPerMin = Math.round((Number(selectedExercise.Est_Calories_Burned_Per_30_Min) || 0) / 30 * 10) / 10;
+
+    return (
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          {imageSource ? (
+            <Image source={imageSource} style={styles.modalImage} resizeMode="cover" />
+          ) : (
+            <View style={[styles.modalImage, { backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' }]}>
+              <Text style={{color: '#94A3B8'}}>Chưa có ảnh mô phỏng</Text>
+            </View>
+          )}
+          
+          <TouchableOpacity 
+            style={styles.closeBtn} 
+            onPress={() => !isLogging && setSelectedExercise(null)}
+          >
+            <ChevronLeft color="#F8FAFC" size={24} />
+          </TouchableOpacity>
+
+          <View style={styles.modalInfo}>
+            <Text style={styles.modalTitle}>{selectedExercise.Exercise_Name_VN}</Text>
+            
+            <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 12}}>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{selectedExercise.Target_Muscle_Group}</Text>
+              </View>
+              <View style={[styles.tag, {backgroundColor: 'rgba(0,255,102,0.1)', borderColor: 'rgba(0,255,102,0.2)'}]}>
+                <Flame color="#00FF66" size={12} style={{ marginRight: 4 }} />
+                <Text style={[styles.tagText, {color: '#00FF66'}]}>{calPerMin} kcal/p</Text>
+              </View>
+            </View>
+
+            <Text style={styles.modalDesc}>{selectedExercise.Description_VN}</Text>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.inputLabel}>Thời gian tập (phút):</Text>
+              <TextInput
+                style={styles.durationInput}
+                value={durationMinutes}
+                onChangeText={setDurationMinutes}
+                keyboardType="numeric"
+                maxLength={3}
+              />
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.logBtn, isLogging && { opacity: 0.7 }]}
+              activeOpacity={0.8}
+              onPress={() => handleLogExercise(selectedExercise)}
+              disabled={isLogging}
+            >
+              {isLogging ? (
+                <ActivityIndicator color="#0F172A" />
+              ) : (
+                <Text style={styles.logBtnText}>Ghi nhận ({Math.round(calPerMin * (Number(durationMinutes) || 15))} kcal)</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <AbstractBackground />
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#FFFFFF" size={28} />
+          <ChevronLeft color="#F8FAFC" size={28} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thư viện bài tập</Text>
-        <View style={{ width: 28 }} />
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Search size={20} color="#94A3B8" />
-          <TextInput
-            placeholder="Tìm kiếm bài tập..."
-            placeholderTextColor="#94A3B8"
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-        <TouchableOpacity style={styles.filterBtn}>
-          <Filter size={20} color="#00FF66" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Categories */}
-      <View style={styles.categoriesWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContent}>
-          {categories.map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              onPress={() => setActiveCategory(cat)}
-              style={[
-                styles.categoryChip,
-                activeCategory === cat && styles.activeCategoryChip
-              ]}
-            >
-              <Text style={[
-                styles.categoryText,
-                activeCategory === cat && styles.activeCategoryText
-              ]}>
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Exercise List */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
-        {filteredExercises.map((exercise, index) => (
-          <TouchableOpacity 
-            key={exercise?.id || index} 
-            activeOpacity={0.9} 
-            style={styles.exerciseCardWrapper}
-            onPress={() => setSelectedExercise(exercise)}
-          >
-            <View style={styles.exerciseCard}>
-              <Image 
-                source={{ uri: exercise?.thumbnailUrl || 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800' }} 
-                style={styles.exerciseImage} 
-              />
-              <View style={styles.exerciseInfo}>
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryBadgeText}>
-                    {exercise?.muscleGroups?.[0] 
-                      ? (TRANSLATIONS.muscleGroups[exercise.muscleGroups[0]] || 'Khác') 
-                      : 'Chung'}
-                  </Text>
-                </View>
-                <Text style={styles.exerciseTitle}>{exercise?.nameVi || exercise?.nameEn || 'Bài tập mới'}</Text>
-                
-                <View style={styles.statsRow}>
-                  <View style={styles.statItem}>
-                    <Clock size={14} color="#94A3B8" />
-                    <Text style={styles.statText}>Linh hoạt</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Flame size={14} color="#94A3B8" />
-                    <Text style={styles.statText}>{exercise?.caloriesPerMinute || '0'} kcal/p</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Zap size={14} color="#94A3B8" />
-                    <Text style={styles.statText}>
-                      {exercise?.difficulty 
-                        ? (TRANSLATIONS.difficulty[exercise.difficulty] || 'Tự do') 
-                        : 'Tự do'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <TouchableOpacity 
-                style={styles.playBtn}
-                onPress={() => setSelectedExercise(exercise)}
-              >
-                <Play size={20} color="#000" fill="#000" />
-              </TouchableOpacity>
-            </View>
+        <Text style={styles.headerTitle}>{isLibraryMode ? 'Thư Viện Bài Tập' : 'Bài Tập Hôm Nay'}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => navigation.navigate('WorkoutHistory')} style={[styles.libraryBtn, { marginRight: 12 }]}>
+            <Clock color="#F8FAFC" size={24} />
           </TouchableOpacity>
-        ))}
-        {filteredExercises.length === 0 && (
-          <View style={styles.emptyStateContainer}>
-            <View style={styles.emptyIllustration}>
-              <Dumbbell size={64} color="#00FF66" strokeWidth={1.5} />
-            </View>
-            <Text style={styles.emptyTitle}>Chưa có bài tập nào!</Text>
-            <Text style={styles.emptyDesc}>Chúng tôi không tìm thấy bài tập phù hợp với tìm kiếm của bạn.</Text>
-            <TouchableOpacity 
-              style={styles.emptyBtn}
-              onPress={() => {
-                setSearchQuery('');
-                setActiveCategory('Tất cả');
-              }}
-            >
-              <Text style={styles.emptyBtnText}>Khám phá bài tập</Text>
-            </TouchableOpacity>
+          <TouchableOpacity onPress={() => setIsLibraryMode(!isLibraryMode)} style={styles.libraryBtn}>
+            <Library color={isLibraryMode ? "#00FF66" : "#F8FAFC"} size={24} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {!isLibraryMode && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+            {[1, 2, 3, 4, 5, 6, 7].map(day => (
+              <TouchableOpacity 
+                key={day}
+                style={[styles.dayBadge, selectedDay === day && styles.dayBadgeActive]}
+                onPress={() => setSelectedDay(day)}
+              >
+                <Text style={[styles.dayBadgeText, selectedDay === day && styles.dayBadgeTextActive]}>
+                  Ngày {day}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {!isLibraryMode && (
+          <View style={styles.planHeader}>
+            <Text style={styles.planTitle}>Lộ trình Hôm nay</Text>
+            <Text style={styles.planSub}>
+              {ptWorkoutPlan && ptWorkoutPlan.length > 0 
+                ? 'Có bài tập bổ sung từ PT của bạn!' 
+                : 'Hoàn thành các bài tập AI gợi ý dưới đây.'}
+            </Text>
           </View>
         )}
-        <View style={{ height: 20 }} />
+
+        {loadingPtPlan && !isLibraryMode ? (
+          <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />
+        ) : (!isLibraryMode && currentExercises.length === 0) ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>PT chưa giao bài tập cho ngày này.</Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {currentExercises.map((item, idx) => {
+              const key = toImageKey(item.Exercise_Name_VN);
+              const imageSource = WORKOUT_IMAGES[key];
+              const cal = Math.round(Number(item.Est_Calories_Burned_Per_30_Min) || 0);
+
+              return (
+                <TouchableOpacity 
+                  key={`ex-${idx}`} 
+                  style={[styles.card, { width: cardWidth, borderColor: item.isPTAssigned ? '#E67E22' : 'transparent', borderWidth: item.isPTAssigned ? 1 : 0 }]}
+                  activeOpacity={0.8}
+                  onPress={() => setSelectedExercise(item)}
+                >
+                  <View style={styles.imageContainer}>
+                    {imageSource ? (
+                      <Image source={imageSource} style={styles.image} resizeMode="cover" />
+                    ) : (
+                      <View style={[styles.image, { backgroundColor: '#334155' }]} />
+                    )}
+                    {item.isPTAssigned && (
+                      <View style={[styles.glassTag, { backgroundColor: 'rgba(230, 126, 34, 0.9)', left: 12, right: 'auto' }]}>
+                        <Text style={[styles.glassTagText, { fontSize: 10 }]}>👑 PT Giao</Text>
+                      </View>
+                    )}
+                    <View style={[styles.glassTag, { right: 12, left: 'auto' }]}>
+                      <Flame color="#00FF66" size={12} style={{ marginRight: 4 }} />
+                      <Text style={styles.glassTagText}>{cal} kcal/30p</Text>
+                    </View>
+                  </View>
+                  <View style={styles.cardFooter}>
+                    <Text style={[styles.exerciseName, item.isPTAssigned && { color: '#E67E22' }]} numberOfLines={2}>
+                      {item.Exercise_Name_VN}
+                    </Text>
+                    <Text style={styles.muscleGroup} numberOfLines={1}>{item.Target_Muscle_Group}</Text>
+                    {item.isPTAssigned && item.ptDetails && (
+                      <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>
+                        {item.ptDetails.durationSec ? `${item.ptDetails.durationSec / 60} phút Cardio` : `${item.ptDetails.sets} Sets x ${item.ptDetails.reps} Reps`}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )
+            })}
+          </View>
+        )}
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Video Modal */}
-      <Modal
-        visible={!!selectedExercise}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setSelectedExercise(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selectedExercise?.nameVi || selectedExercise?.nameEn}</Text>
-              <TouchableOpacity onPress={() => setSelectedExercise(null)} style={styles.closeBtn}>
-                <X size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.videoContainer}>
-              {selectedExercise?.youtubeVideoId ? (
-                <YoutubePlayer
-                  height={220}
-                  play={true}
-                  videoId={selectedExercise.youtubeVideoId}
-                />
-              ) : (
-                <View style={styles.noVideoPlaceholder}>
-                  <Text style={styles.noVideoText}>Video đang cập nhật</Text>
-                </View>
-              )}
-            </View>
-            
-            <View style={styles.modalBody}>
-              <Text style={styles.modalDesc}>
-                Đây là bài tập thuộc nhóm cơ <Text style={{fontWeight: 'bold', color: '#00FF66'}}>
-                  {selectedExercise?.muscleGroups?.[0] ? (TRANSLATIONS.muscleGroups[selectedExercise.muscleGroups[0]] || 'Khác') : 'Chung'}
-                </Text>.
-                Mức độ: <Text style={{fontWeight: 'bold', color: '#00FF66'}}>
-                  {selectedExercise?.difficulty ? (TRANSLATIONS.difficulty[selectedExercise.difficulty] || 'Tự do') : 'Tự do'}
-                </Text>.
-              </Text>
-              <Text style={styles.modalDesc}>
-                Lượng calo tiêu thụ trung bình: <Text style={{fontWeight: 'bold', color: '#00FF66'}}>{selectedExercise?.caloriesPerMinute} kcal/phút</Text>.
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Detail Modal */}
+      {selectedExercise && renderModal()}
+
     </SafeAreaView>
   );
 };
@@ -292,262 +328,199 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
-  backBtn: {
-    padding: 4,
-  },
-  headerTitle: {
-    ...TYPOGRAPHY.h3,
-    color: '#FFFFFF',
-  },
-  searchContainer: {
+  backBtn: { padding: 4, marginLeft: -8 },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: '#F8FAFC' },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  grid: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginTop: 10,
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 16,
   },
-  searchBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    height: 48,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 15,
-    color: '#FFFFFF',
-  },
-  filterBtn: {
-    width: 48,
-    height: 48,
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
-    borderRadius: 16,
-    marginLeft: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.3)',
-  },
-  categoriesWrapper: {
-    marginTop: 20,
-  },
-  categoriesContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 4,
-  },
-  categoryChip: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(30, 41, 59, 0.5)',
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-  },
-  activeCategoryChip: {
-    backgroundColor: 'rgba(0, 255, 102, 0.2)',
-    borderColor: '#00FF66',
-    shadowColor: '#00FF66',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  categoryText: {
-    fontSize: 14,
-    color: '#94A3B8',
-    fontWeight: '600',
-  },
-  activeCategoryText: {
-    color: '#FFFFFF',
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  exerciseCardWrapper: {
+  card: {
+    backgroundColor: '#1E293B',
+    borderRadius: 24,
+    overflow: 'hidden',
     marginBottom: 16,
   },
-  exerciseCard: {
-    flexDirection: 'row',
-    padding: 12,
-    alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+  imageContainer: {
+    width: '100%',
+    height: 140,
+    position: 'relative',
+    backgroundColor: '#334155'
   },
-  exerciseImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 16,
+  image: {
+    width: '100%',
+    height: '100%',
   },
-  exerciseInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  categoryBadge: {
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
-    alignSelf: 'flex-start',
+  glassTag: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
-    marginBottom: 8,
-  },
-  categoryBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#00FF66',
-    textTransform: 'uppercase',
-  },
-  exerciseTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 10,
-  },
-  statsRow: {
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 12,
+  glassTagText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '800',
   },
-  statText: {
+  cardFooter: {
+    padding: 12,
+  },
+  foodName: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#F8FAFC',
+    marginBottom: 4,
+  },
+  subText: {
     fontSize: 12,
     color: '#94A3B8',
-    marginLeft: 4,
-  },
-  playBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#00FF66',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-    shadowColor: '#00FF66',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  emptyStateContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
-  },
-  emptyIllustration: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.2)',
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyDesc: {
-    fontSize: 14,
-    color: '#94A3B8',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  emptyBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
-    borderWidth: 1,
-    borderColor: '#00FF66',
-  },
-  emptyBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#00FF66',
-  },
-  demoBannerCard: {
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.3)',
-    marginBottom: 20,
-    padding: 16,
+    fontWeight: '600'
   },
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-    justifyContent: 'flex-end',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15,23,42,0.9)',
+    justifyContent: 'center',
+    padding: 20,
+    zIndex: 100,
   },
   modalContent: {
     backgroundColor: '#1E293B',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    minHeight: '60%',
-    paddingBottom: 40,
+    borderRadius: 24,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: '#334155',
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-  },
-  modalTitle: {
-    ...TYPOGRAPHY.h4,
-    color: '#FFFFFF',
+  modalImage: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#334155',
   },
   closeBtn: {
-    padding: 4,
-  },
-  videoContainer: {
-    backgroundColor: '#000',
-    width: '100%',
-    height: 220,
-  },
-  noVideoPlaceholder: {
-    flex: 1,
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(15,23,42,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  noVideoText: {
-    color: '#94A3B8',
-    fontSize: 16,
-  },
-  modalBody: {
+  modalInfo: {
     padding: 20,
   },
-  modalDesc: {
-    fontSize: 15,
-    color: '#E2E8F0',
-    lineHeight: 24,
-    marginBottom: 10,
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#F8FAFC',
+    marginBottom: 8,
   },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#334155',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#475569',
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#CBD5E1',
+  },
+  modalDesc: {
+    fontSize: 14,
+    color: '#94A3B8',
+    lineHeight: 22,
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  logBtn: {
+    backgroundColor: '#00FF66',
+    height: 50,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  libraryBtn: {
+    padding: 8,
+  },
+  dayBadge: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  dayBadgeActive: {
+    backgroundColor: 'rgba(0, 255, 102, 0.15)',
+    borderColor: 'rgba(0, 255, 102, 0.5)',
+  },
+  dayBadgeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#9CA3AF',
+  },
+  dayBadgeTextActive: {
+    color: '#00FF66',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: '#9CA3AF',
+    marginTop: 16,
+    fontWeight: '500',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 50,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  inputLabel: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    fontWeight: '600',
+    marginRight: 10,
+  },
+  durationInput: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center'
+  },
+  logBtnText: {
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '800',
+  }
 });
 
 export default ExerciseLibraryScreen;

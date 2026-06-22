@@ -78,8 +78,12 @@ const CurriculumBuilderScreen = () => {
     }
   };
 
+  const enrollmentCount = course?.enrollmentCount || course?.enrolled || 0;
+  const isLocked = enrollmentCount > 0;
+
   // --- QUẢN LÝ MODULE ---
   const addModule = () => {
+    if (isLocked) return;
     setModules(prev => [
       ...prev,
       {
@@ -161,11 +165,24 @@ const CurriculumBuilderScreen = () => {
     setModules(newMods);
   };
 
-  const handleTogglePreview = (modIndex, lesIndex, lessonId, val) => {
-    // Chỉ cập nhật state nội bộ để UI mượt. Sự thay đổi sẽ được đẩy lên server
-    // thông qua hàm updateCurriculum khi người dùng nhấn "LƯU GIÁO TRÌNH"
-    // vì API PATCH /preview của Backend hiện đang bị lỗi 500 Internal Server Error.
+  const handleTogglePreview = async (modIndex, lesIndex, lessonId, val) => {
+    // Cập nhật UI ngay lập tức
     updateLesson(modIndex, lesIndex, 'isPreview', val);
+    
+    // Gọi API để cập nhật trên server
+    if (!String(lessonId).startsWith('temp_')) {
+      try {
+        await ptService.updateLessonPreview(courseId, lessonId, val);
+      } catch (error) {
+        // Rollback nếu lỗi
+        updateLesson(modIndex, lesIndex, 'isPreview', !val);
+        useDialogStore.getState().showDialog({
+          title: 'Lỗi',
+          message: 'Không thể cập nhật quyền xem thử.',
+          type: 'error'
+        });
+      }
+    }
   };
 
   // --- ĐỔI THỨ TỰ (Sử dụng mũi tên thay vì Kéo thả để nhẹ mượt) ---
@@ -432,8 +449,6 @@ const CurriculumBuilderScreen = () => {
 
     try {
       setIsSaving(true);
-      
-      // BƯỚC 2: Gọi lệnh Publish (Không gọi updateCurriculum ở đây nữa vì nó xóa video cloud)
       const { publishCourse } = usePTStore.getState();
       const result = await publishCourse(courseId);
       
@@ -445,29 +460,19 @@ const CurriculumBuilderScreen = () => {
           buttons: [{ text: 'OK', onPress: () => navigation.goBack() }]
         });
       } else {
-        // Bắt lỗi CURRICULUM_INCOMPLETE
         if (result.payload && result.payload.code === 'CURRICULUM_INCOMPLETE' && result.payload.details) {
           const incompleteLessonIds = result.payload.details.map(d => d.lessonId);
-          
-          // Đánh dấu lỗi đỏ trên giao diện
-          let firstErrorY = 0;
           const newMods = [...modules];
-          newMods.forEach((m, mIdx) => {
-            let modHasError = false;
-            m.lessons.forEach((l, lIdx) => {
-              if (incompleteLessonIds.includes(l.id)) {
-                l._isError = true;
-                modHasError = true;
-                // Lưu tọa độ ước tính hoặc dùng reference để scroll
-              }
+          newMods.forEach((m) => {
+            m.lessons.forEach((l) => {
+              if (incompleteLessonIds.includes(l.id)) l._isError = true;
             });
-            if (modHasError) m.isExpanded = true;
+            if (m.lessons.some(l => l._isError)) m.isExpanded = true;
           });
           setModules(newMods);
-
           useDialogStore.getState().showDialog({
             title: 'Lỗi xuất bản',
-            message: 'Một số bài học chưa có video (YouTube hoặc Upload trực tiếp). Vui lòng cập nhật các bài học bị đỏ.',
+            message: 'Một số bài học chưa có video. Vui lòng cập nhật các bài học bị đỏ.',
             type: 'error'
           });
         } else {
@@ -499,16 +504,21 @@ const CurriculumBuilderScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <ArrowLeft size={24} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Soạn Giáo Trình</Text>
-        <TouchableOpacity onPress={handleSaveCurriculum} disabled={isSaving}>
-          {isSaving ? <ActivityIndicator size="small" color={COLORS.primary} /> : <Save size={24} color={COLORS.primary} />}
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Giáo trình</Text>
+        <View style={{ width: 40 }} />
       </View>
+
+      {isLocked && (
+        <View style={{ backgroundColor: 'rgba(231, 76, 60, 0.1)', padding: 12, marginHorizontal: 20, marginBottom: 10, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(231, 76, 60, 0.3)' }}>
+          <Text style={{ color: '#E74C3C', fontSize: 13, textAlign: 'center', fontWeight: '500' }}>
+            Khóa học đã có học viên đăng ký, không thể thay đổi giáo trình.
+          </Text>
+        </View>
+      )}
 
       <ScrollView ref={scrollViewRef} style={styles.content} showsVerticalScrollIndicator={false}>
         {modules.map((module, mIdx) => (
           <View key={module.id} style={styles.moduleCard}>
-            {/* Module Header */}
             <View style={styles.moduleHeader}>
               <TouchableOpacity onPress={() => toggleModule(mIdx)} style={styles.moduleExpander}>
                 {module.isExpanded ? <ChevronUp size={20} color="#FFF" /> : <ChevronDown size={20} color="#FFF" />}
@@ -520,22 +530,24 @@ const CurriculumBuilderScreen = () => {
                 onChangeText={(text) => updateModuleTitle(mIdx, text)}
                 placeholder="Tên chương..."
                 placeholderTextColor="rgba(255,255,255,0.4)"
+                editable={!isLocked}
               />
 
-              <View style={styles.moduleActions}>
-                <TouchableOpacity onPress={() => moveModule(mIdx, -1)} disabled={mIdx === 0} style={{ padding: 4 }}>
-                  <ArrowUp size={18} color={mIdx === 0 ? "rgba(255,255,255,0.2)" : COLORS.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => moveModule(mIdx, 1)} disabled={mIdx === modules.length - 1} style={{ padding: 4 }}>
-                  <ArrowDown size={18} color={mIdx === modules.length - 1 ? "rgba(255,255,255,0.2)" : COLORS.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => removeModule(mIdx)} style={{ padding: 4, marginLeft: 8 }}>
-                  <Trash2 size={18} color={COLORS.error} />
-                </TouchableOpacity>
-              </View>
+              {!isLocked && (
+                <View style={styles.moduleActions}>
+                  <TouchableOpacity onPress={() => moveModule(mIdx, -1)} disabled={mIdx === 0} style={{ padding: 4 }}>
+                    <ArrowUp size={18} color={mIdx === 0 ? "rgba(255,255,255,0.2)" : COLORS.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => moveModule(mIdx, 1)} disabled={mIdx === modules.length - 1} style={{ padding: 4 }}>
+                    <ArrowDown size={18} color={mIdx === modules.length - 1 ? "rgba(255,255,255,0.2)" : COLORS.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => removeModule(mIdx)} style={{ padding: 4, marginLeft: 8 }}>
+                    <Trash2 size={18} color={COLORS.error} />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
 
-            {/* Lessons */}
             {module.isExpanded && (
               <View style={styles.lessonContainer}>
                 {module.lessons.map((lesson, lIdx) => (
@@ -554,21 +566,23 @@ const CurriculumBuilderScreen = () => {
                         onChangeText={(text) => updateLesson(mIdx, lIdx, 'title', text)}
                         placeholder="Tiêu đề bài học..."
                         placeholderTextColor="rgba(255,255,255,0.4)"
+                        editable={!isLocked}
                       />
-                      <View style={styles.lessonActions}>
-                        <TouchableOpacity onPress={() => moveLesson(mIdx, lIdx, -1)} disabled={lIdx === 0}>
-                          <ArrowUp size={16} color={lIdx === 0 ? "rgba(255,255,255,0.2)" : "#FFF"} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => moveLesson(mIdx, lIdx, 1)} disabled={lIdx === module.lessons.length - 1} style={{ marginLeft: 8 }}>
-                          <ArrowDown size={16} color={lIdx === module.lessons.length - 1 ? "rgba(255,255,255,0.2)" : "#FFF"} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => removeLesson(mIdx, lIdx)} style={{ marginLeft: 12 }}>
-                          <Trash2 size={16} color={COLORS.error} />
-                        </TouchableOpacity>
-                      </View>
+                      {!isLocked && (
+                        <View style={styles.lessonActions}>
+                          <TouchableOpacity onPress={() => moveLesson(mIdx, lIdx, -1)} disabled={lIdx === 0}>
+                            <ArrowUp size={16} color={lIdx === 0 ? "rgba(255,255,255,0.2)" : "#FFF"} />
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => moveLesson(mIdx, lIdx, 1)} disabled={lIdx === module.lessons.length - 1} style={{ marginLeft: 8 }}>
+                            <ArrowDown size={16} color={lIdx === module.lessons.length - 1 ? "rgba(255,255,255,0.2)" : "#FFF"} />
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => removeLesson(mIdx, lIdx)} style={{ marginLeft: 12 }}>
+                            <Trash2 size={16} color={COLORS.error} />
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
 
-                    {/* Video Sources */}
                     <Text style={styles.subLabel}>Nguồn Video:</Text>
                     
                     <View style={styles.videoSourceRow}>
@@ -579,6 +593,7 @@ const CurriculumBuilderScreen = () => {
                           onChangeText={(text) => updateLesson(mIdx, lIdx, 'youtubeVideoId', text)}
                           placeholder="Link YouTube hoặc Video ID (11 ký tự)"
                           placeholderTextColor="rgba(255,255,255,0.3)"
+                          editable={!isLocked}
                         />
                       </View>
                     </View>
@@ -592,7 +607,7 @@ const CurriculumBuilderScreen = () => {
                     <View style={styles.uploadRow}>
                       <TouchableOpacity 
                         style={[styles.uploadBtn, (lesson.videoUrl || lesson.localVideoUri) && { borderColor: COLORS.success }]}
-                        onPress={() => handleUploadVideo(mIdx, lIdx, lesson.id)}
+                        onPress={() => !isLocked && handleUploadVideo(mIdx, lIdx, lesson.id)}
                       >
                         <Video size={18} color={(lesson.videoUrl || lesson.localVideoUri) ? COLORS.success : COLORS.primary} style={{ marginRight: 8 }} />
                         <Text style={[styles.uploadText, (lesson.videoUrl || lesson.localVideoUri) && { color: COLORS.success }]}>
@@ -601,19 +616,18 @@ const CurriculumBuilderScreen = () => {
                       </TouchableOpacity>
                     </View>
 
-                    {/* Hiển thị Video Preview nếu đã chọn video hoặc đã có videoUrl */}
                     {(lesson.videoUrl || lesson.localVideoUri) && (
                       <LessonVideoPreview videoUri={lesson.localVideoUri || lesson.videoUrl} />
                     )}
 
-                    {/* Khóa học Demo Toggle */}
                     <View style={styles.previewToggleRow}>
                       <Text style={styles.previewToggleLabel}>Đánh dấu là Video Demo (Học viên xem thử miễn phí)</Text>
                       <Switch 
                         value={lesson.isPreview}
-                        onValueChange={(val) => handleTogglePreview(mIdx, lIdx, lesson.id, val)}
+                        onValueChange={(val) => !isLocked && handleTogglePreview(mIdx, lIdx, lesson.id, val)}
                         trackColor={{ false: 'rgba(255,255,255,0.1)', true: COLORS.primaryLight }}
                         thumbColor={lesson.isPreview ? COLORS.primary : '#f4f3f4'}
+                        disabled={isLocked}
                       />
                     </View>
 
@@ -623,25 +637,30 @@ const CurriculumBuilderScreen = () => {
                   </View>
                 ))}
 
-                <TouchableOpacity style={styles.addLessonBtn} onPress={() => addLesson(mIdx)}>
-                  <Plus size={16} color={COLORS.primary} />
-                  <Text style={styles.addLessonText}>Thêm bài học</Text>
-                </TouchableOpacity>
+                {!isLocked && (
+                  <TouchableOpacity style={styles.addLessonBtn} onPress={() => addLesson(mIdx)}>
+                    <Plus size={16} color={COLORS.primary} />
+                    <Text style={styles.addLessonText}>Thêm bài học</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
           </View>
         ))}
 
-        <TouchableOpacity style={styles.addModuleBtn} onPress={addModule}>
-          <Plus size={20} color={COLORS.primary} />
-          <Text style={styles.addModuleText}>THÊM CHƯƠNG MỚI</Text>
-        </TouchableOpacity>
+        {!isLocked && (
+          <TouchableOpacity style={styles.addModuleBtn} onPress={addModule}>
+            <Plus size={20} color={COLORS.primary} />
+            <Text style={styles.addModuleText}>THÊM CHƯƠNG MỚI</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.footerSpace}>
           <NutriButton 
             title={course?.status === 'PUBLISHED' ? "LƯU LẠI THAY ĐỔI" : "XUẤT BẢN KHÓA HỌC"} 
             onPress={course?.status === 'PUBLISHED' ? handleSaveCurriculum : handlePublish}
             style={{ backgroundColor: COLORS.success }}
+            disabled={isSaving}
           />
           {course?.status !== 'PUBLISHED' && (
             <Text style={styles.publishHint}>

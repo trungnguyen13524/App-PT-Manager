@@ -51,8 +51,10 @@ const CourseMetaScreen = () => {
   const [thumbnailUri, setThumbnailUri] = useState(editingCourse?.thumbnailUrl || null);
   const [isUploadingThumb, setIsUploadingThumb] = useState(false);
   
-  // Gia lap khoa: neu khoa hoc dang o trang thai PUBLISHED hoac co khoa (api check)
-  const isLocked = isEditMode && (editingCourse?.status === 'PUBLISHED' || editingCourse?.enrolled > 0);
+  // Lock fields if course has enrollments
+  const enrollmentCount = editingCourse?.enrollmentCount || editingCourse?.enrolled || 0;
+  const isLocked = isEditMode && enrollmentCount > 0;
+  const isArchived = editingCourse?.status === 'ARCHIVED';
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -91,6 +93,27 @@ const CourseMetaScreen = () => {
       } finally {
         setIsUploadingThumb(false);
       }
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      setIsUploadingThumb(true);
+      await ptService.restoreCourse(editingCourse.id);
+      useDialogStore.getState().showDialog({
+        title: 'Thành công',
+        message: 'Khóa học đã được khôi phục về trạng thái Draft.',
+        type: 'success',
+        buttons: [{ text: 'OK', onPress: () => navigation.goBack() }]
+      });
+    } catch (err) {
+      useDialogStore.getState().showDialog({
+        title: 'Lỗi',
+        message: 'Không thể khôi phục khóa học lúc này.',
+        type: 'error'
+      });
+    } finally {
+      setIsUploadingThumb(false);
     }
   };
 
@@ -346,8 +369,18 @@ const CourseMetaScreen = () => {
             title={(isLoading || isUploadingThumb) ? "ĐANG XỬ LÝ..." : (isEditMode ? "LƯU THAY ĐỔI" : "TIẾP TỤC")} 
             onPress={handleSave}
             style={styles.saveBtn}
-            disabled={isLoading || isUploadingThumb}
+            disabled={isLoading || isUploadingThumb || isArchived}
           />
+          
+          {isArchived && (
+            <NutriButton 
+              title="KHÔI PHỤC KHÓA HỌC" 
+              onPress={handleRestore}
+              style={[styles.saveBtn, { backgroundColor: COLORS.success, marginTop: 15 }]}
+              disabled={isLoading || isUploadingThumb}
+            />
+          )}
+
           <View style={{ height: 50 }} />
         </ScrollView>
       </KeyboardAvoidingView>

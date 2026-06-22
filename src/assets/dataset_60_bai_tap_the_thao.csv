@@ -1,0 +1,61 @@
+﻿ID,Exercise_Name_VN,Exercise_Name_EN,Category,Type,Target_Muscle_Group,Difficulty_Level,Est_Calories_Burned_Per_30_Min,Equipment_Needed,Description_VN
+1,Chạy phục hồi,Recovery Run,Running,Cardio,"Tim mạch, Chân",Beginner,200,Giày chạy,Chạy tốc độ rất chậm để cơ bắp phục hồi sau ngày tập nặng
+2,Chạy bền (Zone 2),Zone 2 Base Run,Running,Cardio,"Tim mạch, Toàn thân",Beginner,300,Giày chạy,"Chạy tốc độ chậm đến vừa, duy trì nhịp tim ở vùng 2 (vừa chạy vừa nói chuyện được)"
+3,Chạy biến tốc,Interval Running,Running,Cardio/Power,"Tim mạch, Đùi, Mông",Intermediate,400,Giày chạy,Chạy nước rút cực nhanh xen kẽ các đoạn đi bộ hoặc chạy chậm để phục hồi
+4,Chạy nhịp độ,Tempo Run,Running,Cardio,"Tim mạch, Chân",Intermediate,350,Giày chạy,Chạy ở tốc độ hơi khó nhưng có thể duy trì liên tục trong 20-30 phút
+5,Chạy dốc,Hill Sprints,Running,Cardio/Strength,"Đùi trước, Mông, Bắp chân",Advanced,450,Giày chạy,Chạy nước rút lên dốc và đi bộ chậm xuống dốc lặp lại nhiều lần
+6,Chạy cự ly dài,Long Distance Run,Running,Cardio,Sức bền toàn thân,Advanced,500,Giày chạy,Chạy liên tục với cự ly dài (thường trên 10km) vào cuối tuần
+7,Chạy tiến triển,Progression Run,Running,Cardio,Tim mạch,Intermediate,380,Giày chạy,Bắt đầu chạy chậm và tăng dần tốc độ cho đến khi kết thúc bài tập
+8,Chạy Fartlek,Fartlek Run,Running,Cardio,"Tim mạch, Chân",Intermediate,360,Giày chạy,Chạy tự do thay đổi tốc độ tùy hứng không theo quy tắc thời gian cố định
+9,Chạy cầu thang,Stair Running,Running,Cardio/Strength,"Đùi, Mông, Bắp chân",Advanced,420,Giày chạy,Chạy bật bậc cầu thang để tăng sức mạnh bùng nổ cho phần dưới
+10,Đi bộ nhanh,Brisk Walking,Running,Cardio nhẹ,"Tim mạch, Chân",Beginner,150,Giày chạy,"Đi bộ với tốc độ nhanh hơn bình thường, đánh tay đều"
+11,Bật nhảy toàn thân,Burpees,Home Workout,HIIT,Toàn thân,Intermediate,450,Không,"Kết hợp chống đẩy, thu chân và bật nhảy cao lên trời"
+12,Leo núi chéo chân,Mountain Climbers,Home Workout,Cardio/Core,"Bụng, Vai, Chân",Intermediate,350,Thảm,"Tư thế chống đẩy, luân phiên co gối về phía ngực nhanh nhất có thể"
+13,Nhảy dang tay chân,Jumping Jacks,Home Workout,Cardio,Toàn thân,Beginner,250,Không,Bật nhảy tách hai chân sang ngang và vung hai tay lên cao qua đầu
+14,Nhảy hình ngôi sao,Star Jumps,Home Workout,Power/Cardio,Toàn thân,Intermediate,320,Không,"Bật nhảy lên cao, bung rộng cả 4 chi ra không trung giống hình ngôi sao"
+15,Nâng cao đùi,High Knees,Home Workout,Cardio,"Bụng dưới, Chân",Beginner,300,Không,Chạy tại chỗ với đùi nâng cao song song với mặt đất
+16,Gót chạm mông,Butt Kicks,Home Workout,Cardio,Đùi sau,Beginner,250,Không,"Chạy tại chỗ, gót chân đá cao ra sau chạm vào mông"
+17,Nhảy dây,Jump Rope,Home Workout,Cardio,"Bắp chân, Vai, Tim mạch",Beginner,350,Dây nhảy,"Bật nhảy liên tục qua dây, giữ khuỷu tay sát thân người"
+18,Nhảy thu gối,Tuck Jumps,Home Workout,Power/Cardio,"Chân, Core",Advanced,400,Không,Bật nhảy cao và thu cả hai gối về sát ngực trên không trung
+19,Trượt băng sang hai bên,Skater Jumps,Home Workout,Cardio/Agility,"Mông, Đùi ngoài",Intermediate,300,Không,Bật nhảy sang ngang từ chân này sang chân kia như người trượt băng
+20,Bò kiểu gấu,Bear Crawls,Home Workout,Cardio/Strength,"Vai, Core, Chân",Intermediate,340,Không,"Bò trên sàn bằng hai tay và mũi chân, giữ lưng thẳng song song mặt đất"
+21,Bật nhảy gập gối,Jumping Lunges,Home Workout,Strength/Power,"Đùi, Mông",Advanced,350,Không,Thực hiện lunge và bật nhảy lên để đổi vị trí hai chân trên không trung
+22,Bật bục/Bục gỗ,Box Jumps,Home Workout,Power,"Đùi trước, Mông, Bắp chân",Advanced,380,Bục/Ghế chắc chắn,Bật nhảy bằng hai chân lên một bục hoặc bề mặt cao và bước xuống
+23,Hít đất cơ bản,Standard Push-ups,Home Workout,Strength,"Ngực, Vai, Tay sau (Triceps)",Beginner,200,Thảm,"Giữ lưng thẳng, hạ thấp và nâng toàn bộ cơ thể bằng lực cánh tay"
+24,Hít đất rộng tay,Wide Grip Push-ups,Home Workout,Strength,Cơ ngực ngoài,Intermediate,220,Thảm,Hít đất với khoảng cách hai bàn tay đặt rộng hơn vai
+25,Hít đất kim cương,Diamond Push-ups,Home Workout,Strength,"Tay sau (Triceps), Ngực trong",Advanced,250,Thảm,Hít đất với hai ngón trỏ và ngón cái chạm nhau tạo thành hình kim cương
+26,Hít đất đầu gối,Knee Push-ups,Home Workout,Strength,"Ngực, Vai, Tay sau",Beginner,150,Thảm,Phiên bản hít đất nhẹ nhàng hơn với điểm tựa là hai đầu gối
+27,Hít đất dốc xuống,Decline Push-ups,Home Workout,Strength,"Ngực trên, Vai",Intermediate,240,Ghế/Bục,"Đặt hai chân lên vị trí cao hơn tay, dồn trọng lượng vào ngực trên và vai"
+28,Hít đất chữ V lộn ngược,Pike Push-ups,Home Workout,Strength,"Vai, Tay sau",Intermediate,230,Thảm,"Tạo tư thế chữ V lộn ngược, hạ đỉnh đầu xuống gần thảm rồi đẩy lên"
+29,Chống đẩy ngược,Bench Dips,Home Workout,Strength,Tay sau (Triceps),Beginner,160,Ghế,Dùng mép ghế để hỗ trợ hạ thấp và nâng cơ thể bằng cơ tay sau
+30,Đu xà đơn,Pull-ups,Home Workout,Strength,"Lưng xô (Lats), Bắp tay (Biceps)",Advanced,250,Xà đơn,Dùng tay bám xà và kéo toàn bộ cơ thể lên cao cho đến khi cằm vượt qua xà
+31,Ngồi xổm,Squats,Home Workout,Strength,"Đùi trước (Quads), Đùi sau, Mông",Beginner,220,Không,"Gập gối hạ hông xuống như đang ngồi vào ghế ảo, lưng giữ thẳng"
+32,Squat bật nhảy,Jump Squats,Home Workout,Strength/Power,"Đùi, Mông",Intermediate,300,Không,Thực hiện squat sâu và bật nhảy lên cao mạnh nhất có thể khi đứng dậy
+33,Squat một chân,Pistol Squats,Home Workout,Strength/Balance,"Đùi trước, Core, Mông",Advanced,300,Không,"Đứng trên một chân, chân kia duỗi thẳng tới trước và thực hiện squat sâu"
+34,Bước gập gối,Lunges,Home Workout,Strength,"Đùi trước, Mông",Beginner,200,Không,Bước một chân lên trước và hạ thấp hông cho đến khi hai gối tạo góc 90 độ
+35,Gập gối lùi,Reverse Lunges,Home Workout,Strength,"Mông, Đùi sau",Beginner,190,Không,"Tương tự Lunge nhưng bước lùi chân về sau, giảm áp lực cho khớp gối"
+36,Gập gối sang ngang,Side Lunges,Home Workout,Strength,"Đùi trong, Mông",Beginner,180,Không,"Bước một chân sang ngang và hạ thấp trọng tâm, chân còn lại duỗi thẳng"
+37,Tư thế cây cầu,Glute Bridges,Home Workout,Strength,"Cơ mông (Glutes), Lưng dưới",Beginner,150,Thảm,"Nằm ngửa, gập gối và đẩy hông lên cao cho đến khi đùi và thân tạo thành đường thẳng"
+38,Cú đá của lừa,Donkey Kicks,Home Workout,Strength,Cơ mông,Beginner,140,Thảm,"Chống tay và đầu gối xuống thảm, đá một gối lên cao hướng trần nhà"
+39,Ngồi dựa tường,Wall Sit,Home Workout,Strength/Endurance,Đùi trước,Beginner,180,Tường,Dựa lưng vào tường và hạ trọng tâm xuống tư thế ngồi xổm vuông góc
+40,Kiễng gót chân,Calf Raises,Home Workout,Strength,Bắp chân,Beginner,120,Không,"Đứng thẳng, nhấc gót chân lên cao hết mức có thể rồi hạ xuống"
+41,Plank cơ bản,Plank,Home Workout,Core,"Cơ lõi (Core), Bụng, Lưng",Beginner,150,Thảm,Giữ cơ thể thẳng song song với mặt đất bằng hai cẳng tay và mũi chân
+42,Plank nghiêng,Side Plank,Home Workout,Core,Cơ liên sườn (Obliques),Intermediate,160,Thảm,Giữ cơ thể nghiêng bằng một cẳng tay và cạnh bàn chân
+43,Plank chạm vai,Plank Shoulder Taps,Home Workout,Core,"Cơ lõi, Thăng bằng",Intermediate,180,Thảm,"Từ tư thế hít đất, luân phiên dùng tay này chạm vào vai kia"
+44,Gập bụng cơ bản,Crunches,Home Workout,Core,Cơ bụng trên,Beginner,120,Thảm,"Nằm ngửa, nâng phần vai lên khỏi mặt đất để siết cơ bụng"
+45,Gập bụng đạp xe,Bicycle Crunches,Home Workout,Core,"Bụng, Liên sườn",Intermediate,180,Thảm,"Nằm ngửa, vặn người sao cho cùi chỏ chạm gối ngược chiều luân phiên"
+46,Nâng hai chân,Leg Raises,Home Workout,Core,Cơ bụng dưới,Beginner,140,Thảm,"Nằm ngửa, giữ hai chân sát nhau duỗi thẳng, nâng lên vuông góc rồi hạ xuống"
+47,Đá chân cắt kéo,Flutter Kicks,Home Workout,Core,Cơ bụng dưới,Intermediate,160,Thảm,"Nằm ngửa, nhấc hai chân lên cách đất một chút và đá luân phiên lên xuống nhỏ"
+48,Vặn mình kiểu Nga,Russian Twists,Home Workout,Core,"Bụng, Liên sườn",Intermediate,160,Thảm,"Ngồi hơi ngả lưng ra sau, nâng gót chân và vặn thân trên sang hai bên"
+49,Gập bụng ngược,Reverse Crunches,Home Workout,Core,Cơ bụng dưới,Beginner,130,Thảm,"Nằm ngửa, co gối và dùng cơ bụng kéo gối về ngực, nhấc mông lên"
+50,Bọ chết,Dead Bug,Home Workout,Core,"Core sâu, Thăng bằng",Beginner,130,Thảm,"Nằm ngửa tay chân giơ lên trời, hạ tay trái và chân phải xuống luân phiên"
+51,Gập bụng chữ V,V-Ups,Home Workout,Core,Toàn bộ cơ bụng,Advanced,200,Thảm,"Nằm ngửa, gập thân trên và nâng chân để tay chạm mũi chân tạo hình chữ V"
+52,Siêu nhân,Superman,Home Workout,Core,Lưng dưới (Lower back),Beginner,120,Thảm,"Nằm sấp, đồng thời nâng cả hai tay và hai chân lên khỏi mặt đất"
+53,Sâu râu vươn mình,Inchworm,Home Workout,Flexibility,"Toàn thân, Gân kheo",Beginner,160,Thảm,"Đứng thẳng, cúi gập người bò tay ra xa thành tư thế plank rồi bò tay về"
+54,Chó cúi mặt,Downward Dog,Home Workout,Flexibility,"Bắp chân, Vai, Lưng",Beginner,100,Thảm,"Chống tay và chân tạo thành hình chữ V lộn ngược, ép gót chân xuống sàn"
+55,Tư thế Mèo-Bò,Cat-Cow,Home Workout,Flexibility,"Cột sống, Lưng",Beginner,80,Thảm,"Quỳ chống tay, uốn cong lưng lên (mèo) rồi võng lưng xuống (bò)"
+56,Tư thế em bé,Child's Pose,Home Workout,Flexibility,"Lưng dưới, Hông",Beginner,50,Thảm,"Quỳ gối, ngồi trên gót chân, vươn dài hai tay về phía trước ép sát ngực xuống đùi"
+57,Tư thế rắn hổ mang,Cobra Stretch,Home Workout,Flexibility,"Cơ bụng, Ngực",Beginner,70,Thảm,"Nằm sấp, chống hai tay ngang ngực và đẩy thân trên vươn cao lên"
+58,Giãn cơ gập hông,Hip Flexor Stretch,Home Workout,Flexibility,"Cơ gập hông, Đùi trước",Beginner,80,Thảm,"Quỳ một gối, bước chân kia lên vuông góc và đẩy hông nhẹ về phía trước"
+59,Vặn mình nằm ngửa,Supine Spinal Twist,Home Workout,Flexibility,"Lưng dưới, Cột sống",Beginner,60,Thảm,"Nằm ngửa, co một gối và vặn ép gối đó sang bên đối diện, mắt nhìn ngược lại"
+60,Tư thế chim chó,Bird Dog,Home Workout,Mobility/Core,"Core, Lưng dưới, Thăng bằng",Beginner,110,Thảm,"Chống tay và gối, duỗi thẳng tay trái về trước và chân phải ra sau luân phiên"

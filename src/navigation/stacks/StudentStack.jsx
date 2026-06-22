@@ -13,6 +13,7 @@ import WorkoutListScreen from '../../features/workout/screens/WorkoutListScreen'
 import WorkoutDetailScreen from '../../features/workout/screens/WorkoutDetailScreen';
 import ExerciseVideoScreen from '../../features/workout/screens/ExerciseVideoScreen';
 import ActiveWorkoutScreen from '../../features/workout/screens/ActiveWorkoutScreen';
+import WorkoutHistoryScreen from '../../features/workout/screens/WorkoutHistoryScreen';
 import PricingScreen from '../../features/users/screens/PricingScreen';
 import CheckoutScreen from '../../features/users/screens/CheckoutScreen';
 import TransactionHistoryScreen from '../../features/payment/screens/TransactionHistoryScreen';
@@ -42,6 +43,7 @@ export const StudentStack = () => {
       <Stack.Screen name="WorkoutDetail" component={WorkoutDetailScreen} />
       <Stack.Screen name="ExerciseVideo" component={ExerciseVideoScreen} />
       <Stack.Screen name="ActiveWorkout" component={ActiveWorkoutScreen} />
+      <Stack.Screen name="WorkoutHistory" component={WorkoutHistoryScreen} />
       <Stack.Screen name="Pricing" component={PricingScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
       <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />

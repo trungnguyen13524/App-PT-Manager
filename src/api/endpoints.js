@@ -26,6 +26,7 @@ export const endpoints = {
   NUTRITION: {
     FOOD_LOGS: '/nutrition/food-logs',
     DAILY_SUMMARY: '/nutrition/summary/daily',
+    SCAN: '/scan',
   },
   FOODS: {
     SEARCH: '/foods/search',
@@ -43,7 +44,7 @@ export const endpoints = {
     COURSES: '/payment/courses',
   },
   WORKOUT: {
-    EXERCISES: '/workout/exercises',
+    EXERCISES: '/workout/exercises', // Used for list and detail
     SESSIONS: '/workout/sessions',
   },
   PT: {
@@ -52,6 +53,8 @@ export const endpoints = {
     ME: '/pt/me',
     COURSES: '/pt/courses',
     STUDENTS: '/pt/students',
+    MEAL_PLAN: '/pt/students/{studentId}/meal-plan',
+    EXERCISES: '/pt/students/{studentId}/exercises',
     EARNINGS: '/pt/earnings',
     WITHDRAWALS: '/pt/withdrawals',
   },

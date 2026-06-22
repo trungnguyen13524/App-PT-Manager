@@ -46,14 +46,13 @@ const PricingScreen = () => {
     setLoadingPlan(planId);
     try {
       const payload = {
-        productType: 'SUBSCRIPTION',
-        productId: planId,
+        productType: planId === 'yearly_pro' ? 'PRO_YEARLY' : 'PRO_MONTHLY',
         returnUrl: 'app-pt-manager://payment/success',
         cancelUrl: 'app-pt-manager://payment/cancel'
       };
-      const response = await paymentService.createCheckoutSession(payload);
-      if (response.data && response.data.checkoutUrl) {
-        navigation.navigate('Checkout', { url: response.data.checkoutUrl });
+      const response = await paymentService.createCheckout(payload);
+      if (response && response.checkoutUrl) {
+        navigation.navigate('Checkout', { url: response.checkoutUrl });
       } else {
         throw new Error('Không lấy được link thanh toán');
       }

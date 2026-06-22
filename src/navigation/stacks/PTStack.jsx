@@ -13,6 +13,7 @@ import PTEditProfileScreen from '../../features/pt-tools/screens/PTEditProfileSc
 import NotificationSettingsScreen from '../../features/users/screens/NotificationSettingsScreen';
 import CourseMetaScreen from '../../features/pt-tools/screens/CourseMetaScreen';
 import CurriculumBuilderScreen from '../../features/pt-tools/screens/CurriculumBuilderScreen';
+import PTPlanBuilderScreen from '../../features/pt-tools/screens/PTPlanBuilderScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,6 +29,7 @@ export const PTStack = () => {
       <Stack.Screen name="CourseMeta" component={CourseMetaScreen} />
       <Stack.Screen name="CurriculumBuilder" component={CurriculumBuilderScreen} />
       <Stack.Screen name="StudentDetail" component={PTStudentDetailScreen} />
+      <Stack.Screen name="PTPlanBuilder" component={PTPlanBuilderScreen} />
       <Stack.Screen name="StudentDashboard" component={StudentDashboardScreen} />
       <Stack.Screen name="Pricing" component={PricingScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />

@@ -59,6 +59,7 @@ const StudentDashboardScreen = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [questsData, setQuestsData] = useState({ quests: [], totalPoints: 0 });
   const [weeklyData, setWeeklyData] = useState([]);
+  const [todayMacrosData, setTodayMacrosData] = useState(null);
   
   // Loading States
   const [loadingMain, setLoadingMain] = useState(true);
@@ -111,33 +112,33 @@ const StudentDashboardScreen = () => {
         try {
           setLoadingWeekly(true);
           
-          // Get start of the week (Monday) and create array of 7 dates
+          // Get start of the week (Monday) based on UTC to align with backend
           const today = new Date();
-          const currentDay = today.getDay();
+          const utcNow = new Date(today.toISOString().split('T')[0] + 'T12:00:00Z');
+          const currentDay = utcNow.getUTCDay();
           const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
           
-          const startDate = new Date(today);
-          startDate.setDate(today.getDate() - distanceToMonday);
+          const startDate = new Date(utcNow);
+          startDate.setUTCDate(utcNow.getUTCDate() - distanceToMonday);
 
           const dateStrings = [];
           for (let i = 0; i < 7; i++) {
             const date = new Date(startDate);
-            date.setDate(startDate.getDate() + i);
-            // Format to local YYYY-MM-DD
-            const yyyy = date.getFullYear();
-            const mm = String(date.getMonth() + 1).padStart(2, '0');
-            const dd = String(date.getDate()).padStart(2, '0');
-            dateStrings.push(`${yyyy}-${mm}-${dd}`);
+            date.setUTCDate(startDate.getUTCDate() + i);
+            dateStrings.push(date.toISOString().split('T')[0]);
           }
 
           // Fetch all 7 days parallel, catching individual errors to fallback to 0
           const weeklyPromises = dateStrings.map(dateStr => 
             nutritionService.getDailySummary({ date: dateStr })
-              .then(res => ({
-                date: dateStr,
-                consumedCalories: res.data?.consumedCalories || res.data?.todayCalories?.consumed || 0,
-                targetCalories: res.data?.targetCalories || res.data?.todayCalories?.target || 2000
-              }))
+              .then(res => {
+                const unwrapped = res.data || res;
+                return {
+                  date: dateStr,
+                  consumedCalories: unwrapped.consumed?.calories || unwrapped.consumedCalories || unwrapped.todayCalories?.consumed || 0,
+                  targetCalories: unwrapped.target?.calories || unwrapped.targetCalories || unwrapped.todayCalories?.target || 2000
+                };
+              })
               .catch(() => ({
                 date: dateStr,
                 consumedCalories: 0,
@@ -146,6 +147,20 @@ const StudentDashboardScreen = () => {
           );
 
           const weeklyResults = await Promise.all(weeklyPromises);
+          
+          // Fetch exact today summary to get macros
+          const todayStr = new Date().toISOString().split('T')[0];
+          try {
+            const todayRes = await nutritionService.getDailySummary({ date: todayStr });
+            const todayUnwrapped = todayRes.data || todayRes;
+            setTodayMacrosData({
+              protein: { consumed: todayUnwrapped?.consumed?.proteinG || 0, target: todayUnwrapped?.target?.proteinG || 150 },
+              carbs: { consumed: todayUnwrapped?.consumed?.carbsG || 0, target: todayUnwrapped?.target?.carbsG || 200 },
+              fat: { consumed: todayUnwrapped?.consumed?.fatG || 0, target: todayUnwrapped?.target?.fatG || 60 }
+            });
+          } catch(e) {
+            setTodayMacrosData(null);
+          }
           
           if (isActive) {
             setWeeklyData(weeklyResults);
@@ -226,7 +241,7 @@ const StudentDashboardScreen = () => {
         
         <CalorieCoreCard 
           todayCalories={dashboardData?.todayCalories}
-          todayMacros={dashboardData?.todayMacros}
+          todayMacros={todayMacrosData || dashboardData?.todayMacros}
           streakDays={dashboardData?.streakDays || 0}
           onShareClick={() => setIsShareModalVisible(true)}
         />

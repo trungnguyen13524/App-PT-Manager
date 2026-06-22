@@ -1,161 +1,190 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Dimensions,
-  StatusBar
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  Image, Dimensions, StatusBar, ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronLeft, Filter, Flame, Clock } from 'lucide-react-native';
-import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
+import { ChevronLeft } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FOOD_IMAGES, toImageKey } from '../../../assets';
+import foodsData from '../../../assets/foods.json';
+import ptService from '../../../api/services/pt.service';
 
 const { width } = Dimensions.get('window');
-const cardWidth = (width - 60) / 2; // 2 columns with padding
+const cardWidth = (width - 60) / 2;
 
 const SuggestedMealsScreen = () => {
   const navigation = useNavigation();
+  const [activeTab, setActiveTab] = useState('ai'); // 'ai' | 'library'
+  const [ptMeals, setPtMeals] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data for suggested meals
-  const categories = ['Tất cả', 'Tăng cơ', 'Giảm mỡ', 'Ít Carbs', 'Thuần chay'];
-  const [activeCategory, setActiveCategory] = React.useState('Tất cả');
+  useEffect(() => {
+    fetchPTMeals();
+  }, []);
 
-  const meals = [
-    {
-      id: 1,
-      name: 'Phở gà',
-      desc: 'Giàu đạm, ít béo',
-      calories: 350,
-      time: '15 phút',
-      image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80',
-      tags: ['Tăng cơ']
-    },
-    {
-      id: 2,
-      name: 'Gỏi cuốn',
-      desc: 'Nhiều rau xanh',
-      calories: 280,
-      time: '10 phút',
-      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
-      tags: ['Giảm mỡ', 'Ít Carbs']
-    },
-    {
-      id: 3,
-      name: 'Cơm gà gạo lứt',
-      desc: 'Cân bằng dinh dưỡng',
-      calories: 420,
-      time: '25 phút',
-      image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=400&q=80',
-      tags: ['Tăng cơ']
-    },
-    {
-      id: 4,
-      name: 'Salad cá hồi',
-      desc: 'Giàu Omega-3',
-      calories: 310,
-      time: '15 phút',
-      image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80',
-      tags: ['Giảm mỡ', 'Ít Carbs']
-    },
-    {
-      id: 5,
-      name: 'Bún đậu chay',
-      desc: 'Thanh đạm',
-      calories: 380,
-      time: '20 phút',
-      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
-      tags: ['Thuần chay']
-    },
-    {
-      id: 6,
-      name: 'Bò bít tết',
-      desc: 'Nhiều đạm',
-      calories: 550,
-      time: '30 phút',
-      image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=400&q=80',
-      tags: ['Tăng cơ']
+  const fetchPTMeals = async () => {
+    try {
+      const res = await ptService.getAssignments('MEAL_PLAN');
+      if (res.data && res.data.days && res.data.days.length > 0) {
+        // Assume we show the first day's meals for today
+        setPtMeals(res.data.days[0].meals || []);
+      }
+    } catch (err) {
+      console.log('No PT meals or error', err.response?.data || err.message);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // Mock AI Plan for 4 meals
+  const aiMeals = [
+    { id: 'm1', mealType: 'BREAKFAST', name: 'Phở bò tái', calories: 450 },
+    { id: 'm2', mealType: 'LUNCH', name: 'Ức gà áp chảo', calories: 320 },
+    { id: 'm3', mealType: 'DINNER', name: 'Salad ức gà', calories: 280 },
+    { id: 'm4', mealType: 'SNACK', name: 'Sữa chua', calories: 120 },
   ];
 
-  const filteredMeals = activeCategory === 'Tất cả' 
-    ? meals 
-    : meals.filter(meal => meal.tags.includes(activeCategory));
+  const mealTypeLabels = {
+    'BREAKFAST': 'Bữa Sáng',
+    'LUNCH': 'Bữa Trưa',
+    'DINNER': 'Bữa Tối',
+    'SNACK': 'Bữa Phụ'
+  };
+
+  const handlePressCard = (item) => {
+    navigation.navigate('MealDetail', { item });
+  };
+
+  const renderCard = (meal, isPT = false) => {
+    const imgKey = toImageKey(meal.name);
+    const imageSource = FOOD_IMAGES[imgKey] || FOOD_IMAGES['uc_ga_ap_chao'];
+
+    // Map to the format MealDetail expects from JSON
+    const payloadItem = {
+      Description_VN: meal.name,
+      Calories: meal.calories,
+      Protein: meal.macros?.proteinG || 0, 
+      Carbohydrate: meal.macros?.carbsG || 0, 
+      TotalFat: meal.macros?.fatG || 0
+    };
+
+    return (
+      <TouchableOpacity 
+        key={meal.id || meal.name} 
+        style={styles.card}
+        activeOpacity={0.8}
+        onPress={() => handlePressCard(payloadItem)}
+      >
+        <View style={styles.imageContainer}>
+          {imageSource ? (
+            <Image source={imageSource} style={styles.image} />
+          ) : (
+             <View style={[styles.image, { backgroundColor: '#CBD5E1' }]} />
+          )}
+          <View style={[styles.glassTag, isPT && { backgroundColor: 'rgba(230, 126, 34, 0.9)' }]}>
+            <Text style={styles.glassTagText}>{meal.calories} kcal</Text>
+          </View>
+        </View>
+        <View style={styles.cardFooter}>
+          <Text style={[styles.mealTypeName, isPT && { color: '#E67E22' }]}>
+            {isPT ? '👑 PT Giao' : mealTypeLabels[meal.mealType]}
+          </Text>
+          <Text style={styles.foodName} numberOfLines={2}>{meal.name}</Text>
+          {isPT && meal.notes ? (
+            <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>{meal.notes}</Text>
+          ) : null}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderLibrary = () => {
+    return (
+      <View style={styles.grid}>
+        {foodsData.map((item, index) => {
+          const key = toImageKey(item.Description_VN);
+          const imageSource = FOOD_IMAGES[key];
+          const cal = Math.round(Number(item.Calories) || 0);
+
+          return (
+            <TouchableOpacity 
+              key={`lib-${index}`} 
+              style={[styles.card, { width: cardWidth }]}
+              activeOpacity={0.8}
+              onPress={() => handlePressCard(item)}
+            >
+              <View style={styles.imageContainer}>
+                {imageSource ? (
+                   <Image source={imageSource} style={styles.image} />
+                ) : (
+                   <View style={[styles.image, { backgroundColor: '#CBD5E1' }]} />
+                )}
+                <View style={styles.glassTag}>
+                  <Text style={styles.glassTagText}>{cal} kcal</Text>
+                </View>
+              </View>
+              <View style={styles.cardFooter}>
+                <Text style={styles.foodName} numberOfLines={2}>{item.Description_VN}</Text>
+              </View>
+            </TouchableOpacity>
+          )
+        })}
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color={COLORS.text} size={28} />
+          <ChevronLeft color="#F8FAFC" size={28} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Gợi ý bữa ăn</Text>
-        <TouchableOpacity style={styles.filterBtn}>
-          <Filter color={COLORS.text} size={24} />
+        <Text style={styles.headerTitle}>Gợi Ý & Thư Viện</Text>
+        <View style={{ width: 28 }} />
+      </View>
+
+      {/* Tabs */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'ai' && styles.activeTab]}
+          onPress={() => setActiveTab('ai')}
+        >
+          <Text style={[styles.tabText, activeTab === 'ai' && styles.activeTabText]}>Thực đơn AI</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'library' && styles.activeTab]}
+          onPress={() => setActiveTab('library')}
+        >
+          <Text style={[styles.tabText, activeTab === 'library' && styles.activeTabText]}>Thư viện món</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Categories Horizontal Scroll */}
-      <View style={styles.categoriesWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
-          {categories.map((cat, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={[styles.categoryBadge, activeCategory === cat && styles.categoryBadgeActive]}
-              onPress={() => setActiveCategory(cat)}
-            >
-              <Text style={[styles.categoryText, activeCategory === cat && styles.categoryTextActive]}>
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Meals Grid */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.gridContent}>
-        <View style={styles.gridContainer}>
-          {filteredMeals.map((meal) => (
-            <TouchableOpacity 
-              key={meal.id} 
-              style={styles.mealCard}
-              onPress={() => navigation.navigate('MealDetail', { 
-                meal: {
-                  ...meal,
-                  title: meal.name,
-                  protein: 25, // Mock default macros
-                  carbs: 30,
-                  fat: 10,
-                  instructions: 'Hướng dẫn chế biến đang cập nhật...',
-                  alternatives: []
-                } 
-              })}
-              activeOpacity={0.8}
-            >
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: meal.image }} style={styles.mealImage} />
-                <View style={styles.calorieTag}>
-                  <Flame size={12} color="#FFF" style={{ marginRight: 4 }} />
-                  <Text style={styles.tagText}>{meal.calories} kcal</Text>
-                </View>
-              </View>
-              <View style={styles.mealInfo}>
-                <Text style={styles.mealName} numberOfLines={1}>{meal.name}</Text>
-                <Text style={styles.mealDesc} numberOfLines={1}>{meal.desc}</Text>
-                <View style={styles.timeRow}>
-                  <Clock size={12} color={COLORS.textLight} />
-                  <Text style={styles.timeText}>{meal.time}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={{ height: 40 }} />
+      {/* Content */}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {activeTab === 'ai' ? (
+          isLoading ? (
+            <View style={{ marginTop: 50, alignItems: 'center' }}>
+              <ActivityIndicator size="large" color="#38BDF8" />
+            </View>
+          ) : (
+            <View style={styles.verticalList}>
+              {ptMeals && ptMeals.length > 0 ? (
+                // Render PT Meals overrides AI
+                ptMeals.map((m) => renderCard(m, true))
+              ) : (
+                // Render AI Meals
+                aiMeals.map((m) => renderCard(m, false))
+              )}
+            </View>
+          )
+        ) : (
+          renderLibrary()
+        )}
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -164,7 +193,7 @@ const SuggestedMealsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#0F172A',
   },
   header: {
     flexDirection: 'row',
@@ -173,116 +202,79 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  backBtn: {
-    padding: 8,
-    marginLeft: -8,
+  backBtn: { padding: 4, marginLeft: -8 },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: '#F8FAFC' },
+  tabContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
+    padding: 4,
   },
-  headerTitle: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.text,
-  },
-  filterBtn: {
-    padding: 8,
-    marginRight: -8,
-  },
-  categoriesWrapper: {
-    marginBottom: 16,
-  },
-  categoriesScroll: {
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-  },
-  categoryBadge: {
-    paddingHorizontal: 20,
+  tab: {
+    flex: 1,
     paddingVertical: 10,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: COLORS.divider,
+    alignItems: 'center',
+    borderRadius: 8,
   },
-  categoryBadgeActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-  },
-  categoryTextActive: {
-    color: '#fff',
-  },
-  gridContent: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-  },
-  gridContainer: {
+  activeTab: { backgroundColor: '#334155' },
+  tabText: { color: '#64748B', fontWeight: '600', fontSize: 15 },
+  activeTabText: { color: '#F8FAFC', fontWeight: '800' },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  verticalList: { gap: 20 },
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 16,
   },
-  mealCard: {
-    width: cardWidth,
-    backgroundColor: '#fff',
+  card: {
+    backgroundColor: '#1E293B',
     borderRadius: 24,
-    marginBottom: 20,
     overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 5,
+    marginBottom: 16,
   },
   imageContainer: {
     width: '100%',
-    height: 130,
+    height: 160,
     position: 'relative',
+    backgroundColor: '#334155'
   },
-  mealImage: {
+  image: {
     width: '100%',
     height: '100%',
   },
-  calorieTag: {
+  glassTag: {
     position: 'absolute',
     top: 12,
     right: 12,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backdropFilter: 'blur(10px)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  tagText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
+  glassTagText: {
+    color: '#00FF66',
+    fontSize: 12,
+    fontWeight: '800',
   },
-  mealInfo: {
+  cardFooter: {
     padding: 16,
   },
-  mealName: {
+  mealTypeName: {
+    fontSize: 12,
+    color: '#00FF66',
+    fontWeight: '700',
+    marginBottom: 4,
+    textTransform: 'uppercase'
+  },
+  foodName: {
     fontSize: 16,
     fontWeight: '800',
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  mealDesc: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 12,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  timeText: {
-    fontSize: 12,
-    color: COLORS.textLight,
-    marginLeft: 4,
-    fontWeight: '500',
+    color: '#F8FAFC',
   }
 });
 

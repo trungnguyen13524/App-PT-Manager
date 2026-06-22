@@ -104,6 +104,7 @@ const PTConnectScreen = () => {
   }, []);
 
   const handleOpenDetail = async (course) => {
+    setPlayingLessonDemo(null); // Reset demo video state
     setSelectedCourse(course);
     setModalVisible(true);
     setLoadingDetail(true);
@@ -127,9 +128,15 @@ const PTConnectScreen = () => {
   const handleBuyCourse = async (courseId) => {
     setPurchasingId(courseId);
     try {
-      const response = await paymentService.createCheckoutSession(courseId);
-      if (response.success && response.data?.checkoutUrl) {
-        Linking.openURL(response.data.checkoutUrl);
+      const payload = {
+        productType: 'PT_COURSE',
+        productId: courseId,
+        returnUrl: 'app-pt-manager://payment/success',
+        cancelUrl: 'app-pt-manager://payment/cancel'
+      };
+      const response = await paymentService.createCheckout(payload);
+      if (response && response.checkoutUrl) {
+        Linking.openURL(response.checkoutUrl);
       } else {
         Alert.alert('Lỗi', 'Không thể tạo phiên thanh toán.');
       }
@@ -267,12 +274,12 @@ const PTConnectScreen = () => {
       </ScrollView>
 
       {/* Course Detail Modal */}
-      <Modal visible={isModalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
+      <Modal visible={isModalVisible} animationType="slide" transparent={true} onRequestClose={() => { setModalVisible(false); setPlayingLessonDemo(null); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle} numberOfLines={1}>{selectedCourse?.title}</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
+              <TouchableOpacity onPress={() => { setModalVisible(false); setPlayingLessonDemo(null); }} style={styles.closeBtn}>
                 <X color="#FFF" size={24} />
               </TouchableOpacity>
             </View>
@@ -289,8 +296,6 @@ const PTConnectScreen = () => {
                     if (playingLessonDemo.type === 'cloudinary') {
                       return <NativeVideoPlayer sourceUri={playingLessonDemo.url} style={styles.demoVideo} />;
                     } else if (playingLessonDemo.type === 'youtube') {
-                      // This branch might not be hit anymore if we open links directly,
-                      // but keeping it just in case.
                       return (
                         <TouchableOpacity 
                           style={[styles.demoVideo, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }]}
@@ -303,30 +308,8 @@ const PTConnectScreen = () => {
                     }
                   }
 
-                  const ytTag = courseDetail?.tags?.find(t => t.startsWith('YT_'));
-                  let parsedYtId = ytTag ? ytTag.replace('YT_', '') : courseDetail?.youtubeVideoId;
-                  if (parsedYtId) {
-                    const match = parsedYtId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
-                    if (match) parsedYtId = match[1];
-                  }
-                  
-                  if (courseDetail?.cloudinaryVideoUrl) {
-                    return <NativeVideoPlayer sourceUri={courseDetail.cloudinaryVideoUrl} style={styles.demoVideo} />;
-                  } else if (parsedYtId) {
-                    return (
-                      <TouchableOpacity 
-                        style={[styles.demoVideo, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }]}
-                        onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${parsedYtId}`)}
-                      >
-                        <Image source={{ uri: `https://img.youtube.com/vi/${parsedYtId}/hqdefault.jpg` }} style={[StyleSheet.absoluteFill, { opacity: 0.6 }]} />
-                        <PlayCircle color="#FFF" size={64} />
-                      </TouchableOpacity>
-                    );
-                  } else if (courseDetail?.demoVideoUrl) {
-                    return <NativeVideoPlayer sourceUri={courseDetail.demoVideoUrl} style={styles.demoVideo} />;
-                  } else {
-                    return <Image source={{ uri: courseDetail?.thumbnailUrl || selectedCourse?.thumbnailUrl }} style={styles.demoVideo} />;
-                  }
+                  // Default: Show thumbnail. Never auto-play anything unless a preview lesson is clicked.
+                  return <Image source={{ uri: courseDetail?.thumbnailUrl || selectedCourse?.thumbnailUrl }} style={styles.demoVideo} />;
                 })()}
 
                 {/* PT Info Area - Simplified */}
@@ -348,6 +331,7 @@ const PTConnectScreen = () => {
                       style={{ backgroundColor: 'rgba(0, 255, 102, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: '#00FF66' }}
                       onPress={() => {
                         setModalVisible(false);
+                        setPlayingLessonDemo(null);
                         navigation.navigate('PublicPTProfile', { pt: courseDetail.pt || { fullName: selectedCourse?.ptFullName, avatarUrl: selectedCourse?.ptAvatarUrl } });
                       }}
                     >
@@ -416,7 +400,7 @@ const PTConnectScreen = () => {
             {/* Bottom Bar */}
             <View style={styles.modalBottomBar}>
               <Text style={styles.modalPriceText}>{formatPrice(selectedCourse?.priceVnd || 0)}</Text>
-              <TouchableOpacity style={styles.buyBtnLarge} onPress={() => { setModalVisible(false); handleBuyCourse(selectedCourse?.id); }}>
+              <TouchableOpacity style={styles.buyBtnLarge} onPress={() => { setModalVisible(false); setPlayingLessonDemo(null); handleBuyCourse(selectedCourse?.id); }}>
                 <Text style={styles.buyBtnLargeText}>Đăng ký ngay</Text>
               </TouchableOpacity>
             </View>

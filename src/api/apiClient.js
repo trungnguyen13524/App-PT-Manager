@@ -132,8 +132,8 @@ apiClient.interceptors.response.use(
           refreshToken: refreshToken,
         });
 
-        // Spec trả về: { data: { accessToken, refreshToken, expiresIn } }
-        const { accessToken, refreshToken: newRefreshToken } = response.data.data;
+        // Spec trả về phẳng không có expiresIn: { data: { accessToken, refreshToken, user } }
+        const { accessToken, refreshToken: newRefreshToken } = response.data.data || response.data;
 
         await useAuthStore.getState().setTokens(accessToken, newRefreshToken);
 

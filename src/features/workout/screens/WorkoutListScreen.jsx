@@ -30,7 +30,7 @@ const WorkoutListScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Luyện tập</Text>
-        <TouchableOpacity style={styles.historyBtn}>
+        <TouchableOpacity style={styles.historyBtn} onPress={() => navigation.navigate('WorkoutHistory')}>
           <Clock color={COLORS.primary} size={20} />
         </TouchableOpacity>
       </View>

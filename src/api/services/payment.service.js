@@ -15,10 +15,7 @@ const paymentService = {
   getSubscription: () => apiClient.get(endpoints.PAYMENT.SUBSCRIPTION),
   
   // GET /payment/courses
-  getPurchasedCourses: (params) => apiClient.get(endpoints.PAYMENT.COURSES, { params }),
-  
-  // POST /payment/checkout for courses
-  checkoutPTCourse: (courseId) => apiClient.post(endpoints.PAYMENT.CHECKOUT, { courseId, type: 'COURSE' })
+  getPurchasedCourses: (params) => apiClient.get(endpoints.PAYMENT.COURSES, { params })
 };
 
 export default paymentService;

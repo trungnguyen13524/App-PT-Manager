@@ -2,58 +2,40 @@ import apiClient from '../apiClient';
 import { endpoints } from '../endpoints';
 
 const ptService = {
-  // POST /pt/verification
-  requestVerification: (data) => apiClient.post(endpoints.PT.VERIFICATION, data),
-  // GET /pt/verification/status
-  getVerificationStatus: () => apiClient.get(endpoints.PT.VERIFICATION_STATUS),
+  getAssignments: (type) => apiClient.get(`/users/me/pt-assignments?type=${type}`),
   
-  // GET /pt/me
+  // Assign meal plan to a student
+  assignMealPlan: (studentId, data) => apiClient.put(endpoints.PT.MEAL_PLAN.replace('{studentId}', studentId), data),
+  
+  // Assign exercises to a student
+  assignExercises: (studentId, data) => apiClient.post(endpoints.PT.EXERCISES.replace('{studentId}', studentId), data),
+
+  // Verification & Profile
+  getVerificationStatus: () => apiClient.get(endpoints.PT.VERIFICATION_STATUS),
+  submitVerification: (data) => apiClient.post(endpoints.PT.VERIFICATION, data),
+  requestVerification: (data) => apiClient.post(endpoints.PT.VERIFICATION, data), // Added requestVerification
   getProfile: () => apiClient.get(endpoints.PT.ME),
-  // PATCH /pt/me
   updateProfile: (data) => apiClient.patch(endpoints.PT.ME, data),
   
-  // POST /pt/courses
-  createCourse: (data) => apiClient.post(endpoints.PT.COURSES, data),
-  // GET /pt/courses
-  getCourses: (params) => apiClient.get(endpoints.PT.COURSES, { params }),
-  // GET /pt/courses/{id}
-  getCourseDetail: (id) => apiClient.get(`${endpoints.PT.COURSES}/${id}`),
-  // PATCH /pt/courses/{id}
-  updateCourse: (id, data) => apiClient.patch(`${endpoints.PT.COURSES}/${id}`, data),
-  // PUT /pt/courses/{id}/curriculum
-  updateCurriculum: (id, data) => apiClient.put(`${endpoints.PT.COURSES}/${id}/curriculum`, data),
-  // POST /pt/courses/{id}/publish
-  publishCourse: (id) => apiClient.post(`${endpoints.PT.COURSES}/${id}/publish`),
-  // POST /pt/courses/{id}/archive
-  archiveCourse: (id) => apiClient.post(`${endpoints.PT.COURSES}/${id}/archive`),
-  // POST /pt/courses/{id}/thumbnail
-  uploadCourseThumbnail: (id, formData) => apiClient.post(`${endpoints.PT.COURSES}/${id}/thumbnail`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  // POST /pt/courses/{id}/lessons/{lessonId}/video
-  uploadLessonVideo: (id, lessonId, formData) => apiClient.post(`${endpoints.PT.COURSES}/${id}/lessons/${lessonId}/video`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  // PATCH /pt/courses/{id}/lessons/{lessonId}/preview
-  toggleLessonPreview: (id, lessonId, data) => apiClient.patch(`${endpoints.PT.COURSES}/${id}/lessons/${lessonId}/preview`, data),
+  // Earnings
+  getEarnings: () => apiClient.get(endpoints.PT.EARNINGS),
+  requestWithdrawal: (data, customHeaders = {}) => apiClient.post(endpoints.PT.WITHDRAWALS, data, { headers: { ...customHeaders } }),
 
-  // GET /pt/students
-  getStudents: (params) => apiClient.get(endpoints.PT.STUDENTS, { params }),
-  // GET /pt/students/{studentId}
+  // Courses
+  getCourses: () => apiClient.get(endpoints.PT.COURSES),
+  getCourseDetail: (courseId) => apiClient.get(`${endpoints.PT.COURSES}/${courseId}`),
+  createCourse: (data) => apiClient.post(endpoints.PT.COURSES, data),
+  updateCourse: (courseId, data) => apiClient.patch(`${endpoints.PT.COURSES}/${courseId}`, data),
+  updateCurriculum: (courseId, data) => apiClient.put(`${endpoints.PT.COURSES}/${courseId}/curriculum`, data),
+  publishCourse: (courseId) => apiClient.post(`${endpoints.PT.COURSES}/${courseId}/publish`),
+  restoreCourse: (courseId) => apiClient.post(`${endpoints.PT.COURSES}/${courseId}/restore`),
+  uploadLessonVideo: (courseId, lessonId, formData) => apiClient.post(`${endpoints.PT.COURSES}/${courseId}/lessons/${lessonId}/video`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateLessonPreview: (courseId, lessonId, isPreview) => apiClient.patch(`${endpoints.PT.COURSES}/${courseId}/lessons/${lessonId}/preview`, { isPreview }),
+  uploadCourseThumbnail: (courseId, formData) => apiClient.post(`${endpoints.PT.COURSES}/${courseId}/thumbnail`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }), // Added uploadCourseThumbnail
+
+  // Students
+  getStudents: () => apiClient.get(endpoints.PT.STUDENTS),
   getStudentDetail: (studentId) => apiClient.get(`${endpoints.PT.STUDENTS}/${studentId}`),
-  // PUT /pt/students/{studentId}/meal-plan
-  assignMealPlan: (studentId, data) => apiClient.put(`${endpoints.PT.STUDENTS}/${studentId}/meal-plan`, data),
-  // POST /pt/students/{studentId}/exercises
-  assignExercises: (studentId, data) => apiClient.post(`${endpoints.PT.STUDENTS}/${studentId}/exercises`, data),
-  
-  // GET /pt/earnings
-  getEarnings: (params) => apiClient.get(endpoints.PT.EARNINGS, { params }),
-  // POST /pt/withdrawals
-  requestWithdrawal: (data, idempotencyKey) => apiClient.post(endpoints.PT.WITHDRAWALS, data, {
-    headers: { 'Idempotency-Key': idempotencyKey }
-  }),
-  // GET /pt/withdrawals
-  getWithdrawals: (params) => apiClient.get(endpoints.PT.WITHDRAWALS, { params }),
 };
 
 export default ptService;

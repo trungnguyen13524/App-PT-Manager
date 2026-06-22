@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,33 +6,66 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
-  StatusBar
+  StatusBar,
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronLeft, TrendingUp, Flame, Droplets, Target, Award } from 'lucide-react-native';
+import { ChevronLeft, TrendingUp, TrendingDown, Flame, Droplets, Target, Award } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import NutriCard from '../../../components/shared/NutriCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNutritionStore } from '../../../store/nutritionStore';
 
 const { width } = Dimensions.get('window');
 
 const NutritionOverviewScreen = () => {
   const navigation = useNavigation();
 
-  // Mock data for the week
-  const weekDays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-  const caloriesData = [1850, 2100, 1950, 2300, 1750, 0, 0];
-  const targetCalories = 2124;
-  const currentDayIndex = 4; // T6
+  const { weeklySummary, fetchWeeklySummary } = useNutritionStore();
+  const [loading, setLoading] = useState(true);
 
-  // Mock Macros average
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await fetchWeeklySummary();
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
+  const weekDays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  
+  // Xử lý dữ liệu từ API
+  const caloriesData = weeklySummary ? weeklySummary.map(day => day?.consumed?.calories || 0) : Array(7).fill(0);
+  const targetCalories = weeklySummary ? Math.max(...weeklySummary.map(day => day?.target?.calories || 0)) : 2000;
+  
+  const currentDayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+
+  // Tính trung bình
+  const validDays = weeklySummary ? weeklySummary.filter(day => day?.consumed?.calories > 0) : [];
+  const validDaysCount = validDays.length || 1;
+  const avgCalories = validDays.reduce((sum, day) => sum + (day.consumed?.calories || 0), 0) / validDaysCount;
+  
   const macros = {
-    protein: { current: 125, target: 159, color: COLORS.primary },
-    carbs: { current: 180, target: 212, color: '#FF8A65' },
-    fat: { current: 55, target: 71, color: '#FFC107' }
+    protein: { 
+      current: Math.round(validDays.reduce((sum, day) => sum + (day.consumed?.proteinG || 0), 0) / validDaysCount),
+      target: Math.round(validDays.reduce((sum, day) => sum + (day.target?.proteinG || 0), 0) / validDaysCount) || 150,
+      color: COLORS.primary 
+    },
+    carbs: { 
+      current: Math.round(validDays.reduce((sum, day) => sum + (day.consumed?.carbsG || 0), 0) / validDaysCount),
+      target: Math.round(validDays.reduce((sum, day) => sum + (day.target?.carbsG || 0), 0) / validDaysCount) || 200,
+      color: '#FF8A65' 
+    },
+    fat: { 
+      current: Math.round(validDays.reduce((sum, day) => sum + (day.consumed?.fatG || 0), 0) / validDaysCount),
+      target: Math.round(validDays.reduce((sum, day) => sum + (day.target?.fatG || 0), 0) / validDaysCount) || 60,
+      color: '#FFC107' 
+    }
   };
 
   const calculateProgress = (current, target) => {
+    if (!target) return 0;
     return Math.min((current / target) * 100, 100);
   };
 
@@ -50,17 +83,29 @@ const NutritionOverviewScreen = () => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        
+        {loading ? (
+          <View style={{ marginTop: 100, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={{ marginTop: 16, color: COLORS.textSecondary }}>Đang tải dữ liệu tuần...</Text>
+          </View>
+        ) : (
+          <>
         {/* Weekly Chart Card */}
         <NutriCard style={styles.chartCard}>
           <View style={styles.cardHeader}>
             <View>
               <Text style={styles.cardSubtitle}>Trung bình mỗi ngày</Text>
-              <Text style={styles.cardTitle}>1,990 kcal</Text>
+              <Text style={styles.cardTitle}>{Math.round(avgCalories).toLocaleString()} kcal</Text>
             </View>
-            <View style={styles.trendBadge}>
-              <TrendingUp size={16} color={COLORS.primary} />
-              <Text style={styles.trendText}>+5%</Text>
+            <View style={[styles.trendBadge, avgCalories > targetCalories && { backgroundColor: '#FF525230' }]}>
+              {avgCalories > targetCalories ? (
+                <TrendingDown size={16} color="#FF5252" />
+              ) : (
+                <TrendingUp size={16} color={COLORS.primary} />
+              )}
+              <Text style={[styles.trendText, avgCalories > targetCalories && { color: '#FF5252' }]}>
+                {targetCalories > 0 ? Math.round((Math.abs(avgCalories - targetCalories) / targetCalories) * 100) : 0}%
+              </Text>
             </View>
           </View>
 
@@ -183,21 +228,11 @@ const NutritionOverviewScreen = () => {
           </View>
         </NutriCard>
 
-        {/* AI Insights Card */}
-        <Text style={styles.sectionTitle}>Nhận xét từ AI</Text>
-        <View style={styles.insightCard}>
-          <View style={styles.insightIconWrapper}>
-            <Award size={24} color="#FFF" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightTitle}>Rất tốt! Bạn đang bám sát mục tiêu</Text>
-            <Text style={styles.insightText}>
-              Lượng Protein trung bình tuần này của bạn khá tốt. Tuy nhiên vào Thứ 5 bạn đã vượt mức Calo. Hãy cố gắng duy trì lượng rau xanh và uống đủ nước nhé!
-            </Text>
-          </View>
-        </View>
+
 
         <View style={{ height: 40 }} />
+        </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -365,39 +400,6 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     borderRadius: 4,
-  },
-  insightCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 24,
-    padding: 24,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  insightIconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  insightContent: {
-    flex: 1,
-  },
-  insightTitle: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
-    lineHeight: 22,
-  },
-  insightText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 13,
-    lineHeight: 20,
   }
 });
 
