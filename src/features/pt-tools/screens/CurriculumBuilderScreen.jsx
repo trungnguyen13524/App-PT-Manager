@@ -67,7 +67,7 @@ const CurriculumBuilderScreen = () => {
       const sortedModules = (res.data?.modules || []).map(m => ({
         ...m,
         isExpanded: true,
-        lessons: (m.lessons || []).sort((a, b) => a.displayOrder - b.displayOrder)
+        lessons: (m.lessons || []).map(l => ({ ...l, videoUrl: l.cloudinaryVideoUrl || l.videoUrl })).sort((a, b) => a.displayOrder - b.displayOrder)
       })).sort((a, b) => a.displayOrder - b.displayOrder);
       
       setModules(sortedModules);
@@ -376,21 +376,6 @@ const CurriculumBuilderScreen = () => {
 
   // --- LƯU GIÁO TRÌNH ---
   const handleSaveCurriculum = async () => {
-    const hasCloudVideo = modules.some(m => m.lessons.some(l => l.videoUrl && l.videoUrl.startsWith('http')));
-    if (hasCloudVideo) {
-      return Alert.alert(
-        'Cảnh báo dữ liệu',
-        'Việc Lưu Giáo Trình sẽ làm XÓA SẠCH toàn bộ các video bạn đã tải lên Cloudinary trước đó. Bạn có chắc chắn muốn Lưu và tải lại toàn bộ video không?',
-        [
-          { text: 'Hủy bỏ', style: 'cancel' },
-          { 
-            text: 'Vẫn Lưu (Mất Video)', 
-            style: 'destructive',
-            onPress: () => performSaveCurriculum()
-          }
-        ]
-      );
-    }
     performSaveCurriculum();
   };
 
@@ -410,6 +395,7 @@ const CurriculumBuilderScreen = () => {
             displayOrder: l.displayOrder,
             youtubeVideoId: l.youtubeVideoId || undefined,
             videoUrl: l.videoUrl || undefined,
+            cloudinaryVideoUrl: l.videoUrl || undefined,
             duration: Number(l.duration) || 0,
             isPreview: !!l.isPreview
           }))

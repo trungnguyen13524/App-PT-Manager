@@ -41,42 +41,42 @@ const CalorieCoreCard = ({ todayCalories, todayMacros, streakDays, onShareClick 
       <View style={styles.macrosRow}>
         <View style={styles.macroItem}>
           <Text style={styles.macroLabel}>Carbs</Text>
-          <Text style={styles.macroValue}>{consumedCarbs}/{targetCarbs}g</Text>
+          <Text style={[styles.macroValue, consumedCarbs > targetCarbs && { color: '#FF4D4D' }]}>{consumedCarbs}/{targetCarbs}g</Text>
           <View style={styles.macroTrack}>
             <View style={[
               styles.macroBar, 
               { 
-                backgroundColor: '#00B3FF', 
+                backgroundColor: consumedCarbs > targetCarbs ? '#FF4D4D' : '#00B3FF', 
                 width: `${Math.min((consumedCarbs / (targetCarbs || 1)) * 100, 100)}%`, 
-                shadowColor: '#00B3FF' 
+                shadowColor: consumedCarbs > targetCarbs ? '#FF4D4D' : '#00B3FF' 
               }
             ]} />
           </View>
         </View>
         <View style={styles.macroItem}>
           <Text style={styles.macroLabel}>Protein</Text>
-          <Text style={styles.macroValue}>{consumedProtein}/{targetProtein}g</Text>
+          <Text style={[styles.macroValue, consumedProtein > targetProtein && { color: '#FF4D4D' }]}>{consumedProtein}/{targetProtein}g</Text>
           <View style={styles.macroTrack}>
             <View style={[
               styles.macroBar, 
               { 
-                backgroundColor: '#00FF66', 
+                backgroundColor: consumedProtein > targetProtein ? '#FF4D4D' : '#00FF66', 
                 width: `${Math.min((consumedProtein / (targetProtein || 1)) * 100, 100)}%`, 
-                shadowColor: '#00FF66' 
+                shadowColor: consumedProtein > targetProtein ? '#FF4D4D' : '#00FF66' 
               }
             ]} />
           </View>
         </View>
         <View style={styles.macroItem}>
           <Text style={styles.macroLabel}>Fat</Text>
-          <Text style={styles.macroValue}>{consumedFat}/{targetFat}g</Text>
+          <Text style={[styles.macroValue, consumedFat > targetFat && { color: '#FF4D4D' }]}>{consumedFat}/{targetFat}g</Text>
           <View style={styles.macroTrack}>
             <View style={[
               styles.macroBar, 
               { 
-                backgroundColor: '#FF4D00', 
+                backgroundColor: consumedFat > targetFat ? '#FF4D4D' : '#FF4D00', 
                 width: `${Math.min((consumedFat / (targetFat || 1)) * 100, 100)}%`, 
-                shadowColor: '#FF4D00' 
+                shadowColor: consumedFat > targetFat ? '#FF4D4D' : '#FF4D00' 
               }
             ]} />
           </View>

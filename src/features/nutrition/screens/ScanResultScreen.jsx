@@ -82,7 +82,7 @@ const ScanResultScreen = () => {
           macros: {
             proteinG: Math.round(foodData.protein * foodData.amount),
             carbsG: Math.round(foodData.carbs * foodData.amount),
-            fatG: Math.round(foodData.fat * foodData.amount),
+            fatG: Math.round(foodData.fat * foodData.amount)
           },
           portion: foodData.amount || 1,
           mealType: selectedMeal,

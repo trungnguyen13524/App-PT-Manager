@@ -26,6 +26,7 @@ export const endpoints = {
   NUTRITION: {
     FOOD_LOGS: '/nutrition/food-logs',
     DAILY_SUMMARY: '/nutrition/summary/daily',
+    GENERATE_MEAL_PLAN: '/nutrition/meal-plans/generate',
     SCAN: '/scan',
   },
   FOODS: {

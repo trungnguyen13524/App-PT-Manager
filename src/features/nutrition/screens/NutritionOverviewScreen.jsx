@@ -119,14 +119,15 @@ const NutritionOverviewScreen = () => {
               
               let barColor = '#E9ECEF';
               if (value > 0) {
-                barColor = isOverTarget ? '#FF5252' : COLORS.primaryLight;
-                if (isToday) barColor = COLORS.primary;
+                barColor = isOverTarget ? '#FF4D4D' : COLORS.primaryLight;
+                if (isToday && !isOverTarget) barColor = COLORS.primary;
+                else if (isToday && isOverTarget) barColor = '#FF0000';
               }
 
               return (
                 <View key={day} style={styles.barWrapper}>
                   {value > 0 && (
-                    <Text style={[styles.barValue, isToday && { color: COLORS.primary, fontWeight: '700' }]}>
+                    <Text style={[styles.barValue, isToday && { fontWeight: '700' }, isOverTarget ? { color: '#FF4D4D' } : (isToday ? { color: COLORS.primary } : {})]}>
                       {value}
                     </Text>
                   )}
@@ -164,7 +165,7 @@ const NutritionOverviewScreen = () => {
               <View style={styles.macroHeader}>
                 <Text style={styles.macroName}>Protein</Text>
                 <Text style={styles.macroValues}>
-                  <Text style={{ fontWeight: '700', color: COLORS.text }}>{macros.protein.current}g </Text>
+                  <Text style={[{ fontWeight: '700', color: COLORS.text }, macros.protein.current > macros.protein.target && { color: '#FF4D4D' }]}>{macros.protein.current}g </Text>
                   / {macros.protein.target}g
                 </Text>
               </View>
@@ -172,7 +173,7 @@ const NutritionOverviewScreen = () => {
                 <View 
                   style={[
                     styles.progressBarFill, 
-                    { width: `${calculateProgress(macros.protein.current, macros.protein.target)}%`, backgroundColor: macros.protein.color }
+                    { width: `${calculateProgress(macros.protein.current, macros.protein.target)}%`, backgroundColor: macros.protein.current > macros.protein.target ? '#FF4D4D' : macros.protein.color }
                   ]} 
                 />
               </View>
@@ -188,7 +189,7 @@ const NutritionOverviewScreen = () => {
               <View style={styles.macroHeader}>
                 <Text style={styles.macroName}>Carbohydrates</Text>
                 <Text style={styles.macroValues}>
-                  <Text style={{ fontWeight: '700', color: COLORS.text }}>{macros.carbs.current}g </Text>
+                  <Text style={[{ fontWeight: '700', color: COLORS.text }, macros.carbs.current > macros.carbs.target && { color: '#FF4D4D' }]}>{macros.carbs.current}g </Text>
                   / {macros.carbs.target}g
                 </Text>
               </View>
@@ -196,7 +197,7 @@ const NutritionOverviewScreen = () => {
                 <View 
                   style={[
                     styles.progressBarFill, 
-                    { width: `${calculateProgress(macros.carbs.current, macros.carbs.target)}%`, backgroundColor: macros.carbs.color }
+                    { width: `${calculateProgress(macros.carbs.current, macros.carbs.target)}%`, backgroundColor: macros.carbs.current > macros.carbs.target ? '#FF4D4D' : macros.carbs.color }
                   ]} 
                 />
               </View>
@@ -212,7 +213,7 @@ const NutritionOverviewScreen = () => {
               <View style={styles.macroHeader}>
                 <Text style={styles.macroName}>Fat</Text>
                 <Text style={styles.macroValues}>
-                  <Text style={{ fontWeight: '700', color: COLORS.text }}>{macros.fat.current}g </Text>
+                  <Text style={[{ fontWeight: '700', color: COLORS.text }, macros.fat.current > macros.fat.target && { color: '#FF4D4D' }]}>{macros.fat.current}g </Text>
                   / {macros.fat.target}g
                 </Text>
               </View>
@@ -220,7 +221,7 @@ const NutritionOverviewScreen = () => {
                 <View 
                   style={[
                     styles.progressBarFill, 
-                    { width: `${calculateProgress(macros.fat.current, macros.fat.target)}%`, backgroundColor: macros.fat.color }
+                    { width: `${calculateProgress(macros.fat.current, macros.fat.target)}%`, backgroundColor: macros.fat.current > macros.fat.target ? '#FF4D4D' : macros.fat.color }
                   ]} 
                 />
               </View>

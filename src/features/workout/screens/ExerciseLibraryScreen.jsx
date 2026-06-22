@@ -4,7 +4,7 @@ import {
   Image, Dimensions, StatusBar, ActivityIndicator, TextInput
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronLeft, Flame, Library, Clock } from 'lucide-react-native';
+import { ChevronLeft, Flame, Library, Clock, Activity } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WORKOUT_IMAGES, toImageKey } from '../../../assets';
 import exercisesData from '../../../assets/exercises.json';
@@ -49,14 +49,8 @@ const ExerciseLibraryScreen = () => {
   };
 
   const getExercisesForDay = (dayIndex) => {
-    // 1. Lấy bài tập AI gợi ý (Giả lập logic bằng cách hash dayIndex vào mảng exercisesData)
-    // Tạm thời lấy 4 bài ngẫu nhiên theo dayIndex
-    const aiBase = [
-      exercisesData[(dayIndex * 2) % exercisesData.length],
-      exercisesData[(dayIndex * 3 + 1) % exercisesData.length],
-      exercisesData[(dayIndex * 4 + 2) % exercisesData.length],
-      exercisesData[(dayIndex * 5 + 3) % exercisesData.length],
-    ].filter(Boolean);
+    // Không còn giả lập AI nữa vì chưa có backend support.
+    // Tạm thời chỉ hiển thị các bài tập do PT giao.
 
     // 2. Lấy bài tập do PT giao (Tích lũy - Không ghi đè)
     const ptAssigned = [];
@@ -80,7 +74,7 @@ const ExerciseLibraryScreen = () => {
       });
     }
 
-    return [...ptAssigned, ...aiBase];
+    return ptAssigned;
   };
 
   const currentExercises = isLibraryMode ? exercisesData : getExercisesForDay(selectedDay);
@@ -248,16 +242,7 @@ const ExerciseLibraryScreen = () => {
       )}
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {!isLibraryMode && (
-          <View style={styles.planHeader}>
-            <Text style={styles.planTitle}>Lộ trình Hôm nay</Text>
-            <Text style={styles.planSub}>
-              {ptWorkoutPlan && ptWorkoutPlan.length > 0 
-                ? 'Có bài tập bổ sung từ PT của bạn!' 
-                : 'Hoàn thành các bài tập AI gợi ý dưới đây.'}
-            </Text>
-          </View>
-        )}
+
 
         {loadingPtPlan && !isLibraryMode ? (
           <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />
@@ -283,7 +268,9 @@ const ExerciseLibraryScreen = () => {
                     {imageSource ? (
                       <Image source={imageSource} style={styles.image} resizeMode="cover" />
                     ) : (
-                      <View style={[styles.image, { backgroundColor: '#334155' }]} />
+                      <View style={[styles.image, { backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center' }]}>
+                        <Activity color="#475569" size={32} />
+                      </View>
                     )}
                     {item.isPTAssigned && (
                       <View style={[styles.glassTag, { backgroundColor: 'rgba(230, 126, 34, 0.9)', left: 12, right: 'auto' }]}>
@@ -377,13 +364,13 @@ const styles = StyleSheet.create({
   cardFooter: {
     padding: 12,
   },
-  foodName: {
+  exerciseName: {
     fontSize: 15,
     fontWeight: '800',
     color: '#F8FAFC',
     marginBottom: 4,
   },
-  subText: {
+  muscleGroup: {
     fontSize: 12,
     color: '#94A3B8',
     fontWeight: '600'

@@ -216,7 +216,7 @@ const CourseMetaScreen = () => {
           lessons: [
             {
               title: 'Bài học 1',
-              youtubeVideoId: ytIdStr,
+              ...(ytIdStr ? { youtubeVideoId: ytIdStr } : {}),
               durationMin: 0,
               displayOrder: 0
             }

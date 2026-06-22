@@ -11,11 +11,12 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { ChevronLeft, Plus, Clock, ChevronRight, Utensils, Moon, Sun, Trash2, X } from 'lucide-react-native';
+import { ChevronLeft, Plus, Clock, ChevronRight, Utensils, Moon, Sun, Trash2, X, ScanLine, Search, Coffee } from 'lucide-react-native';
 import { useNutritionStore } from '../../../store/nutritionStore';
 import { useMissionStore } from '../../../store/missionStore';
 import { AbstractBackground } from '../../../components/common/AbstractBackground';
@@ -23,26 +24,51 @@ import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import foodsData from '../../../assets/foods.json';
 import { FOOD_IMAGES, toImageKey } from '../../../assets';
 import ptService from '../../../api/services/pt.service';
+import foodService from '../../../api/services/food.service';
 
 const { width } = Dimensions.get('window');
 
 const MealLogScreen = ({ route }) => {
+  const findLocalImage = (name) => {
+    if (!name) return null;
+    const exactKey = toImageKey(name);
+    if (FOOD_IMAGES[exactKey]) return FOOD_IMAGES[exactKey];
+    
+    const searchWords = exactKey.split('_').filter(Boolean);
+    let bestMatch = null;
+    let maxOverlap = 0;
+    
+    for (const key of Object.keys(FOOD_IMAGES)) {
+      const keyWords = key.split('_');
+      let overlapCount = 0;
+      for (const word of searchWords) {
+        if (keyWords.includes(word)) overlapCount++;
+      }
+      
+      if (overlapCount >= 2 && overlapCount > maxOverlap) {
+        maxOverlap = overlapCount;
+        bestMatch = FOOD_IMAGES[key];
+      }
+    }
+    return bestMatch;
+  };
+
   const navigation = useNavigation();
-  const { 
-    meals, 
-    suggestedMenu, 
-    dailySummary, 
-    isLoading, 
-    fetchDailyLogs, 
+  const {
+    meals,
+    suggestedMenu,
+    dailySummary,
+    isLoading,
+    fetchDailyLogs,
     fetchActiveMealPlan,
     deleteFoodLog,
     updateFoodLog
   } = useNutritionStore();
   const { lockDailyDiaryAction } = useMissionStore();
-  
+
   const [activeTab, setActiveTab] = useState('diary');
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Edit Modal State
   const [editingMeal, setEditingMeal] = useState(null);
   const [editCalories, setEditCalories] = useState('');
@@ -53,41 +79,49 @@ const MealLogScreen = ({ route }) => {
   const [loadingPtPlan, setLoadingPtPlan] = useState(false);
 
   // Search Modal State
+  const [isAddMenuVisible, setIsAddMenuVisible] = useState(false);
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
 
   useEffect(() => {
+    let timeoutId;
     if (searchQuery.length >= 2) {
-      const lowerQuery = searchQuery.toLowerCase();
-      const results = foodsData.filter(item => 
-        (item.Food_Name_VN && item.Food_Name_VN.toLowerCase().includes(lowerQuery)) ||
-        (item.Description_VN && item.Description_VN.toLowerCase().includes(lowerQuery))
-      ).slice(0, 15);
-      setSearchResults(results);
+      timeoutId = setTimeout(() => {
+        const query = searchQuery.toLowerCase();
+        const results = foodsData.filter(f => {
+          const name = f.Description_VN || f.Food_Name_VN || '';
+          return name.toLowerCase().includes(query);
+        }).slice(0, 15);
+        setSearchResults(results);
+      }, 300); // Debounce 300ms
     } else {
       setSearchResults([]);
     }
+    return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
   const handleSelectSearchedFood = (item) => {
     setIsSearchModalVisible(false);
     setSearchQuery('');
-    const calories = Math.round(Number(item.Calories) || 0);
-    const protein = Math.round(Number(item.Protein_g) || 0);
-    const carbs = Math.round(Number(item.Carbs_g) || 0);
-    const fat = Math.round(Number(item.Fat_g) || 0);
-    const imageSource = FOOD_IMAGES[toImageKey(item.Description_VN)];
+    const calories = Math.round(Number(item.calories) || Number(item.Calories) || 0);
+    const protein = Math.round(Number(item.protein) || Number(item.Protein_g) || 0);
+    const carbs = Math.round(Number(item.carbs) || Number(item.Carbs_g) || 0);
+    const fat = Math.round(Number(item.fat) || Number(item.Fat_g) || 0);
+    
+    // Attempt to map image if it's the old structure, or use item.imageUrl from backend
+    const descVn = item.description || item.Description_VN || item.Food_Name_VN;
+    const imageSource = item.imageUrl ? { uri: item.imageUrl } : FOOD_IMAGES[toImageKey(descVn)];
 
     const payloadItem = {
-      id: item.Food_Name_VN,
-      title: item.Description_VN || item.Food_Name_VN,
+      id: item.id || item.Food_Name_VN,
+      title: item.name || item.Description_VN || item.Food_Name_VN,
       calories,
       protein,
       carbs,
       fat,
       image: imageSource,
-      description: item.Description_VN || '',
+      description: descVn || '',
       rawItem: item
     };
     navigation.navigate('MealDetail', { meal: payloadItem });
@@ -115,26 +149,36 @@ const MealLogScreen = ({ route }) => {
   };
 
   const getMealsForDay = (dayIndex) => {
-    if (!ptMealPlan || ptMealPlan.length === 0) return { morning: [], lunch: [], evening: [] };
+    // 1. Try finding PT assigned meal plan first
+    const dayAssignment = ptMealPlan?.find(p => p.dayOfWeek === dayIndex || p.day === dayIndex);
     
-    // Find assignment for the specific day (day 1 to 7)
-    const dayAssignment = ptMealPlan.find(p => p.dayOfWeek === dayIndex || p.day === dayIndex);
-    if (!dayAssignment) return { morning: [], lunch: [], evening: [] };
+    // 2. If no PT plan, fallback to AI suggestedMenu
+    // In v1, suggestedMenu is stateless and represents a generic daily plan returned by AI
+    const hasSuggestedMenu = suggestedMenu && (suggestedMenu.morning?.length > 0 || suggestedMenu.lunch?.length > 0 || suggestedMenu.evening?.length > 0);
+    
+    if (!dayAssignment && !hasSuggestedMenu) {
+      return { morning: [], lunch: [], evening: [] };
+    }
 
     // Parse the textual assignment and lookup foods
-    const parseMeals = (mealString, mealType) => {
-      if (!mealString) return [];
-      const items = mealString.split(',').map(s => s.trim()).filter(Boolean);
+    const parseMeals = (mealData, mealType) => {
+      if (!mealData) return [];
+      let items = [];
+      if (Array.isArray(mealData)) {
+        items = mealData;
+      } else if (typeof mealData === 'string') {
+        items = mealData.split(',').map(s => s.trim()).filter(Boolean);
+      }
       return items.map(itemName => {
         // Exact match or contains
         const lowerName = itemName.toLowerCase();
-        let matchedFood = foodsData.find(f => 
+        let matchedFood = foodsData.find(f =>
           (f.Description_VN && f.Description_VN.toLowerCase() === lowerName) ||
           (f.Food_Name_VN && f.Food_Name_VN.toLowerCase() === lowerName)
         );
-        
+
         if (!matchedFood) {
-          matchedFood = foodsData.find(f => 
+          matchedFood = foodsData.find(f =>
             (f.Description_VN && f.Description_VN.toLowerCase().includes(lowerName)) ||
             (f.Food_Name_VN && f.Food_Name_VN.toLowerCase().includes(lowerName))
           );
@@ -154,7 +198,7 @@ const MealLogScreen = ({ route }) => {
             mealType: mealType
           };
         }
-        
+
         // Fallback if not found
         return {
           id: itemName,
@@ -171,11 +215,20 @@ const MealLogScreen = ({ route }) => {
       });
     };
 
-    return {
-      morning: parseMeals(dayAssignment.breakfast, 'BREAKFAST'),
-      lunch: parseMeals(dayAssignment.lunch, 'LUNCH'),
-      evening: parseMeals(dayAssignment.dinner, 'DINNER')
-    };
+    if (dayAssignment) {
+      return {
+        morning: parseMeals(dayAssignment.breakfast, 'BREAKFAST'),
+        lunch: parseMeals(dayAssignment.lunch, 'LUNCH'),
+        evening: parseMeals(dayAssignment.dinner, 'DINNER')
+      };
+    } else {
+      // Use AI plan
+      return {
+        morning: parseMeals(suggestedMenu.morning, 'BREAKFAST'),
+        lunch: parseMeals(suggestedMenu.lunch, 'LUNCH'),
+        evening: parseMeals(suggestedMenu.evening, 'DINNER')
+      };
+    }
   };
 
   const currentMeals = activeTab === 'menu' ? getMealsForDay(selectedDay) : null;
@@ -210,8 +263,8 @@ const MealLogScreen = ({ route }) => {
         </View>
       </View>
       {items.map((item) => (
-        <TouchableOpacity 
-          key={item.id} 
+        <TouchableOpacity
+          key={item.id}
           activeOpacity={0.8}
           onPress={() => navigation.navigate('MealDetail', { meal: item })}
         >
@@ -253,14 +306,14 @@ const MealLogScreen = ({ route }) => {
       await updateFoodLog(editingMeal.id, { calories: newCals });
     }
     setEditingMeal(null);
-    loadData(); 
+    loadData();
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <AbstractBackground />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -272,7 +325,7 @@ const MealLogScreen = ({ route }) => {
 
       {/* Tabs */}
       <View style={styles.tabWrapper}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'diary' && styles.activeTab]}
           onPress={() => setActiveTab('diary')}
           activeOpacity={0.8}
@@ -280,7 +333,7 @@ const MealLogScreen = ({ route }) => {
           <Text style={[styles.tabText, activeTab === 'diary' && styles.activeTabText]}>Nhật ký</Text>
           {activeTab === 'diary' && <View style={styles.activeTabIndicator} />}
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'menu' && styles.activeTab]}
           onPress={() => setActiveTab('menu')}
           activeOpacity={0.8}
@@ -290,8 +343,8 @@ const MealLogScreen = ({ route }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00FF66" colors={['#00FF66']} />
@@ -303,30 +356,59 @@ const MealLogScreen = ({ route }) => {
           <>
             {/* Daily Stats Summary */}
             <View style={styles.glassCard}>
-              <View style={styles.statsHeader}>
+              <View style={[styles.statsHeader, { flexDirection: 'column', alignItems: 'flex-start', marginBottom: 24 }]}>
                 <Text style={styles.statsTitle}>Tổng quát hôm nay</Text>
-                <Text style={styles.statsCal}>{dailySummary?.consumed?.calories || 0} kcal</Text>
+                
+                {(dailySummary?.consumed?.calories || 0) > (dailySummary?.target?.calories || 2000) ? (
+                  <View style={{ backgroundColor: 'rgba(255, 77, 77, 0.15)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, marginTop: 8, borderWidth: 1, borderColor: 'rgba(255, 77, 77, 0.3)' }}>
+                    <Text style={{ color: '#FF4D4D', fontSize: 13, fontWeight: 'bold' }}>
+                      ⚠️ Đã vượt quá mục tiêu Calo!
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.statsCal, { fontSize: 28, marginTop: 8 }]}>
+                    {dailySummary?.consumed?.calories || 0} <Text style={{ fontSize: 16, color: '#9CA3AF', fontWeight: '600' }}>/ {dailySummary?.target?.calories || 2000} kcal</Text>
+                  </Text>
+                )}
               </View>
               <View style={styles.macroProgressWrapper}>
                 <View style={styles.macroMiniItem}>
                   <Text style={styles.macroMiniLabel}>Carbs</Text>
-                  <Text style={styles.macroMiniValue}>{dailySummary?.consumed?.carbsG || 0}g</Text>
+                  <Text style={styles.macroMiniValue}>{dailySummary?.consumed?.carbs ?? dailySummary?.consumed?.carbsG ?? 0} / {dailySummary?.target?.carbsG || 200}g</Text>
                   <View style={[styles.macroMiniBarBase]}>
-                     <View style={[styles.macroMiniBarFill, { backgroundColor: '#FF8A65', width: '60%' }]} />
+                    <View style={[
+                      styles.macroMiniBarFill, 
+                      { 
+                        backgroundColor: (dailySummary?.consumed?.carbs ?? dailySummary?.consumed?.carbsG ?? 0) > (dailySummary?.target?.carbsG || 200) ? '#FF4444' : '#FF8A65', 
+                        width: `${Math.min(100, ((dailySummary?.consumed?.carbs ?? dailySummary?.consumed?.carbsG ?? 0) / (dailySummary?.target?.carbsG || 200)) * 100)}%` 
+                      }
+                    ]} />
                   </View>
                 </View>
                 <View style={styles.macroMiniItem}>
                   <Text style={styles.macroMiniLabel}>Protein</Text>
-                  <Text style={styles.macroMiniValue}>{dailySummary?.consumed?.proteinG || 0}g</Text>
+                  <Text style={styles.macroMiniValue}>{dailySummary?.consumed?.protein ?? dailySummary?.consumed?.proteinG ?? 0} / {dailySummary?.target?.proteinG || 150}g</Text>
                   <View style={[styles.macroMiniBarBase]}>
-                     <View style={[styles.macroMiniBarFill, { backgroundColor: '#00FF66', width: '40%' }]} />
+                    <View style={[
+                      styles.macroMiniBarFill, 
+                      { 
+                        backgroundColor: (dailySummary?.consumed?.protein ?? dailySummary?.consumed?.proteinG ?? 0) > (dailySummary?.target?.proteinG || 150) ? '#FF4444' : '#00FF66', 
+                        width: `${Math.min(100, ((dailySummary?.consumed?.protein ?? dailySummary?.consumed?.proteinG ?? 0) / (dailySummary?.target?.proteinG || 150)) * 100)}%` 
+                      }
+                    ]} />
                   </View>
                 </View>
                 <View style={styles.macroMiniItem}>
                   <Text style={styles.macroMiniLabel}>Fat</Text>
-                  <Text style={styles.macroMiniValue}>{dailySummary?.consumed?.fatG || 0}g</Text>
+                  <Text style={styles.macroMiniValue}>{dailySummary?.consumed?.fat ?? dailySummary?.consumed?.fatG ?? 0} / {dailySummary?.target?.fatG || 60}g</Text>
                   <View style={[styles.macroMiniBarBase]}>
-                     <View style={[styles.macroMiniBarFill, { backgroundColor: '#FFC107', width: '30%' }]} />
+                    <View style={[
+                      styles.macroMiniBarFill, 
+                      { 
+                        backgroundColor: (dailySummary?.consumed?.fat ?? dailySummary?.consumed?.fatG ?? 0) > (dailySummary?.target?.fatG || 60) ? '#FF4444' : '#00B3FF', 
+                        width: `${Math.min(100, ((dailySummary?.consumed?.fat ?? dailySummary?.consumed?.fatG ?? 0) / (dailySummary?.target?.fatG || 60)) * 100)}%` 
+                      }
+                    ]} />
                   </View>
                 </View>
               </View>
@@ -334,9 +416,9 @@ const MealLogScreen = ({ route }) => {
 
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Bữa ăn đã ghi</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.addSmallBtn}
-                onPress={() => setIsSearchModalVisible(true)}
+                onPress={() => setIsAddMenuVisible(true)}
               >
                 <Plus size={16} color="#0A0B10" strokeWidth={3} />
                 <Text style={styles.addSmallText}>THÊM</Text>
@@ -349,57 +431,109 @@ const MealLogScreen = ({ route }) => {
                 <Text style={styles.emptyText}>Chưa có bữa ăn nào được ghi hôm nay</Text>
               </View>
             ) : (
-              meals.map((meal) => (
-                <TouchableOpacity 
-                  key={meal.id} 
-                  activeOpacity={0.8}
-                  onPress={() => openEditModal(meal)}
-                >
-                  <View style={styles.glassCardMeal}>
-                    <Image source={{ uri: meal.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c' }} style={styles.mealImage} />
-                    <View style={styles.mealInfo}>
-                      <View style={styles.mealHeader}>
-                        <Text style={styles.mealType}>{meal.mealType}</Text>
-                        <View style={styles.timeTag}>
-                          <Clock size={12} color="#9CA3AF" />
-                          <Text style={styles.timeText}>
-                            {(meal.consumedAt || meal.loggedAt) ? new Date(meal.consumedAt || meal.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                          </Text>
+              meals.map((meal) => {
+                const nameToMap = meal.foodName || meal.customName || '';
+                const localImage = findLocalImage(nameToMap);
+
+                let imageContent;
+                if (meal.imageUrl) {
+                  imageContent = <Image source={{ uri: meal.imageUrl }} style={styles.mealImage} />;
+                } else if (localImage) {
+                  imageContent = <Image source={localImage} style={styles.mealImage} />;
+                } else {
+                  let IconComponent = Utensils;
+                  let iconColor = '#00B3FF';
+                  if (meal.mealType === 'BREAKFAST') {
+                    IconComponent = Sun;
+                    iconColor = '#FFD700';
+                  } else if (meal.mealType === 'DINNER') {
+                    IconComponent = Moon;
+                    iconColor = '#9CA3AF';
+                  } else if (meal.mealType === 'SNACK') {
+                    IconComponent = Coffee;
+                    iconColor = '#FF9F43';
+                  }
+                  
+                  imageContent = (
+                    <View style={[styles.mealImage, { backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' }]}>
+                      <IconComponent size={28} color={iconColor} />
+                    </View>
+                  );
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={meal.id}
+                    activeOpacity={0.8}
+                    onPress={() => openEditModal(meal)}
+                  >
+                    <View style={styles.glassCardMeal}>
+                      {imageContent}
+                      <View style={styles.mealInfo}>
+                        <View style={styles.mealHeader}>
+                          <Text style={styles.mealType}>{meal.mealType}</Text>
+                          <View style={styles.timeTag}>
+                            <Clock size={12} color="#9CA3AF" />
+                            <Text style={styles.timeText}>
+                              {(meal.consumedAt || meal.loggedAt) ? new Date(meal.consumedAt || meal.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </Text>
+                          </View>
                         </View>
-                      </View>
-                      <Text style={styles.foodName} numberOfLines={1}>{meal.foodName}</Text>
+                        <Text style={styles.foodName} numberOfLines={1}>{nameToMap}</Text>
                       <Text style={styles.foodStats}>
-                        {meal.calories} kcal • P:{meal.proteinG ?? meal.macros?.proteinG ?? meal.macros?.protein ?? 0}g C:{meal.carbsG ?? meal.macros?.carbsG ?? meal.macros?.carbs ?? 0}g F:{meal.fatG ?? meal.macros?.fatG ?? meal.macros?.fat ?? 0}g
+                        {meal.calories} kcal • P:{meal.protein ?? meal.proteinG ?? meal.macros?.proteinG ?? meal.macros?.protein ?? 0}g C:{meal.carbs ?? meal.carbsG ?? meal.macros?.carbsG ?? meal.macros?.carbs ?? 0}g F:{meal.fat ?? meal.fatG ?? meal.macros?.fatG ?? meal.macros?.fat ?? 0}g
                       </Text>
                     </View>
-                    <TouchableOpacity onPress={() => deleteFoodLog(meal.id)} style={styles.deleteBtn}>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        const mealId = meal.id || meal._id || meal.foodLogId;
+                        const { useDialogStore } = require('../../../store/dialogStore');
+                        useDialogStore.getState().showDialog({
+                          title: 'Xóa bữa ăn',
+                          message: 'Xóa bữa ăn sẽ làm thay đổi lượng Calo ghi nhận. Hành vi cố tình thêm rồi xóa liên tục có thể bị hệ thống xem là gian lận điểm thưởng. Bạn vẫn muốn xóa?',
+                          type: 'warning',
+                          confirmText: 'Xóa ngay',
+                          cancelText: 'Hủy',
+                          onConfirm: async () => {
+                            await deleteFoodLog(mealId);
+                            loadData();
+                          }
+                        });
+                      }} 
+                      style={styles.deleteBtn}
+                    >
                       <Trash2 size={20} color="#FF4444" />
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
-              ))
+                );
+              })
             )}
 
             {meals.length > 0 && (
-              <View style={styles.lockBtnWrapper}>
-                <TouchableOpacity 
+              <View style={[styles.lockBtnWrapper, meals.length >= 3 && styles.lockBtnWrapperActive]}>
+                <TouchableOpacity
                   style={[styles.lockBtn, meals.length < 3 && styles.lockBtnDisabled]}
                   onPress={handleLockDiary}
                   disabled={meals.length < 3}
                   activeOpacity={0.8}
                 >
                   {meals.length >= 3 && (
-                    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+                    <Svg width="100%" height="100%" style={[StyleSheet.absoluteFill, { borderRadius: 16 }]} preserveAspectRatio="none">
                       <Defs>
                         <LinearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                           <Stop offset="0%" stopColor="#00FF66" />
                           <Stop offset="100%" stopColor="#00B3FF" />
                         </LinearGradient>
                       </Defs>
-                      <Rect width="100%" height="100%" fill="url(#btnGrad)" />
+                      <Rect width="100%" height="100%" fill="url(#btnGrad)" rx="16" ry="16" />
                     </Svg>
                   )}
-                  <Text style={[styles.lockBtnText, meals.length < 3 && styles.lockBtnTextDisabled]}>🔒 CHỐT NHẬT KÝ NGÀY</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', zIndex: 1 }}>
+                    <Text style={[styles.lockBtnText, meals.length < 3 && styles.lockBtnTextDisabled]}>
+                      {meals.length < 3 ? '🔒 ' : '✅ '}CHỐT NHẬT KÝ NGÀY
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               </View>
             )}
@@ -413,7 +547,7 @@ const MealLogScreen = ({ route }) => {
             {/* Horizontal Day Selector */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24 }}>
               {[1, 2, 3, 4, 5, 6, 7].map(day => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   key={day}
                   style={[styles.dayBadge, selectedDay === day && styles.dayBadgeActive]}
                   onPress={() => setSelectedDay(day)}
@@ -430,7 +564,16 @@ const MealLogScreen = ({ route }) => {
             ) : (!currentMeals.morning.length && !currentMeals.lunch.length && !currentMeals.evening.length) ? (
               <View style={styles.emptyState}>
                 <Utensils size={48} color="rgba(255,255,255,0.2)" />
-                <Text style={styles.emptyText}>PT chưa giao giáo án dinh dưỡng cho ngày này.</Text>
+                <Text style={styles.emptyText}>Chưa có giáo án dinh dưỡng cho ngày này.</Text>
+                <TouchableOpacity 
+                  style={{ marginTop: 20, backgroundColor: '#00FF66', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}
+                  onPress={async () => {
+                    const { useNutritionStore } = require('../../../store/nutritionStore');
+                    await useNutritionStore.getState().generateAIMealPlan();
+                  }}
+                >
+                  <Text style={{ color: '#000', fontWeight: 'bold' }}>Tạo thực đơn bằng AI</Text>
+                </TouchableOpacity>
               </View>
             ) : (
               <>
@@ -444,6 +587,42 @@ const MealLogScreen = ({ route }) => {
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* Bottom Sheet - Add Menu */}
+      <Modal visible={isAddMenuVisible} animationType="slide" transparent={true} onRequestClose={() => setIsAddMenuVisible(false)}>
+        <TouchableOpacity style={styles.bottomSheetOverlay} activeOpacity={1} onPress={() => setIsAddMenuVisible(false)}>
+          <View style={styles.bottomSheetContainer}>
+            <View style={styles.bottomSheetHandle} />
+            <Text style={styles.bottomSheetTitle}>Thêm bữa ăn mới</Text>
+
+            <TouchableOpacity 
+              style={[styles.addOptionCard, { borderColor: '#00FF66', backgroundColor: 'rgba(0, 255, 102, 0.05)' }]}
+              onPress={() => { setIsAddMenuVisible(false); navigation.navigate('FoodScan'); }}
+            >
+              <View style={[styles.addOptionIconWrapper, { backgroundColor: 'rgba(0, 255, 102, 0.2)' }]}>
+                <ScanLine color="#00FF66" size={28} />
+              </View>
+              <View style={styles.addOptionTextWrapper}>
+                <Text style={styles.addOptionTitle}>📸 Quét món ăn bằng AI</Text>
+                <Text style={styles.addOptionDesc}>Chụp mâm cơm, AI sẽ tự động phân tích Calo</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.addOptionCard}
+              onPress={() => { setIsAddMenuVisible(false); setIsSearchModalVisible(true); }}
+            >
+              <View style={styles.addOptionIconWrapper}>
+                <Search color="#FFF" size={24} />
+              </View>
+              <View style={styles.addOptionTextWrapper}>
+                <Text style={styles.addOptionTitle}>✍️ Tìm và nhập thủ công</Text>
+                <Text style={styles.addOptionDesc}>Tìm kiếm từ thư viện hàng nghìn món ăn</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Edit Meal Modal */}
       {editingMeal && (
         <View style={StyleSheet.absoluteFill}>
@@ -456,7 +635,7 @@ const MealLogScreen = ({ route }) => {
                 </TouchableOpacity>
               </View>
               <Text style={styles.editModalLabel}>{editingMeal.foodName}</Text>
-              
+
               <View style={styles.editInputWrapper}>
                 <Text style={styles.editInputPrefix}>Calories:</Text>
                 <TextInput
@@ -470,6 +649,27 @@ const MealLogScreen = ({ route }) => {
 
               <TouchableOpacity style={styles.saveEditBtn} onPress={handleSaveEdit}>
                 <Text style={styles.saveEditBtnText}>CẬP NHẬT</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.saveEditBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#FF4D4D', marginTop: 12 }]} 
+                onPress={() => {
+                  const { useDialogStore } = require('../../../store/dialogStore');
+                  useDialogStore.getState().showDialog({
+                    title: 'Xóa bữa ăn',
+                    message: 'Xóa bữa ăn sẽ làm thay đổi lượng Calo ghi nhận. Hành vi cố tình thêm rồi xóa liên tục có thể bị hệ thống xem là gian lận điểm thưởng. Bạn vẫn muốn xóa?',
+                    type: 'warning',
+                    confirmText: 'Xóa ngay',
+                    cancelText: 'Hủy',
+                    onConfirm: async () => {
+                      await deleteFoodLog(editingMeal.id || editingMeal.foodLogId);
+                      setEditingMeal(null);
+                      loadData();
+                    }
+                  });
+                }}
+              >
+                <Text style={[styles.saveEditBtnText, { color: '#FF4D4D' }]}>XÓA BỮA ĂN</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -487,7 +687,7 @@ const MealLogScreen = ({ route }) => {
                   <X color="#FFFFFF" size={24} />
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.editInputWrapper}>
                 <TextInput
                   style={styles.editInput}
@@ -501,11 +701,12 @@ const MealLogScreen = ({ route }) => {
 
               <ScrollView style={{ flex: 1, marginTop: 10 }} showsVerticalScrollIndicator={false}>
                 {searchResults.map((item, index) => {
-                  const imageSource = FOOD_IMAGES[toImageKey(item.Description_VN)];
-                  const cal = Math.round(Number(item.Calories) || 0);
+                  const descVn = item.description || item.Description_VN || item.Food_Name_VN;
+                  const imageSource = item.imageUrl ? { uri: item.imageUrl } : FOOD_IMAGES[toImageKey(descVn)];
+                  const cal = Math.round(Number(item.calories) || Number(item.Calories) || 0);
                   return (
-                    <TouchableOpacity 
-                      key={index} 
+                    <TouchableOpacity
+                      key={index}
                       style={styles.glassCardMenu}
                       onPress={() => handleSelectSearchedFood(item)}
                     >
@@ -515,7 +716,7 @@ const MealLogScreen = ({ route }) => {
                         <View style={[styles.menuImage, { backgroundColor: '#333' }]} />
                       )}
                       <View style={styles.menuInfo}>
-                        <Text style={styles.menuTitle}>{item.Description_VN}</Text>
+                        <Text style={styles.menuTitle}>{item.name || descVn}</Text>
                         <Text style={styles.menuStatText}>{cal} kcal</Text>
                       </View>
                     </TouchableOpacity>
@@ -856,12 +1057,14 @@ const styles = StyleSheet.create({
   lockBtnWrapper: {
     marginTop: 16,
     marginBottom: 20,
+    borderRadius: 16,
+  },
+  lockBtnWrapperActive: {
     shadowColor: '#00FF66',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 20,
     elevation: 8,
-    borderRadius: 16,
   },
   lockBtn: {
     height: 60,
@@ -873,6 +1076,8 @@ const styles = StyleSheet.create({
   },
   lockBtnDisabled: {
     backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   lockBtnText: {
     fontSize: 16,
@@ -955,6 +1160,70 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
     letterSpacing: 1,
+  },
+  bottomSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 11, 16, 0.7)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheetContainer: {
+    backgroundColor: '#1E293B',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  bottomSheetHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  bottomSheetTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFF',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  addOptionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  addOptionIconWrapper: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  addOptionTextWrapper: {
+    flex: 1,
+  },
+  addOptionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFF',
+    marginBottom: 4,
+  },
+  addOptionDesc: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    lineHeight: 18,
   }
 });
 

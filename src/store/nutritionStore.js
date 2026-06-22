@@ -13,6 +13,7 @@ export const useNutritionStore = create((set, get) => ({
   weeklySummary: null,
   isLoading: false,
   error: null,
+  lastLoggedAt: 0,
 
   // Lấy nhật ký thực phẩm và tổng kết ngày
   fetchDailyLogs: async (date) => {
@@ -24,8 +25,8 @@ export const useNutritionStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const [logsRes, summaryRes] = await Promise.all([
-        nutritionService.getFoodLogs({ date: targetDate }),
-        nutritionService.getDailySummary({ date: targetDate })
+        nutritionService.getFoodLogs({ date: targetDate }).catch(err => ({ data: [] })),
+        nutritionService.getDailySummary({ date: targetDate }).catch(err => ({ data: null }))
       ]);
 
       // Backend trả về format mới: { date, meals: { breakfast: [], lunch: [], ... }, totals }
@@ -35,6 +36,12 @@ export const useNutritionStore = create((set, get) => ({
 
       if (Array.isArray(data)) {
         parsedMeals = data;
+      } else if (data && data.items && Array.isArray(data.items)) {
+        parsedMeals = data.items;
+      } else if (data && data.foodLogs && Array.isArray(data.foodLogs)) {
+        parsedMeals = data.foodLogs;
+      } else if (data && data.data && Array.isArray(data.data)) {
+        parsedMeals = data.data;
       } else if (data && data.meals) {
         if (Array.isArray(data.meals)) {
           parsedMeals = data.meals;
@@ -47,9 +54,30 @@ export const useNutritionStore = create((set, get) => ({
         }
       }
 
+      let fetchedSummary = summaryRes.data || summaryRes;
+      if (!fetchedSummary || fetchedSummary.error || (fetchedSummary.data === null)) {
+        // Compute locally
+        let totalCal = 0, totalP = 0, totalC = 0, totalF = 0;
+        parsedMeals.forEach(m => {
+          totalCal += m.calories || 0;
+          totalP += m.protein || m.proteinG || m.macros?.proteinG || m.macros?.protein || 0;
+          totalC += m.carbs || m.carbsG || m.macros?.carbsG || m.macros?.carbs || 0;
+          totalF += m.fat || m.fatG || m.macros?.fatG || m.macros?.fat || 0;
+        });
+        fetchedSummary = {
+          consumed: {
+            calories: totalCal,
+            proteinG: totalP,
+            carbsG: totalC,
+            fatG: totalF
+          },
+          target: get().dailySummary?.target || { calories: 2000, proteinG: 150, carbsG: 200, fatG: 60 }
+        };
+      }
+
       set({ 
         meals: parsedMeals, 
-        dailySummary: summaryRes.data || summaryRes || get().dailySummary,
+        dailySummary: fetchedSummary,
         isLoading: false 
       });
     } catch (err) {
@@ -94,17 +122,54 @@ export const useNutritionStore = create((set, get) => ({
   // Lấy thực đơn gợi ý (Meal Plan)
   fetchActiveMealPlan: async () => {
     try {
-      const response = await nutritionService.getActiveMealPlan();
-      set({ suggestedMenu: response.data || { morning: [], lunch: [], evening: [] } });
+      // In v1, there is no getActiveMealPlan endpoint. If needed, we can mock or do nothing.
+      // We will rely on user explicitly calling generateAIMealPlan
     } catch (err) {
-      // Đã ẩn console.warn để màn hình không bị vướng Log vàng (API chưa có)
-      // console.warn('Không thể lấy thực đơn gợi ý');
-      set({ suggestedMenu: { morning: [], lunch: [], evening: [] } });
+      console.warn('Không thể lấy thực đơn gợi ý');
+    }
+  },
+
+  // Tạo thực đơn AI mới
+  generateAIMealPlan: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await nutritionService.generateMealPlan();
+      const planData = response.data || response;
+      if (planData && planData.daily_meals) {
+        set({ 
+          suggestedMenu: {
+            morning: planData.daily_meals.breakfast || [],
+            lunch: planData.daily_meals.lunch || [],
+            evening: planData.daily_meals.dinner || []
+          },
+          isLoading: false
+        });
+        
+        // Trigger AI_MENU mission
+        const { useMissionStore } = require('./missionStore');
+        const todayStr = new Date().toISOString().split('T')[0];
+        useMissionStore.getState().triggerMissionAction('AI_MENU', undefined, todayStr);
+        
+        return { success: true };
+      } else {
+        set({ isLoading: false, error: 'Invalid data format from AI' });
+        return { success: false, error: 'Invalid data format from AI' };
+      }
+    } catch (err) {
+      set({ isLoading: false, error: err.message });
+      return { success: false, error: err.message };
     }
   },
 
   // Thêm món ăn mới
   addFoodLog: async (foodData) => {
+    // Chống spam: Phải cách nhau ít nhất 30 giây mới được log tiếp
+    const now = Date.now();
+    if (now - get().lastLoggedAt < 30000) {
+      return { success: false, error: 'Vui lòng thao tác chậm lại. Hệ thống đang chống gian lận.' };
+    }
+    set({ lastLoggedAt: now });
+
     set({ isLoading: true, error: null });
     try {
       const response = await nutritionService.logFood(foodData);
@@ -124,10 +189,11 @@ export const useNutritionStore = create((set, get) => ({
 
   // Xóa món ăn
   deleteFoodLog: async (id) => {
+    if (!id) return;
     try {
       await nutritionService.deleteFoodLog(id);
       set(state => ({
-        meals: state.meals.filter(m => (m.id || m.foodLogId) !== id)
+        meals: state.meals.filter(m => (m.id || m._id || m.foodLogId) !== id)
       }));
     } catch (err) {
       console.error('Lỗi khi xóa món ăn:', err);

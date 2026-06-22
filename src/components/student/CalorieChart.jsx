@@ -17,8 +17,8 @@ const CalorieChart = ({ current = 0, target = 2000 }) => {
       <Svg width={SIZE} height={SIZE}>
         <Defs>
           <LinearGradient id="energyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#00FF66" stopOpacity="1" />
-            <Stop offset="100%" stopColor="#00B3FF" stopOpacity="1" />
+            <Stop offset="0%" stopColor={current > target ? "#FF4D4D" : "#00FF66"} stopOpacity="1" />
+            <Stop offset="100%" stopColor={current > target ? "#FF0000" : "#00B3FF"} stopOpacity="1" />
           </LinearGradient>
         </Defs>
         {/* Background Circle */}
@@ -46,7 +46,12 @@ const CalorieChart = ({ current = 0, target = 2000 }) => {
       </Svg>
       
       <View style={styles.textContainer}>
-        <Text style={styles.currentText}>{current.toLocaleString()}</Text>
+        {current > target && (
+          <Text style={{ color: '#FF4D4D', fontSize: 12, fontWeight: 'bold', marginBottom: 2 }}>
+            ⚠️ Vượt mục tiêu
+          </Text>
+        )}
+        <Text style={[styles.currentText, current > target && { color: '#FF4D4D', textShadowColor: 'rgba(255, 77, 77, 0.5)' }]}>{current.toLocaleString()}</Text>
         <Text style={styles.targetText}>/ {target.toLocaleString()} kcal</Text>
       </View>
     </View>

@@ -16,7 +16,9 @@ const nutritionService = {
 
   // GET /nutrition/summary/daily
   getDailySummary: (params) => apiClient.get(endpoints.NUTRITION.DAILY_SUMMARY, { params }),
-  
+  // POST /nutrition/meal-plans/generate
+  generateMealPlan: () => apiClient.post(endpoints.NUTRITION.GENERATE_MEAL_PLAN),
+
   // POST /scan
   scanFood: (data) => apiClient.post(endpoints.NUTRITION.SCAN, data),
 };

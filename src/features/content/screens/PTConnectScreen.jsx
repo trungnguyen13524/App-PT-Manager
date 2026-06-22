@@ -355,8 +355,8 @@ const PTConnectScreen = () => {
                         <Text style={styles.curriculumModuleTitle}>{mod.title}</Text>
                         <View style={styles.curriculumLessons}>
                           {mod.lessons && mod.lessons.map((lesson, lIdx) => {
-                            const hasVideo = lesson.cloudinaryVideoUrl || lesson.youtubeVideoId;
-                            const canPreview = lesson.isPreview && hasVideo;
+                            const hasVideo = lesson.cloudinaryVideoUrl || lesson.videoUrl || lesson.youtubeVideoId;
+                            const canPreview = lesson.isPreview;
                             return (
                               <View key={lesson.id || lIdx} style={styles.curriculumLessonItem}>
                                 <View style={styles.curriculumLessonInfo}>
@@ -366,15 +366,22 @@ const PTConnectScreen = () => {
                                   <TouchableOpacity 
                                     style={styles.previewBtn}
                                     onPress={() => {
-                                      if (lesson.cloudinaryVideoUrl) setPlayingLessonDemo({ type: 'cloudinary', url: lesson.cloudinaryVideoUrl });
+                                      if (lesson.cloudinaryVideoUrl || lesson.videoUrl) setPlayingLessonDemo({ type: 'cloudinary', url: lesson.cloudinaryVideoUrl || lesson.videoUrl });
                                       else if (lesson.youtubeVideoId) {
                                         let ytId = lesson.youtubeVideoId;
                                         const match = ytId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
                                         if (match) ytId = match[1];
                                         
-                                        // Open youtube link directly instead of playing inline
                                         Linking.openURL(`https://www.youtube.com/watch?v=${ytId}`).catch(() => {
                                           Linking.openURL(lesson.youtubeVideoId);
+                                        });
+                                      } else {
+                                        const { useDialogStore } = require('../../../store/dialogStore');
+                                        const cleanText = lesson.content ? lesson.content.replace(/<[^>]*>?/gm, '') : 'Bài học này chỉ chứa nội dung văn bản nhưng chưa được thêm nội dung.';
+                                        useDialogStore.getState().showDialog({
+                                          title: `Xem thử: ${lesson.title}`,
+                                          message: cleanText,
+                                          type: 'info'
                                         });
                                       }
                                     }}

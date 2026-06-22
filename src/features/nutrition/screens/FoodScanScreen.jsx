@@ -7,6 +7,7 @@ import {
   StatusBar,
   ActivityIndicator,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { X, Zap, ZapOff, Image as ImageIcon } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY } from '../../../theme';
 import { useDialogStore } from '../../../store/dialogStore';
+import scanService from '../../../api/services/scan.service';
 
 const { width } = Dimensions.get('window');
 const SCANNER_SIZE = width * 0.75;
@@ -61,12 +63,36 @@ const FoodScanScreen = () => {
         quality: 0.5,
       });
 
-      // MOCK AI delay
-      setTimeout(() => {
+      const formData = new FormData();
+      formData.append('image', {
+        uri: Platform.OS === 'ios' ? photo.uri.replace('file://', '') : photo.uri,
+        name: 'photo.jpg',
+        type: 'image/jpeg',
+      });
+
+      try {
+        const response = await scanService.scanImage(formData);
+        const aiData = response?.data || response || {};
+        
         setIsScanning(false);
         navigation.navigate('ScanResult', {
           scannedData: {
-            name: "Món ăn đang quét...",
+            scanId: aiData.id || aiData.scanId || null,
+            name: aiData.name || aiData.foodName || "Món ăn (AI nhận diện)",
+            calories: aiData.calories || 0,
+            protein: aiData.macros?.proteinG || aiData.protein || 0,
+            carbs: aiData.macros?.carbsG || aiData.carbs || 0,
+            fat: aiData.macros?.fatG || aiData.fat || 0,
+            confidence: aiData.confidence || 90,
+            image: photo.uri
+          }
+        });
+      } catch (apiError) {
+        console.warn('Scan API error, using fallback:', apiError);
+        setIsScanning(false);
+        navigation.navigate('ScanResult', {
+          scannedData: {
+            name: "Món ăn (Demo API Failed)",
             calories: 350,
             protein: 20,
             carbs: 40,
@@ -75,7 +101,7 @@ const FoodScanScreen = () => {
             image: photo.uri
           }
         });
-      }, 1500);
+      }
 
     } catch (error) {
       console.error(error);
