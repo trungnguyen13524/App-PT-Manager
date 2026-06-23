@@ -10,10 +10,14 @@
       "supportsTablet": true
     },
     "android": {
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.nhanhwang.NutriCoach"
     },
-    "web": {
-    },
+    "web": {},
     "plugins": [
       "expo-secure-store",
       [
@@ -28,6 +32,11 @@
           "photosPermission": "Cho phép ứng dụng truy cập thư viện ảnh để bạn có thể cập nhật ảnh đại diện."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a8750c04-9bda-4dc7-98ae-78cf1f603926"
+      }
+    }
   }
 }
