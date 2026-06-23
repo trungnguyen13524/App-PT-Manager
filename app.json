@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "NutriCoach",
+    "slug": "NutriCoach",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép ứng dụng sử dụng camera để chụp ảnh bữa ăn hoặc mã vạch."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép ứng dụng truy cập thư viện ảnh để bạn có thể cập nhật ảnh đại diện."
+        }
+      ]
+    ]
+  }
+}

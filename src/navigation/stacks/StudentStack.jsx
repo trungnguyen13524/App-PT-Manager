@@ -1,0 +1,56 @@
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import StudentTabNavigator from '../StudentTabNavigator';
+import ExerciseLibraryScreen from '../../features/workout/screens/ExerciseLibraryScreen';
+import MealLogScreen from '../../features/nutrition/screens/MealLogScreen';
+import FoodScanScreen from '../../features/nutrition/screens/FoodScanScreen';
+import MealDetailScreen from '../../features/nutrition/screens/MealDetailScreen';
+import ScanResultScreen from '../../features/nutrition/screens/ScanResultScreen';
+import NutritionOverviewScreen from '../../features/nutrition/screens/NutritionOverviewScreen';
+import SuggestedMealsScreen from '../../features/nutrition/screens/SuggestedMealsScreen';
+import WorkoutListScreen from '../../features/workout/screens/WorkoutListScreen';
+import WorkoutDetailScreen from '../../features/workout/screens/WorkoutDetailScreen';
+import ExerciseVideoScreen from '../../features/workout/screens/ExerciseVideoScreen';
+import ActiveWorkoutScreen from '../../features/workout/screens/ActiveWorkoutScreen';
+import WorkoutHistoryScreen from '../../features/workout/screens/WorkoutHistoryScreen';
+import PricingScreen from '../../features/users/screens/PricingScreen';
+import CheckoutScreen from '../../features/users/screens/CheckoutScreen';
+import TransactionHistoryScreen from '../../features/payment/screens/TransactionHistoryScreen';
+import BodyMetricsScreen from '../../features/users/screens/BodyMetricsScreen';
+import QuestsScreen from '../../features/gamification/screens/QuestsScreen';
+import RewardsStoreScreen from '../../features/gamification/screens/RewardsStoreScreen';
+import EditProfileScreen from '../../features/users/screens/EditProfileScreen';
+import NotificationSettingsScreen from '../../features/users/screens/NotificationSettingsScreen';
+import PublicPTProfileScreen from '../../features/content/screens/PublicPTProfileScreen';
+
+const Stack = createNativeStackNavigator();
+
+export const StudentStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainTab" component={StudentTabNavigator} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+      <Stack.Screen name="ExerciseLibrary" component={ExerciseLibraryScreen} />
+      <Stack.Screen name="MealLog" component={MealLogScreen} />
+      <Stack.Screen name="FoodScan" component={FoodScanScreen} />
+      <Stack.Screen name="MealDetail" component={MealDetailScreen} />
+      <Stack.Screen name="ScanResult" component={ScanResultScreen} />
+      <Stack.Screen name="NutritionOverview" component={NutritionOverviewScreen} />
+      <Stack.Screen name="SuggestedMeals" component={SuggestedMealsScreen} />
+      <Stack.Screen name="WorkoutList" component={WorkoutListScreen} />
+      <Stack.Screen name="WorkoutDetail" component={WorkoutDetailScreen} />
+      <Stack.Screen name="ExerciseVideo" component={ExerciseVideoScreen} />
+      <Stack.Screen name="ActiveWorkout" component={ActiveWorkoutScreen} />
+      <Stack.Screen name="WorkoutHistory" component={WorkoutHistoryScreen} />
+      <Stack.Screen name="Pricing" component={PricingScreen} />
+      <Stack.Screen name="Checkout" component={CheckoutScreen} />
+      <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
+      <Stack.Screen name="BodyMetrics" component={BodyMetricsScreen} />
+      <Stack.Screen name="Quests" component={QuestsScreen} />
+      <Stack.Screen name="RewardsStore" component={RewardsStoreScreen} />
+      <Stack.Screen name="PublicPTProfile" component={PublicPTProfileScreen} />
+    </Stack.Navigator>
+  );
+};
