@@ -31,7 +31,8 @@
         {
           "photosPermission": "Cho phép ứng dụng truy cập thư viện ảnh để bạn có thể cập nhật ảnh đại diện."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "extra": {
       "eas": {
