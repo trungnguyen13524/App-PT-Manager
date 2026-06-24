@@ -127,6 +127,15 @@ const CourseMetaScreen = () => {
       return;
     }
 
+    if (!formData.description || formData.description.trim().length < 20) {
+      useDialogStore.getState().showDialog({
+        title: 'Mô tả quá ngắn',
+        message: 'Mô tả chi tiết khóa học phải có ít nhất 20 ký tự để học viên hiểu rõ hơn.',
+        type: 'warning'
+      });
+      return;
+    }
+
     const price = parseInt(formData.priceVnd, 10);
     const duration = parseInt(formData.durationDays, 10);
 
@@ -261,10 +270,10 @@ const CourseMetaScreen = () => {
             style={[
               styles.input, 
               options.multiline && { height: 100, textAlignVertical: 'top' },
-              isLockedField && { color: 'rgba(255,255,255,0.4)' }
+              isLockedField && { color: '#A0AEC0' }
             ]}
             placeholder={placeholder}
-            placeholderTextColor="rgba(255,255,255,0.4)"
+            placeholderTextColor="#A0AEC0"
             value={formData[field]}
             onChangeText={(val) => handleChange(field, val)}
             keyboardType={options.keyboardType || 'default'}
@@ -278,11 +287,11 @@ const CourseMetaScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ArrowLeft size={24} color={COLORS.text} />
+          <ArrowLeft size={24} color="#1A202C" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{isEditMode ? 'Sửa thông tin' : 'Tạo khóa học mới'}</Text>
         <View style={{ width: 40 }} />
@@ -303,12 +312,12 @@ const CourseMetaScreen = () => {
                 <Image source={{ uri: thumbnailUri }} style={styles.thumbnailImage} />
               ) : (
                 <View style={styles.thumbnailPlaceholder}>
-                  <UploadCloud size={32} color="rgba(255,255,255,0.4)" />
+                  <UploadCloud size={32} color="#A0AEC0" />
                   <Text style={styles.thumbnailPlaceholderText}>Chọn ảnh bìa (Tỷ lệ 16:9)</Text>
                 </View>
               )}
               <View style={styles.editThumbOverlay}>
-                <Edit3 size={16} color="#FFF" />
+                <Edit3 size={16} color="#2D3748" />
               </View>
             </TouchableOpacity>
             <View style={{ height: 20 }} />
@@ -391,7 +400,7 @@ const CourseMetaScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FAFAFA',
   },
   header: {
     flexDirection: 'row',
@@ -400,32 +409,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: 50,
     paddingBottom: SPACING.md,
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: '#F3F4F6',
   },
   backBtn: {
     padding: 8,
     marginLeft: -8,
   },
   headerTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.text,
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#1A202C',
+    textTransform: 'uppercase',
   },
   content: {
     padding: SPACING.lg,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: '#F3F4F6',
+    shadowColor: '#2D4A33',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#FFF',
+    fontWeight: '900',
+    color: '#1A202C',
     marginBottom: 20,
   },
   inputWrapper: {
@@ -433,17 +449,17 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    color: '#4A5568',
     marginBottom: 8,
-    fontWeight: '500',
+    fontWeight: '700',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: '#E5E7EB',
     height: 56,
     paddingHorizontal: 16,
   },
@@ -452,9 +468,10 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#FFF',
+    color: '#1A202C',
     fontSize: 16,
     height: '100%',
+    fontWeight: '600',
   },
   rowInputs: {
     flexDirection: 'row',
@@ -474,10 +491,11 @@ const styles = StyleSheet.create({
   thumbnailContainer: {
     width: '100%',
     height: 180,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: '#F9FAFB',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
@@ -492,17 +510,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   thumbnailPlaceholderText: {
-    color: 'rgba(255,255,255,0.4)',
+    color: '#A0AEC0',
     marginTop: 8,
     fontSize: 14,
+    fontWeight: '600'
   },
   editThumbOverlay: {
     position: 'absolute',
     bottom: 10,
     right: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: '#FFFFFF',
     padding: 8,
     borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   }
 });
 

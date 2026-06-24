@@ -311,13 +311,13 @@ const MealLogScreen = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <AbstractBackground />
 
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#FFFFFF" size={28} />
+          <ChevronLeft color="#1A202C" size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Dinh dưỡng</Text>
         <View style={{ width: 28 }} />
@@ -347,11 +347,11 @@ const MealLogScreen = ({ route }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00FF66" colors={['#00FF66']} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#556B2F" colors={['#556B2F']} />
         }
       >
         {isLoading && !refreshing ? (
-          <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />
+          <ActivityIndicator size="large" color="#556B2F" style={{ marginTop: 50 }} />
         ) : activeTab === 'diary' ? (
           <>
             {/* Daily Stats Summary */}
@@ -392,7 +392,7 @@ const MealLogScreen = ({ route }) => {
                     <View style={[
                       styles.macroMiniBarFill, 
                       { 
-                        backgroundColor: (dailySummary?.consumed?.protein ?? dailySummary?.consumed?.proteinG ?? 0) > (dailySummary?.target?.proteinG || 150) ? '#FF4444' : '#00FF66', 
+                        backgroundColor: (dailySummary?.consumed?.protein ?? dailySummary?.consumed?.proteinG ?? 0) > (dailySummary?.target?.proteinG || 150) ? '#FF4444' : '#556B2F', 
                         width: `${Math.min(100, ((dailySummary?.consumed?.protein ?? dailySummary?.consumed?.proteinG ?? 0) / (dailySummary?.target?.proteinG || 150)) * 100)}%` 
                       }
                     ]} />
@@ -455,7 +455,7 @@ const MealLogScreen = ({ route }) => {
                   }
                   
                   imageContent = (
-                    <View style={[styles.mealImage, { backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' }]}>
+                    <View style={[styles.mealImage, { backgroundColor: 'rgba(0, 0, 0, 0.02)', justifyContent: 'center', alignItems: 'center' }]}>
                       <IconComponent size={28} color={iconColor} />
                     </View>
                   );
@@ -522,7 +522,7 @@ const MealLogScreen = ({ route }) => {
                     <Svg width="100%" height="100%" style={[StyleSheet.absoluteFill, { borderRadius: 16 }]} preserveAspectRatio="none">
                       <Defs>
                         <LinearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <Stop offset="0%" stopColor="#00FF66" />
+                          <Stop offset="0%" stopColor="#556B2F" />
                           <Stop offset="100%" stopColor="#00B3FF" />
                         </LinearGradient>
                       </Defs>
@@ -560,25 +560,25 @@ const MealLogScreen = ({ route }) => {
             </ScrollView>
 
             {loadingPtPlan ? (
-              <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />
+              <ActivityIndicator size="large" color="#556B2F" style={{ marginTop: 50 }} />
             ) : (!currentMeals.morning.length && !currentMeals.lunch.length && !currentMeals.evening.length) ? (
               <View style={styles.emptyState}>
                 <Utensils size={48} color="rgba(255,255,255,0.2)" />
                 <Text style={styles.emptyText}>Chưa có giáo án dinh dưỡng cho ngày này.</Text>
                 <TouchableOpacity 
-                  style={{ marginTop: 20, backgroundColor: '#00FF66', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}
+                  style={{ marginTop: 20, backgroundColor: '#556B2F', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16, shadowColor: '#556B2F', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 4 }}
                   onPress={async () => {
                     const { useNutritionStore } = require('../../../store/nutritionStore');
                     await useNutritionStore.getState().generateAIMealPlan();
                   }}
                 >
-                  <Text style={{ color: '#000', fontWeight: 'bold' }}>Tạo thực đơn bằng AI</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16 }}>Tạo thực đơn bằng AI</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <>
                 {currentMeals.morning.length > 0 && renderSuggestedSection('Bữa sáng', <Sun size={20} color="#FF9800" />, currentMeals.morning)}
-                {currentMeals.lunch.length > 0 && renderSuggestedSection('Bữa trưa', <Utensils size={20} color="#00FF66" />, currentMeals.lunch)}
+                {currentMeals.lunch.length > 0 && renderSuggestedSection('Bữa trưa', <Utensils size={20} color="#556B2F" />, currentMeals.lunch)}
                 {currentMeals.evening.length > 0 && renderSuggestedSection('Bữa tối', <Moon size={20} color="#00B3FF" />, currentMeals.evening)}
               </>
             )}
@@ -595,11 +595,11 @@ const MealLogScreen = ({ route }) => {
             <Text style={styles.bottomSheetTitle}>Thêm bữa ăn mới</Text>
 
             <TouchableOpacity 
-              style={[styles.addOptionCard, { borderColor: '#00FF66', backgroundColor: 'rgba(0, 255, 102, 0.05)' }]}
+              style={[styles.addOptionCard, { borderColor: '#556B2F', backgroundColor: 'rgba(0, 255, 102, 0.05)' }]}
               onPress={() => { setIsAddMenuVisible(false); navigation.navigate('FoodScan'); }}
             >
-              <View style={[styles.addOptionIconWrapper, { backgroundColor: 'rgba(0, 255, 102, 0.2)' }]}>
-                <ScanLine color="#00FF66" size={28} />
+              <View style={[styles.addOptionIconWrapper, { backgroundColor: 'rgba(85, 107, 47, 0.2)' }]}>
+                <ScanLine color="#556B2F" size={28} />
               </View>
               <View style={styles.addOptionTextWrapper}>
                 <Text style={styles.addOptionTitle}>📸 Quét món ăn bằng AI</Text>
@@ -612,7 +612,7 @@ const MealLogScreen = ({ route }) => {
               onPress={() => { setIsAddMenuVisible(false); setIsSearchModalVisible(true); }}
             >
               <View style={styles.addOptionIconWrapper}>
-                <Search color="#FFF" size={24} />
+                <Search color="#2D3748" size={24} />
               </View>
               <View style={styles.addOptionTextWrapper}>
                 <Text style={styles.addOptionTitle}>✍️ Tìm và nhập thủ công</Text>
@@ -631,7 +631,7 @@ const MealLogScreen = ({ route }) => {
               <View style={styles.editModalHeader}>
                 <Text style={styles.editModalTitle}>Sửa bữa ăn</Text>
                 <TouchableOpacity onPress={() => setEditingMeal(null)}>
-                  <X color="#FFFFFF" size={24} />
+                  <X color="#2D3748" size={24} />
                 </TouchableOpacity>
               </View>
               <Text style={styles.editModalLabel}>{editingMeal.foodName}</Text>
@@ -684,7 +684,7 @@ const MealLogScreen = ({ route }) => {
               <View style={styles.editModalHeader}>
                 <Text style={styles.editModalTitle}>Tìm món ăn</Text>
                 <TouchableOpacity onPress={() => setIsSearchModalVisible(false)}>
-                  <X color="#FFFFFF" size={24} />
+                  <X color="#2D3748" size={24} />
                 </TouchableOpacity>
               </View>
 
@@ -739,7 +739,7 @@ const MealLogScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#2D3748',
   },
   header: {
     flexDirection: 'row',
@@ -753,8 +753,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: '900',
+    color: '#1A202C',
     letterSpacing: 0.5,
   },
   tabWrapper: {
@@ -762,7 +762,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 10,
     marginBottom: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     marginHorizontal: 20,
     borderRadius: 20,
     padding: 4,
@@ -775,24 +775,25 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   activeTab: {
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
   },
   tabText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#9CA3AF',
+    color: '#718096',
   },
   activeTabText: {
-    color: '#00FF66',
+    color: '#2D4A33',
+    fontWeight: '900',
   },
   activeTabIndicator: {
     position: 'absolute',
     bottom: -4,
     width: '40%',
     height: 3,
-    backgroundColor: '#00FF66',
+    backgroundColor: '#2D4A33',
     borderRadius: 2,
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 8,
@@ -804,26 +805,36 @@ const styles = StyleSheet.create({
   },
   // Glass Cards
   glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 24,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#2D4A33',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
+    elevation: 4,
   },
   glassCardMeal: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(20, 24, 35, 0.65)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 12,
     marginBottom: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
   glassCardMenu: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     borderRadius: 20,
     padding: 12,
     marginBottom: 12,
@@ -839,18 +850,15 @@ const styles = StyleSheet.create({
   },
   statsTitle: {
     fontSize: 15,
-    color: '#9CA3AF',
-    fontWeight: '700',
+    color: '#1A202C',
+    fontWeight: '900',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   statsCal: {
     fontSize: 24,
     fontWeight: '900',
-    color: '#00FF66',
-    textShadowColor: 'rgba(0, 255, 102, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+    color: '#2D4A33',
   },
   macroProgressWrapper: {
     flexDirection: 'row',
@@ -862,20 +870,20 @@ const styles = StyleSheet.create({
   },
   macroMiniLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#718096',
     marginBottom: 6,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   macroMiniValue: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: '900',
+    color: '#1A202C',
     marginBottom: 8,
   },
   macroMiniBarBase: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     overflow: 'hidden',
   },
   macroMiniBarFill: {
@@ -894,18 +902,18 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: '900',
+    color: '#1A202C',
     marginLeft: 10,
   },
   addSmallBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#00FF66',
+    backgroundColor: '#556B2F',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 10,
@@ -914,7 +922,7 @@ const styles = StyleSheet.create({
   addSmallText: {
     fontSize: 12,
     fontWeight: '900',
-    color: '#0A0B10',
+    color: '#FFFFFF',
     marginLeft: 6,
     letterSpacing: 0.5,
   },
@@ -935,8 +943,8 @@ const styles = StyleSheet.create({
   },
   mealType: {
     fontSize: 12,
-    fontWeight: '800',
-    color: '#00B3FF',
+    fontWeight: '900',
+    color: '#2B6CB0',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -952,14 +960,14 @@ const styles = StyleSheet.create({
   },
   foodName: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: '900',
+    color: '#1A202C',
     marginBottom: 6,
   },
   foodStats: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontWeight: '500',
+    color: '#718096',
+    fontWeight: '600',
   },
   // Menu Tab Styles
   menuHeaderRow: {
@@ -971,7 +979,7 @@ const styles = StyleSheet.create({
   menuMainTitle: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: '#1A202C',
   },
   dateBadge: {
     backgroundColor: 'rgba(0, 255, 102, 0.15)',
@@ -979,12 +987,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.3)',
+    borderColor: 'rgba(85, 107, 47, 0.3)',
   },
   dateBadgeText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#00FF66',
+    color: '#556B2F',
   },
   menuSection: {
     marginBottom: 24,
@@ -1001,7 +1009,7 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#2D3748',
     marginBottom: 6,
   },
   menuStatsRow: {
@@ -1021,22 +1029,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   dayBadgeActive: {
-    backgroundColor: 'rgba(0, 255, 102, 0.15)',
-    borderColor: 'rgba(0, 255, 102, 0.5)',
+    backgroundColor: 'rgba(85, 107, 47, 0.15)',
+    borderColor: 'rgba(85, 107, 47, 0.3)',
   },
   dayBadgeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#9CA3AF',
+    color: '#4A5568',
   },
   dayBadgeTextActive: {
-    color: '#00FF66',
+    color: '#2D4A33',
+    fontWeight: '900',
   },
   emptyState: {
     alignItems: 'center',
@@ -1045,9 +1054,9 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: '#9CA3AF',
+    color: '#4A5568',
     marginTop: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   deleteBtn: {
     padding: 10,
@@ -1060,7 +1069,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   lockBtnWrapperActive: {
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 20,
@@ -1072,12 +1081,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
   },
   lockBtnDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: '#F3F4F6',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: '#D1D5DB',
+    borderStyle: 'dashed',
   },
   lockBtnText: {
     fontSize: 16,
@@ -1086,7 +1096,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   lockBtnTextDisabled: {
-    color: 'rgba(255,255,255,0.3)',
+    color: '#6B7280',
   },
   modalOverlay: {
     flex: 1,
@@ -1096,12 +1106,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   editModalContainer: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EADDCA',
     borderRadius: 24,
     padding: 24,
     width: '100%',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   editModalHeader: {
     flexDirection: 'row',
@@ -1112,12 +1122,12 @@ const styles = StyleSheet.create({
   editModalTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#2D3748',
   },
   editModalLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#00FF66',
+    color: '#556B2F',
     marginBottom: 20,
   },
   editInputWrapper: {
@@ -1129,7 +1139,7 @@ const styles = StyleSheet.create({
     height: 60,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   editInputPrefix: {
     fontSize: 16,
@@ -1141,15 +1151,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#2D3748',
   },
   saveEditBtn: {
-    backgroundColor: '#00FF66',
+    backgroundColor: '#556B2F',
     height: 56,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
@@ -1167,7 +1177,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheetContainer: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EADDCA',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     padding: 24,
@@ -1175,7 +1185,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   bottomSheetHandle: {
     width: 40,
@@ -1188,7 +1198,7 @@ const styles = StyleSheet.create({
   bottomSheetTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFF',
+    color: '#2D3748',
     marginBottom: 24,
     textAlign: 'center',
   },
@@ -1200,13 +1210,13 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(0, 0, 0, 0.02)',
   },
   addOptionIconWrapper: {
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -1217,7 +1227,7 @@ const styles = StyleSheet.create({
   addOptionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFF',
+    color: '#2D3748',
     marginBottom: 4,
   },
   addOptionDesc: {

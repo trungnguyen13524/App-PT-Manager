@@ -26,11 +26,11 @@ const AbstractBackground = memo(() => (
     <Svg width="100%" height="100%">
       <Defs>
         <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#0F172A" />
-          <Stop offset="100%" stopColor="#1E293B" />
+          <Stop offset="0%" stopColor="#2D3748" />
+          <Stop offset="100%" stopColor="#EADDCA" />
         </LinearGradient>
         <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.15" />
+          <Stop offset="0%" stopColor="#556B2F" stopOpacity="0.15" />
           <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.05" />
         </LinearGradient>
         <LinearGradient id="circleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -63,7 +63,7 @@ const GlowingInput = memo(({ icon: Icon, placeholder, value, onChangeText, keybo
         pointerEvents="none" 
       />
       <View style={styles.inputIcon}>
-        <Icon size={20} color={isFocused ? '#00FF66' : '#CBD5E1'} />
+        <Icon size={20} color={isFocused ? '#556B2F' : '#CBD5E1'} />
       </View>
       <TextInput
         style={styles.input}
@@ -95,7 +95,7 @@ const GamifiedButton = memo(({ title, onPress, loading, variant = 'primary' }) =
           <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
             <Defs>
               <LinearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor="#00FF66" stopOpacity="1" />
+                <Stop offset="0%" stopColor="#556B2F" stopOpacity="1" />
                 <Stop offset="100%" stopColor="#00B3FF" stopOpacity="1" />
               </LinearGradient>
             </Defs>
@@ -103,9 +103,9 @@ const GamifiedButton = memo(({ title, onPress, loading, variant = 'primary' }) =
           </Svg>
         )}
         {loading ? (
-          <ActivityIndicator color={isOutline ? "#00FF66" : "#0A0B10"} size="small" />
+          <ActivityIndicator color={isOutline ? "#556B2F" : "#0A0B10"} size="small" />
         ) : (
-          <Text style={[styles.ctaText, isOutline && { color: '#00FF66' }]}>{title}</Text>
+          <Text style={[styles.ctaText, isOutline && { color: '#556B2F' }]}>{title}</Text>
         )}
       </TouchableOpacity>
     </View>
@@ -156,7 +156,7 @@ const ForgotPasswordScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <AbstractBackground />
 
       <TouchableOpacity 
@@ -164,7 +164,7 @@ const ForgotPasswordScreen = () => {
         onPress={() => navigation.goBack()}
       >
         <View style={styles.backButtonBg} />
-        <ArrowLeft size={24} color="#FFFFFF" />
+        <ArrowLeft size={24} color="#2D3748" />
       </TouchableOpacity>
       
       <KeyboardAvoidingView 
@@ -178,7 +178,7 @@ const ForgotPasswordScreen = () => {
         >
           <View style={styles.header}>
             <View style={styles.iconCircle}>
-              <KeyRound color="#00FF66" size={40} />
+              <KeyRound color="#556B2F" size={40} />
             </View>
             <Text style={styles.brandName}>KHÔI PHỤC</Text>
             <Text style={styles.brandSlogan}>MẬT KHẨU CỦA BẠN</Text>
@@ -212,7 +212,7 @@ const ForgotPasswordScreen = () => {
             {isSuccess && (
               <View style={styles.successMessage}>
                 <View style={styles.successIconWrapper}>
-                  <ShieldCheck size={24} color="#00FF66" />
+                  <ShieldCheck size={24} color="#556B2F" />
                 </View>
                 <Text style={styles.successText}>
                   Đã gửi thành công! Vui lòng làm theo hướng dẫn trong email để đặt lại mật khẩu.
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   },
   backButtonBg: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 22,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -278,11 +278,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: 'rgba(0, 255, 102, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.3)',
+    borderColor: 'rgba(85, 107, 47, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 20,
@@ -291,13 +291,13 @@ const styles = StyleSheet.create({
   brandName: {
     fontSize: 32,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: '#2D3748',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
   brandSlogan: {
     fontSize: 13,
-    color: '#00FF66',
+    color: '#556B2F',
     marginTop: 6,
     fontWeight: '700',
     letterSpacing: 3,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#2D3748',
     marginBottom: 8,
     letterSpacing: 0.5,
   },
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.25)',
   },
   inputOverlayFocused: {
-    borderColor: '#00FF66',
+    borderColor: '#556B2F',
     backgroundColor: 'rgba(0, 255, 102, 0.08)',
   },
   inputIcon: {
@@ -354,12 +354,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    color: '#FFFFFF',
+    color: '#2D3748',
     fontSize: 16,
     fontWeight: '500',
   },
   ctaButtonWrapper: {
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   ctaButtonOutline: {
     backgroundColor: 'rgba(0, 255, 102, 0.05)',
     borderWidth: 1,
-    borderColor: '#00FF66',
+    borderColor: '#556B2F',
   },
   ctaText: {
     fontSize: 16,
@@ -389,17 +389,17 @@ const styles = StyleSheet.create({
   successMessage: {
     marginTop: 24,
     padding: 20,
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.3)',
+    borderColor: 'rgba(85, 107, 47, 0.3)',
   },
   successIconWrapper: {
     alignItems: 'center',
     marginBottom: 12,
   },
   successText: {
-    color: '#E2E8F0',
+    color: '#4A5568',
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'center',
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   loginLink: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#00FF66',
+    color: '#556B2F',
     letterSpacing: 0.5,
   }
 });

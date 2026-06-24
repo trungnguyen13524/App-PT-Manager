@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   instructionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.primary, marginLeft: 8 },
   instructionText: { fontSize: 15, color: COLORS.text, lineHeight: 22 },
   warningBox: {
-    backgroundColor: '#FFF3F0',
+    backgroundColor: '#2D37483F0',
     padding: 20,
     borderRadius: 20,
     marginBottom: 40,

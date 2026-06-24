@@ -166,12 +166,12 @@ const PTEditProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <AbstractBackground />
       
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#FFF" size={28} />
+          <ChevronLeft color="#2D3748" size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thông tin cá nhân</Text>
         <View style={{ width: 36 }} />
@@ -188,14 +188,14 @@ const PTEditProfileScreen = () => {
             <TouchableOpacity onPress={handlePickAvatar} disabled={isUploadingAvatar || isLoading} style={{ position: 'relative' }}>
               <Image 
                 source={{ uri: userProfile?.avatarUrl || 'https://i.pravatar.cc/150' }}
-                style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(0, 0, 0, 0.05)' }}
               />
               <View style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: COLORS.primary, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: COLORS.background }}>
                 <Camera color="#000" size={16} />
               </View>
               {isUploadingAvatar && (
                 <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}>
-                  <ActivityIndicator size="small" color="#FFF" />
+                  <ActivityIndicator size="small" color="#2D3748" />
                 </View>
               )}
             </TouchableOpacity>
@@ -293,22 +293,22 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...TYPOGRAPHY.h3,
-    color: '#FFF',
+    color: '#2D3748',
   },
   scrollContent: {
     padding: 20,
   },
   formCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFF',
+    color: '#2D3748',
     marginBottom: 20,
   },
   inputGroup: {
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   },
   disabledInput: {
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(0, 0, 0, 0.02)',
   },
   inputIcon: {
     marginRight: 12,
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    color: '#FFF',
+    color: '#2D3748',
     fontSize: 16,
   },
   hintText: {
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     width: '100%',
-    color: '#FFF',
+    color: '#2D3748',
     fontSize: 16,
   },
 });

@@ -19,35 +19,10 @@ import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg'
 import { useAuthStore } from '../../../store/authStore';
 import { useUserStore } from '../../../store/userStore';
 import { useDialogStore } from '../../../store/dialogStore';
+import WaveBackground from '../../../components/common/WaveBackground';
+import { COLORS, TYPOGRAPHY } from '../../../theme';
 
 const { width } = Dimensions.get('window');
-
-const AbstractBackground = memo(() => (
-  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-    <Svg width="100%" height="100%">
-      <Defs>
-        <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#0F172A" />
-          <Stop offset="100%" stopColor="#1E293B" />
-        </LinearGradient>
-        <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.15" />
-          <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.05" />
-        </LinearGradient>
-        <LinearGradient id="circleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#FF4D00" stopOpacity="0.15" />
-          <Stop offset="100%" stopColor="#FF0080" stopOpacity="0.05" />
-        </LinearGradient>
-      </Defs>
-      <Rect width="100%" height="100%" fill="url(#bgGrad)" />
-      
-      <Circle cx="15%" cy="15%" r="140" fill="url(#circleGrad1)" />
-      <Circle cx="90%" cy="80%" r="180" fill="url(#circleGrad2)" />
-      <Circle cx="85%" cy="25%" r="90" fill="url(#circleGrad2)" />
-      <Circle cx="20%" cy="85%" r="120" fill="url(#circleGrad1)" />
-    </Svg>
-  </View>
-));
 
 const GamifiedButton = memo(({ onPress, disabled, loading, isLastStep }) => (
   <View style={[styles.ctaButtonWrapper, disabled && { opacity: 0.5 }]}>
@@ -60,7 +35,7 @@ const GamifiedButton = memo(({ onPress, disabled, loading, isLastStep }) => (
       <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <Stop offset="0%" stopColor="#00FF66" stopOpacity="1" />
+            <Stop offset="0%" stopColor="#556B2F" stopOpacity="1" />
             <Stop offset="100%" stopColor="#00B3FF" stopOpacity="1" />
           </LinearGradient>
         </Defs>
@@ -177,7 +152,7 @@ const OnboardingSurveyScreen = () => {
               activeOpacity={0.8}
             >
               {/* Subtle background glow for selected state */}
-              <View style={[styles.genderBannerGlow, { opacity: isActive ? 0.15 : 0.03, backgroundColor: isActive ? '#00FF66' : '#FFFFFF' }]} />
+              <View style={[styles.genderBannerGlow, { opacity: isActive ? 0.15 : 0.03, backgroundColor: isActive ? COLORS.primary : COLORS.border }]} />
               
               <Text style={[styles.genderBannerLabel, isActive && styles.genderBannerLabelActive]}>
                 {g === 'MALE' ? 'Nam giới' : 'Nữ giới'}
@@ -187,7 +162,7 @@ const OnboardingSurveyScreen = () => {
               <View style={styles.bannerGraphicContainer}>
                 <Icon 
                   size={140} 
-                  color={isActive ? '#00FF66' : 'rgba(255,255,255,0.6)'} 
+                  color={isActive ? COLORS.primary : COLORS.textLight} 
                   strokeWidth={1} 
                   style={[styles.croppedIcon, isActive && styles.croppedIconActive]} 
                 />
@@ -295,7 +270,7 @@ const OnboardingSurveyScreen = () => {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View style={[styles.goalIconContainer, isActive && styles.goalIconContainerActive]}>
-                <Icon size={24} color={isActive ? '#00FF66' : 'rgba(255,255,255,0.5)'} strokeWidth={isActive ? 2.5 : 2} />
+                <Icon size={24} color={isActive ? COLORS.primary : COLORS.textLight} strokeWidth={isActive ? 2.5 : 2} />
               </View>
               <Text style={[styles.goalLabel, isActive && styles.goalLabelActive]}>
                 {g.label}
@@ -333,7 +308,7 @@ const OnboardingSurveyScreen = () => {
             </Text>
             <Text style={styles.optionDesc}>{a.desc}</Text>
           </View>
-          {formData.activityLevel === a.id && <Check color="#00FF66" size={24} />}
+          {formData.activityLevel === a.id && <Check color="#556B2F" size={24} />}
         </TouchableOpacity>
       ))}
     </View>
@@ -404,18 +379,18 @@ const OnboardingSurveyScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <AbstractBackground />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <WaveBackground />
 
       <View style={styles.header}>
         <TouchableOpacity onPress={prevStep} disabled={step === 0} style={styles.backBtn}>
-          <ChevronLeft color={step === 0 ? 'rgba(255,255,255,0.2)' : '#FFFFFF'} size={28} />
+          <ChevronLeft color={step === 0 ? COLORS.textLight : COLORS.text} size={28} />
         </TouchableOpacity>
         <View style={styles.progressContainer}>
           <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
             <Defs>
               <LinearGradient id="xpGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor="#00FF66" />
+                <Stop offset="0%" stopColor="#556B2F" />
                 <Stop offset="100%" stopColor="#00B3FF" />
               </LinearGradient>
             </Defs>
@@ -453,7 +428,7 @@ const OnboardingSurveyScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
+  container: { flex: 1, backgroundColor: COLORS.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -471,22 +446,21 @@ const styles = StyleSheet.create({
   progressContainer: {
     flex: 1,
     height: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 5,
     marginHorizontal: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
-  stepText: { fontSize: 15, fontWeight: '900', color: '#00FF66', width: 36, textAlign: 'right' },
+  stepText: { fontSize: 15, fontWeight: '900', color: COLORS.primary, width: 36, textAlign: 'right' },
   titleSection: { paddingHorizontal: 24, marginTop: 10, marginBottom: 40 },
-  title: { fontSize: 32, fontWeight: '900', color: '#FFFFFF', marginBottom: 12, letterSpacing: 0.5 },
-  subtitle: { fontSize: 16, color: '#9CA3AF', lineHeight: 24 },
+  title: { fontSize: 32, fontWeight: '900', color: COLORS.secondary, marginBottom: 12, letterSpacing: 0.5 },
+  subtitle: { fontSize: 16, color: COLORS.textSecondary, lineHeight: 24 },
   slidesContainer: { flexDirection: 'row', width: width * 6, flex: 1 },
   slide: { width: width, paddingHorizontal: 24 },
   stepContainer: { width: '100%' },
   
-  // Gender Redesign (Sleek Vertical Banners)
   genderStepContainer: {
     flex: 1,
     paddingTop: 10,
@@ -497,7 +471,7 @@ const styles = StyleSheet.create({
   genderBanner: {
     width: '100%',
     height: 130,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: COLORS.surface,
     borderRadius: 24,
     paddingHorizontal: 30,
     marginBottom: 24,
@@ -505,11 +479,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 4,
   },
   genderBannerActive: {
-    borderColor: '#00FF66',
+    borderColor: COLORS.primary,
     borderWidth: 2,
     transform: [{ scale: 1.02 }],
   },
@@ -519,12 +498,12 @@ const styles = StyleSheet.create({
   genderBannerLabel: { 
     fontSize: 26, 
     fontWeight: '700', 
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: COLORS.textSecondary,
     zIndex: 10,
     paddingLeft: 24,
   },
   genderBannerLabelActive: { 
-    color: '#FFFFFF', 
+    color: COLORS.secondary, 
     fontWeight: '900', 
     letterSpacing: 1 
   },
@@ -540,57 +519,61 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-15deg' }],
   },
   croppedIconActive: {
-    shadowColor: '#00FF66',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
   },
 
-  // Goal Selection Redesign
   goalCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: COLORS.surface,
     padding: 16,
     borderRadius: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)'
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
   },
   goalCardActive: {
-    borderColor: '#00FF66',
-    backgroundColor: 'rgba(0, 255, 102, 0.15)',
-    shadowColor: '#00FF66',
+    borderColor: COLORS.primary,
+    backgroundColor: 'rgba(85, 107, 47, 0.08)',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 15,
-    elevation: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 5,
     transform: [{ scale: 1.02 }]
   },
   goalIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)'
+    borderColor: 'rgba(0, 0, 0, 0.05)'
   },
   goalIconContainerActive: {
-    backgroundColor: 'rgba(0, 255, 102, 0.2)',
-    borderColor: '#00FF66'
+    backgroundColor: 'rgba(85, 107, 47, 0.15)',
+    borderColor: COLORS.primary
   },
   goalLabel: { 
     fontSize: 18, 
     fontWeight: '700', 
-    color: 'rgba(255, 255, 255, 0.7)' 
+    color: COLORS.textSecondary 
   },
   goalLabelActive: { 
-    color: '#FFFFFF',
+    color: COLORS.secondary,
     fontWeight: '900',
     letterSpacing: 0.5
   },
@@ -598,47 +581,58 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#00FF66',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#00FF66',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 5,
   },
 
-  // Other steps
   optionCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(20, 24, 35, 0.65)',
+    backgroundColor: COLORS.surface,
     padding: 20,
     borderRadius: 20,
     marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.1)'
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
   },
   optionCardActive: {
-    borderColor: '#00FF66',
-    backgroundColor: 'rgba(0, 255, 102, 0.1)'
+    borderColor: COLORS.primary,
+    backgroundColor: 'rgba(85, 107, 47, 0.08)',
+    borderWidth: 1.5,
   },
-  optionLabel: { fontSize: 18, fontWeight: '700', color: '#FFFFFF' },
-  optionLabelActive: { color: '#00FF66' },
-  optionDesc: { fontSize: 14, color: '#9CA3AF', marginTop: 6, lineHeight: 20 },
-  inputLabel: { fontSize: 15, fontWeight: '700', color: '#9CA3AF', marginBottom: 12 },
+  optionLabel: { fontSize: 18, fontWeight: '700', color: COLORS.textSecondary },
+  optionLabelActive: { color: COLORS.secondary },
+  optionDesc: { fontSize: 14, color: COLORS.textLight, marginTop: 6, lineHeight: 20 },
+  
+  inputLabel: { fontSize: 15, fontWeight: '700', color: COLORS.textSecondary, marginBottom: 12 },
   input: {
-    backgroundColor: 'rgba(20, 24, 35, 0.65)',
+    backgroundColor: COLORS.surface,
     height: 64,
     borderRadius: 16,
     paddingHorizontal: 20,
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    textAlign: 'center'
+    color: COLORS.text,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    textAlign: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.02,
+    shadowRadius: 10,
+    elevation: 1,
   },
   dateInputContainer: {
     flexDirection: 'row',
@@ -654,37 +648,46 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: COLORS.textSecondary,
     marginBottom: 8,
     fontWeight: '600',
     paddingLeft: 4,
   },
   dateInput: {
-    backgroundColor: 'rgba(20, 24, 35, 0.65)',
+    backgroundColor: COLORS.surface,
     height: 64,
     borderRadius: 16,
     paddingHorizontal: 12,
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    textAlign: 'center'
+    color: COLORS.text,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    textAlign: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.02,
+    shadowRadius: 10,
+    elevation: 1,
   },
   
-  // Results step
   resultCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    padding: 20,
+    backgroundColor: COLORS.surface,
+    padding: 24,
     borderRadius: 24,
     marginBottom: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)'
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 5,
   },
   resultLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: COLORS.textSecondary,
     marginBottom: 8,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -693,50 +696,41 @@ const styles = StyleSheet.create({
   resultValue: {
     fontSize: 48,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: COLORS.secondary,
     marginBottom: 8,
-    textShadowColor: 'rgba(0, 255, 102, 0.8)',
+    textShadowColor: 'rgba(85, 107, 47, 0.2)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 15,
   },
   resultDesc: {
     fontSize: 14,
-    color: '#D1D5DB',
+    color: COLORS.textLight,
     textAlign: 'center',
     lineHeight: 22,
   },
   badgeContainer: {
-    backgroundColor: 'rgba(10, 11, 16, 0.5)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#00FF66',
-    marginBottom: 12,
-    shadowColor: '#00FF66',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    marginBottom: 16,
   },
   badgeText: {
-    color: '#00FF66',
-    fontWeight: '900',
-    fontSize: 15,
+    color: COLORS.primary,
+    fontWeight: '800',
+    fontSize: 14,
     letterSpacing: 1,
-    textShadowColor: 'rgba(0, 255, 102, 0.6)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 5,
   },
 
-  // Footer CTA
   footer: { padding: 24, paddingBottom: 40 },
   ctaButtonWrapper: {
-    shadowColor: '#00FF66',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.3,
     shadowRadius: 20,
-    elevation: 10,
+    elevation: 8,
     borderRadius: 16,
   },
   ctaButton: {

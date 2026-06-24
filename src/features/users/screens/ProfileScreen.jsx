@@ -27,6 +27,7 @@ import { useAuthStore } from '../../../store/authStore';
 import { useUserStore } from '../../../store/userStore';
 import { useDialogStore } from '../../../store/dialogStore';
 import { AbstractBackground, GlassCard } from '../../../components/common';
+import ProUpgradeBanner from '../../../components/student/dashboard/ProUpgradeBanner';
 
 import * as ImagePicker from 'expo-image-picker';
 
@@ -109,7 +110,7 @@ const ProfileScreen = () => {
     }
   };
 
-  const MenuOption = ({ icon: Icon, title, subtitle, onPress, color = '#FFFFFF' }) => (
+  const MenuOption = ({ icon: Icon, title, subtitle, onPress, color = '#2D3748' }) => (
     <TouchableOpacity style={styles.menuOption} onPress={onPress}>
       <View style={styles.menuOptionLeft}>
         <View style={styles.iconBox}>
@@ -153,6 +154,12 @@ const ProfileScreen = () => {
             </View>
           </View>
         </View>
+
+        {displayUser?.role === 'USER' ? (
+          <View style={{ marginTop: 10 }}>
+            <ProUpgradeBanner tier={displayUser?.tier} />
+          </View>
+        ) : null}
 
         {/* Stats Row (Only for Students) */}
         {displayUser?.role === 'USER' ? (
@@ -224,7 +231,7 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#0F172A' // Dark slate fallback
+    backgroundColor: '#FAFAFA' // Light fallback
   },
   scrollContent: {
     paddingTop: Platform.OS === 'android' ? 40 : 20, // Add proper safe area padding for Android/clipped avatars
@@ -255,7 +262,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#0F172A',
+    borderColor: '#2D3748',
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
@@ -264,12 +271,14 @@ const styles = StyleSheet.create({
   },
   name: { 
     ...TYPOGRAPHY.h2, 
-    color: '#FFFFFF' 
+    color: '#1A202C',
+    fontWeight: '900'
   },
   email: { 
     fontSize: 14, 
-    color: '#94A3B8', 
-    marginTop: 4 
+    color: '#4A5568', 
+    marginTop: 4,
+    fontWeight: '600'
   },
   badgeContainer: { 
     marginTop: 12 
@@ -277,7 +286,7 @@ const styles = StyleSheet.create({
   tierBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -312,25 +321,26 @@ const styles = StyleSheet.create({
   statDivider: { 
     width: 1, 
     height: '70%', 
-    backgroundColor: 'rgba(255, 255, 255, 0.1)', 
+    backgroundColor: 'rgba(0, 0, 0, 0.05)', 
     alignSelf: 'center' 
   },
   statLabel: { 
     fontSize: 12, 
-    color: '#94A3B8', 
+    color: '#718096', 
     marginBottom: 8,
     textTransform: 'uppercase',
-    letterSpacing: 1
+    letterSpacing: 1,
+    fontWeight: '700'
   },
   statValue: { 
     fontSize: 22, 
-    fontWeight: '800', 
-    color: '#FFFFFF', 
+    fontWeight: '900', 
+    color: '#2D4A33', 
     fontVariant: ['tabular-nums'] 
   },
   unit: { 
     fontSize: 12, 
-    fontWeight: '500', 
+    fontWeight: '700', 
     color: COLORS.primary 
   },
 
@@ -340,8 +350,8 @@ const styles = StyleSheet.create({
   },
   menuGroupTitle: { 
     fontSize: 14, 
-    fontWeight: '700', 
-    color: '#94A3B8', 
+    fontWeight: '900', 
+    color: '#1A202C', 
     marginBottom: 12, 
     marginTop: 16, 
     marginLeft: 4,
@@ -366,48 +376,50 @@ const styles = StyleSheet.create({
     width: 44, 
     height: 44, 
     borderRadius: 14, 
-    backgroundColor: 'rgba(0, 0, 0, 0.3)', 
+    backgroundColor: 'rgba(85, 107, 47, 0.1)', 
     justifyContent: 'center', 
     alignItems: 'center', 
     marginRight: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)'
+    borderColor: 'rgba(85, 107, 47, 0.2)'
   },
   menuOptionTitle: { 
     fontSize: 16, 
-    fontWeight: '600' 
+    fontWeight: '800',
+    color: '#1A202C'
   },
   menuOptionSubtitle: { 
     fontSize: 13, 
-    color: '#94A3B8', 
-    marginTop: 4 
+    color: '#718096', 
+    marginTop: 4,
+    fontWeight: '600'
   },
   
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 16,
     marginTop: 30,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.5)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
     shadowColor: '#EF4444',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
     elevation: 3
   },
   logoutText: { 
     color: '#EF4444', 
     fontSize: 16, 
-    fontWeight: 'bold', 
+    fontWeight: '900', 
     marginLeft: 10 
   },
   version: { 
     textAlign: 'center', 
-    color: '#64748B', 
+    color: '#718096', 
     fontSize: 12, 
     marginTop: 30 
   }

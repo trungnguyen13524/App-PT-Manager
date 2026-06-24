@@ -22,7 +22,7 @@ const CalorieCoreCard = ({ todayCalories, todayMacros, streakDays, onShareClick 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text style={styles.cardTitle}>NĂNG LƯỢNG LÕI</Text>
         <TouchableOpacity onPress={onShareClick} style={styles.shareBtn}>
-          <Share2 color="#FFF" size={16} />
+          <Share2 color="#2D3748" size={16} />
           <Text style={styles.shareText}>Khoe ngay</Text>
         </TouchableOpacity>
       </View>
@@ -46,9 +46,9 @@ const CalorieCoreCard = ({ todayCalories, todayMacros, streakDays, onShareClick 
             <View style={[
               styles.macroBar, 
               { 
-                backgroundColor: consumedCarbs > targetCarbs ? '#FF4D4D' : '#00B3FF', 
+                backgroundColor: consumedCarbs > targetCarbs ? COLORS.error : COLORS.secondary, 
                 width: `${Math.min((consumedCarbs / (targetCarbs || 1)) * 100, 100)}%`, 
-                shadowColor: consumedCarbs > targetCarbs ? '#FF4D4D' : '#00B3FF' 
+                shadowColor: consumedCarbs > targetCarbs ? COLORS.error : COLORS.secondary 
               }
             ]} />
           </View>
@@ -60,9 +60,9 @@ const CalorieCoreCard = ({ todayCalories, todayMacros, streakDays, onShareClick 
             <View style={[
               styles.macroBar, 
               { 
-                backgroundColor: consumedProtein > targetProtein ? '#FF4D4D' : '#00FF66', 
+                backgroundColor: consumedProtein > targetProtein ? COLORS.error : COLORS.primary, 
                 width: `${Math.min((consumedProtein / (targetProtein || 1)) * 100, 100)}%`, 
-                shadowColor: consumedProtein > targetProtein ? '#FF4D4D' : '#00FF66' 
+                shadowColor: consumedProtein > targetProtein ? COLORS.error : COLORS.primary 
               }
             ]} />
           </View>
@@ -74,9 +74,9 @@ const CalorieCoreCard = ({ todayCalories, todayMacros, streakDays, onShareClick 
             <View style={[
               styles.macroBar, 
               { 
-                backgroundColor: consumedFat > targetFat ? '#FF4D4D' : '#FF4D00', 
+                backgroundColor: consumedFat > targetFat ? COLORS.error : COLORS.accent, 
                 width: `${Math.min((consumedFat / (targetFat || 1)) * 100, 100)}%`, 
-                shadowColor: consumedFat > targetFat ? '#FF4D4D' : '#FF4D00' 
+                shadowColor: consumedFat > targetFat ? COLORS.error : COLORS.accent 
               }
             ]} />
           </View>
@@ -88,21 +88,26 @@ const CalorieCoreCard = ({ todayCalories, todayMacros, streakDays, onShareClick 
 
 const styles = StyleSheet.create({
   glassCard: {
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: 24,
     padding: 20,
     marginHorizontal: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 8,
   },
   calorieCard: {
-    marginTop: 8,
-    marginBottom: 32,
+    marginTop: 0,
+    marginBottom: 20,
     position: 'relative',
     overflow: 'hidden',
   },
   cardTitle: {
-    color: '#FFF',
+    color: '#2D3748',
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: 1,
@@ -110,13 +115,13 @@ const styles = StyleSheet.create({
   shareBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   shareText: {
-    color: '#FFF',
+    color: '#2D3748',
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 6,
@@ -139,16 +144,16 @@ const styles = StyleSheet.create({
   chartWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 220,
-    marginVertical: 10,
+    height: 180,
+    marginVertical: 4,
   },
   macrosRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: 8,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
+    borderTopColor: 'rgba(0, 0, 0, 0.04)',
   },
   macroItem: {
     flex: 1,
@@ -156,12 +161,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   macroLabel: {
-    color: '#94A3B8',
+    color: '#4A5568',
     fontSize: 12,
     marginBottom: 4,
   },
   macroValue: {
-    color: '#FFF',
+    color: '#2D3748',
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 8,
@@ -169,7 +174,7 @@ const styles = StyleSheet.create({
   macroTrack: {
     width: '100%',
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 3,
     overflow: 'hidden',
   },

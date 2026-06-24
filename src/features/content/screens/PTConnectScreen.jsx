@@ -77,6 +77,7 @@ const PTConnectScreen = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [purchasingId, setPurchasingId] = useState(null);
+  const [filterDays, setFilterDays] = useState('all');
 
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [courseDetail, setCourseDetail] = useState(null);
@@ -152,19 +153,35 @@ const PTConnectScreen = () => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
+  const FILTERS = [
+    { id: 'all', label: 'Tất cả' },
+    { id: 'short', label: '< 15 ngày' },
+    { id: 'medium', label: '15-30 ngày' },
+    { id: 'long', label: '> 30 ngày' }
+  ];
+
+  const filteredCourses = courses.filter(course => {
+    if (filterDays === 'all') return true;
+    const duration = course.durationDays || 0;
+    if (filterDays === 'short') return duration > 0 && duration < 15;
+    if (filterDays === 'medium') return duration >= 15 && duration <= 30;
+    if (filterDays === 'long') return duration > 30;
+    return true;
+  });
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0B0F19" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F5F5DC" />
       <AbstractBackground />
       
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>PT Connect</Text>
-          <Text style={styles.headerSubtitle}>Khóa học từ chuyên gia hàng đầu</Text>
+          <Text style={styles.headerTitle}>Khóa học</Text>
+          <Text style={styles.headerSubtitle}>Gói tập & Chương trình từ Chuyên gia</Text>
         </View>
         <TouchableOpacity style={styles.searchBtn}>
-          <Search color="#FFFFFF" size={24} />
+          <Search color="#2D3748" size={24} />
         </TouchableOpacity>
       </View>
 
@@ -187,32 +204,51 @@ const PTConnectScreen = () => {
 
         {/* Filters/Categories (Static for now) */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Khóa học Nổi bật</Text>
+          <Text style={styles.sectionTitle}>Chương trình Nổi bật</Text>
           <TouchableOpacity>
             <Text style={styles.seeAllText}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
 
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+          {FILTERS.map(filter => (
+            <TouchableOpacity 
+              key={filter.id} 
+              style={[styles.filterPill, filterDays === filter.id && styles.filterPillActive]}
+              onPress={() => setFilterDays(filter.id)}
+            >
+              <Text style={[styles.filterText, filterDays === filter.id && styles.filterTextActive]}>
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
         {loading ? (
           <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 50 }} />
         ) : (
           <View style={styles.listContainer}>
-            {courses.map((course) => (
-              <TouchableOpacity 
-                key={course.id} 
+            {filteredCourses.length === 0 ? (
+              <View style={{ padding: 20, alignItems: 'center' }}>
+                <Text style={{ color: '#A0AEC0', fontSize: 14 }}>Không có khóa học nào phù hợp.</Text>
+              </View>
+            ) : (
+              filteredCourses.map((course) => (
+                <TouchableOpacity 
+                  key={course.id} 
                 style={styles.courseCard} 
                 activeOpacity={0.9}
                 onPress={() => handleOpenDetail(course)}
               >
-                <Image source={{ uri: course.thumbnailUrl }} style={styles.courseImage} />
+                <Image source={{ uri: course.thumbnailUrl || 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80' }} style={styles.courseImage} />
                 
                 <View style={styles.courseContent}>
                   {/* PT Info */}
                   <View style={styles.ptInfoRow}>
-                    <Image source={{ uri: course.ptAvatarUrl }} style={styles.ptAvatar} />
+                    <Image source={{ uri: course.ptAvatarUrl || 'https://i.pravatar.cc/150' }} style={styles.ptAvatar} />
                     <View style={styles.ptNameContainer}>
                       <Text style={styles.ptName}>{course.ptFullName}</Text>
-                      <CheckCircle color="#00FF66" size={12} style={{ marginLeft: 4 }} />
+                      <CheckCircle color="#556B2F" size={12} style={{ marginLeft: 4 }} />
                     </View>
                   </View>
 
@@ -225,11 +261,11 @@ const PTConnectScreen = () => {
                       <Text style={styles.metaText}>{course.rating}</Text>
                     </View>
                     <View style={styles.metaItem}>
-                      <Users color="#94A3B8" size={14} />
+                      <Users color="#4A5568" size={14} />
                       <Text style={styles.metaText}>{course.students?.toLocaleString()}</Text>
                     </View>
                     <View style={styles.metaItem}>
-                      <PlayCircle color="#94A3B8" size={14} />
+                      <PlayCircle color="#4A5568" size={14} />
                       <Text style={styles.metaText}>{course.totalLessons} bài</Text>
                     </View>
                   </View>
@@ -253,11 +289,11 @@ const PTConnectScreen = () => {
                       disabled={purchasingId === course.id}
                     >
                       {purchasingId === course.id ? (
-                        <ActivityIndicator size="small" color="#00FF66" style={{ marginRight: 4 }} />
+                        <ActivityIndicator size="small" color="#556B2F" style={{ marginRight: 4 }} />
                       ) : (
                         <>
                           <Text style={styles.buyBtnText}>Mua ngay</Text>
-                          <ChevronRight color="#00FF66" size={16} />
+                          <ChevronRight color="#556B2F" size={16} />
                         </>
                       )}
                     </TouchableOpacity>
@@ -265,7 +301,8 @@ const PTConnectScreen = () => {
 
                 </View>
               </TouchableOpacity>
-            ))}
+            ))
+            )}
           </View>
         )}
         
@@ -280,13 +317,13 @@ const PTConnectScreen = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle} numberOfLines={1}>{selectedCourse?.title}</Text>
               <TouchableOpacity onPress={() => { setModalVisible(false); setPlayingLessonDemo(null); }} style={styles.closeBtn}>
-                <X color="#FFF" size={24} />
+                <X color="#2D3748" size={24} />
               </TouchableOpacity>
             </View>
             
             {loadingDetail ? (
               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#00FF66" />
+                <ActivityIndicator size="large" color="#556B2F" />
               </View>
             ) : courseDetail ? (
               <ScrollView showsVerticalScrollIndicator={false}>
@@ -297,19 +334,19 @@ const PTConnectScreen = () => {
                       return <NativeVideoPlayer sourceUri={playingLessonDemo.url} style={styles.demoVideo} />;
                     } else if (playingLessonDemo.type === 'youtube') {
                       return (
-                        <TouchableOpacity 
-                          style={[styles.demoVideo, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }]}
-                          onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${playingLessonDemo.url}`)}
-                        >
-                          <Image source={{ uri: `https://img.youtube.com/vi/${playingLessonDemo.url}/hqdefault.jpg` }} style={[StyleSheet.absoluteFill, { opacity: 0.6 }]} />
-                          <PlayCircle color="#FFF" size={64} />
-                        </TouchableOpacity>
+                        <View style={styles.demoVideo}>
+                          <YoutubePlayer
+                            height={200}
+                            play={true}
+                            videoId={playingLessonDemo.url}
+                          />
+                        </View>
                       );
                     }
                   }
 
                   // Default: Show thumbnail. Never auto-play anything unless a preview lesson is clicked.
-                  return <Image source={{ uri: courseDetail?.thumbnailUrl || selectedCourse?.thumbnailUrl }} style={styles.demoVideo} />;
+                  return <Image source={{ uri: courseDetail?.thumbnailUrl || selectedCourse?.thumbnailUrl || 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80' }} style={styles.demoVideo} />;
                 })()}
 
                 {/* PT Info Area - Simplified */}
@@ -322,28 +359,36 @@ const PTConnectScreen = () => {
                         source={{ uri: courseDetail.pt?.avatarUrl || selectedCourse?.ptAvatarUrl || 'https://i.pravatar.cc/150' }} 
                         style={{ width: 50, height: 50, borderRadius: 25, marginRight: 12, backgroundColor: '#333' }} 
                       />
-                      <Text style={{ color: '#FFF', fontSize: 16, fontWeight: 'bold' }}>
+                      <Text style={{ color: '#2D3748', fontSize: 16, fontWeight: 'bold' }}>
                         {courseDetail.pt?.fullName || selectedCourse?.ptFullName || 'Huấn luyện viên'}
                       </Text>
                     </View>
                     
                     <TouchableOpacity 
-                      style={{ backgroundColor: 'rgba(0, 255, 102, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: '#00FF66' }}
+                      style={{ backgroundColor: 'rgba(85, 107, 47, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: '#556B2F' }}
                       onPress={() => {
                         setModalVisible(false);
                         setPlayingLessonDemo(null);
                         navigation.navigate('PublicPTProfile', { pt: courseDetail.pt || { fullName: selectedCourse?.ptFullName, avatarUrl: selectedCourse?.ptAvatarUrl } });
                       }}
                     >
-                      <Text style={{ color: '#00FF66', fontSize: 12, fontWeight: 'bold' }}>Xem chi tiết</Text>
+                      <Text style={{ color: '#556B2F', fontSize: 12, fontWeight: 'bold' }}>Xem chi tiết</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 {/* Course Details */}
                 <View style={styles.modalSection}>
-                  <Text style={styles.modalSectionTitle}>Giới thiệu khóa học</Text>
-                  <Text style={styles.courseDescription}>{courseDetail.description || 'Chưa có mô tả chi tiết cho khóa học này.'}</Text>
+                  <Text style={styles.modalSectionTitle}>Giới thiệu gói tập</Text>
+                  <Text style={styles.courseDescription}>{courseDetail.description || 'Chưa có mô tả chi tiết cho chương trình này.'}</Text>
+                  
+                  {/* Copyright Note */}
+                  <View style={styles.copyrightNote}>
+                    <Shield color={COLORS.info} size={20} />
+                    <Text style={styles.copyrightText}>
+                      Tài liệu này được thiết kế độc quyền. Vui lòng không chia sẻ ra ngoài để tôn trọng bản quyền của Huấn luyện viên.
+                    </Text>
+                  </View>
                 </View>
 
                 {/* Curriculum / Modules */}
@@ -366,15 +411,15 @@ const PTConnectScreen = () => {
                                   <TouchableOpacity 
                                     style={styles.previewBtn}
                                     onPress={() => {
+                                      console.log('DEMO_LESSON_DATA:', JSON.stringify(lesson, null, 2));
                                       if (lesson.cloudinaryVideoUrl || lesson.videoUrl) setPlayingLessonDemo({ type: 'cloudinary', url: lesson.cloudinaryVideoUrl || lesson.videoUrl });
                                       else if (lesson.youtubeVideoId) {
                                         let ytId = lesson.youtubeVideoId;
                                         const match = ytId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
                                         if (match) ytId = match[1];
                                         
-                                        Linking.openURL(`https://www.youtube.com/watch?v=${ytId}`).catch(() => {
-                                          Linking.openURL(lesson.youtubeVideoId);
-                                        });
+                                        // Hiển thị Preview YouTube ở khung trên cùng
+                                        setPlayingLessonDemo({ type: 'youtube', url: ytId });
                                       } else {
                                         const { useDialogStore } = require('../../../store/dialogStore');
                                         const cleanText = lesson.content ? lesson.content.replace(/<[^>]*>?/gm, '') : 'Bài học này chỉ chứa nội dung văn bản nhưng chưa được thêm nội dung.';
@@ -422,7 +467,7 @@ const PTConnectScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B0F19',
+    backgroundColor: '#FAFAFA',
   },
   header: {
     flexDirection: 'row',
@@ -434,25 +479,27 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...TYPOGRAPHY.h2,
-    color: '#FFFFFF',
+    color: '#1A202C',
+    fontWeight: '900',
   },
   headerSubtitle: {
     ...TYPOGRAPHY.body2,
-    color: '#94A3B8',
+    color: '#4A5568',
     marginTop: 4,
+    fontWeight: '600',
   },
   searchBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0,0,0,0.1)',
   },
   scrollContent: {
-    padding: 20,
+    paddingBottom: 20,
   },
   // Banner
   bannerContainer: {
@@ -464,7 +511,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.2)',
+    borderColor: 'rgba(85, 107, 47, 0.2)',
+    marginHorizontal: 20,
   },
   bannerContent: {
     flex: 1,
@@ -472,17 +520,19 @@ const styles = StyleSheet.create({
   },
   bannerTitle: {
     ...TYPOGRAPHY.h3,
-    color: '#00FF66',
+    color: '#3A4D20',
+    fontWeight: '900',
     marginBottom: 8,
   },
   bannerText: {
     ...TYPOGRAPHY.body2,
-    color: '#E2E8F0',
+    color: '#4A5568',
+    fontWeight: '600',
     marginBottom: 16,
-    opacity: 0.8,
+    opacity: 0.9,
   },
   bannerBtn: {
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -491,50 +541,29 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 255, 102, 0.5)',
   },
   bannerBtnText: {
-    color: '#00FF66',
+    color: '#FFF',
     fontWeight: 'bold',
-    fontSize: 12,
   },
   bannerImage: {
     width: 120,
     height: 120,
     position: 'absolute',
-    right: -10,
+    right: 20,
     bottom: -10,
-    zIndex: 1,
   },
   // Sections
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.h3,
-    color: '#FFFFFF',
-  },
-  seeAllText: {
-    color: '#00FF66',
-    fontWeight: '600',
-    fontSize: 14,
-  },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 12 },
+  sectionTitle: { ...TYPOGRAPHY.h3, color: '#1A202C', fontWeight: '900' },
+  seeAllText: { color: '#556B2F', fontWeight: 'bold' },
+  filterScroll: { paddingHorizontal: 20, paddingBottom: 16, gap: 8 },
+  filterPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
+  filterPillActive: { backgroundColor: '#556B2F', borderColor: '#556B2F' },
+  filterText: { color: '#4A5568', fontWeight: '600', fontSize: 13 },
+  filterTextActive: { color: '#FFFFFF' },
   // List
-  listContainer: {
-    gap: 20,
-  },
-  courseCard: {
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  courseImage: {
-    width: '100%',
-    height: 180,
-    resizeMode: 'cover',
-  },
+  listContainer: { paddingHorizontal: 20, paddingBottom: 40 },
+  courseCard: { backgroundColor: '#FFFFFF', borderRadius: 20, marginBottom: 20, overflow: 'hidden', elevation: 4, shadowColor: '#2D4A33', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 24 },
+  courseImage: { width: '100%', height: 180 },
   courseContent: {
     padding: 16,
   },
@@ -544,11 +573,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   ptAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.15)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   ptNameContainer: {
     flexDirection: 'row',
@@ -557,13 +587,14 @@ const styles = StyleSheet.create({
   },
   ptName: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#E2E8F0',
+    fontWeight: '800',
+    color: '#1A202C',
   },
   courseTitle: {
     ...TYPOGRAPHY.h3,
     fontSize: 17,
-    color: '#FFFFFF',
+    fontWeight: '800',
+    color: '#1A202C',
     marginBottom: 12,
     lineHeight: 24,
   },
@@ -578,10 +609,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metaText: {
-    fontSize: 12,
-    color: '#94A3B8',
-    marginLeft: 4,
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#1A202C',
+    marginLeft: 6,
+    fontWeight: '800',
   },
   tagsRow: {
     flexDirection: 'row',
@@ -590,82 +621,86 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tagPill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    backgroundColor: 'rgba(85, 107, 47, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(85, 107, 47, 0.2)',
   },
   tagText: {
-    fontSize: 11,
-    color: '#E2E8F0',
-    fontWeight: '500',
+    fontSize: 12,
+    color: '#2D4A33',
+    fontWeight: '900',
   },
   priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+    borderTopColor: 'rgba(0, 0, 0, 0.02)',
     paddingTop: 16,
   },
   priceText: {
     ...TYPOGRAPHY.h3,
-    color: '#00FF66',
+    fontSize: 22,
+    color: '#2D4A33',
+    fontWeight: '900',
   },
   buyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    backgroundColor: '#556B2F',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.3)',
+    borderColor: '#4C602A',
   },
   buyBtnText: {
-    color: '#00FF66',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '900',
     fontSize: 14,
     marginRight: 4,
   },
+  copyrightNote: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(49, 130, 206, 0.1)', padding: 12, borderRadius: 8, marginTop: 16, borderWidth: 1, borderColor: 'rgba(49, 130, 206, 0.3)' },
+  copyrightText: { color: '#1A202C', fontWeight: '700', fontSize: 13, marginLeft: 10, flex: 1, lineHeight: 20 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#0F172A', borderTopLeftRadius: 24, borderTopRightRadius: 24, height: '90%', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-  modalTitle: { ...TYPOGRAPHY.h3, color: '#FFF', flex: 1, marginRight: 10 },
-  closeBtn: { padding: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20 },
+  modalContent: { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, height: '90%', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)' },
+  modalTitle: { ...TYPOGRAPHY.h3, color: '#1A202C', fontWeight: '900', flex: 1, marginRight: 10 },
+  closeBtn: { padding: 4, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 20 },
   demoVideo: { width: '100%', height: 200, backgroundColor: '#000' },
-  modalSection: { padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-  modalSectionTitle: { ...TYPOGRAPHY.h3, color: '#FFF', marginBottom: 16 },
-  ptProfileHeaderLarge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)', marginBottom: 16 },
+  modalSection: { padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)' },
+  modalSectionTitle: { ...TYPOGRAPHY.h3, color: '#1A202C', fontWeight: '900', marginBottom: 16 },
+  ptProfileHeaderLarge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: 'rgba(0, 0, 0, 0.02)', marginBottom: 16 },
   ptProfileAvatarContainerLarge: { marginRight: 16 },
-  ptProfileAvatarLarge: { width: 70, height: 70, borderRadius: 35, borderWidth: 2, borderColor: '#00FF66' },
+  ptProfileAvatarLarge: { width: 70, height: 70, borderRadius: 35, borderWidth: 2, borderColor: '#556B2F' },
   ptProfileInfoLarge: { flex: 1 },
-  ptProfileNameLarge: { ...TYPOGRAPHY.h2, fontSize: 20, color: '#FFF' },
-  expBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0, 255, 102, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginTop: 8, borderWidth: 1, borderColor: 'rgba(0, 255, 102, 0.3)' },
-  expBadgeText: { color: '#00FF66', fontSize: 12, fontWeight: '600', marginLeft: 4 },
+  ptProfileNameLarge: { ...TYPOGRAPHY.h2, fontSize: 20, color: '#2D3748' },
+  expBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(85, 107, 47, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginTop: 8, borderWidth: 1, borderColor: 'rgba(85, 107, 47, 0.3)' },
+  expBadgeText: { color: '#556B2F', fontSize: 12, fontWeight: '600', marginLeft: 4 },
   ptBioContainerLarge: { backgroundColor: 'rgba(0,0,0,0.2)', padding: 14, borderRadius: 12, marginBottom: 16 },
-  bioLabel: { fontSize: 13, color: '#94A3B8', fontWeight: '600', marginBottom: 6, textTransform: 'uppercase' },
-  ptBioTextLarge: { color: '#F8FAFC', fontSize: 15, lineHeight: 24 },
+  bioLabel: { fontSize: 13, color: '#4A5568', fontWeight: '600', marginBottom: 6, textTransform: 'uppercase' },
+  ptBioTextLarge: { color: '#2D3748', fontSize: 15, lineHeight: 24 },
   specialtiesWrapper: { marginTop: 4 },
   tagsRowLarge: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tagPillLarge: { backgroundColor: 'rgba(255, 255, 255, 0.08)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.15)' },
-  tagTextLarge: { fontSize: 13, color: '#E2E8F0', fontWeight: '500' },
-  courseDescription: { color: '#E2E8F0', fontSize: 15, lineHeight: 24 },
-  modalBottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#0F172A', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingBottom: Platform.OS === 'ios' ? 30 : 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' },
-  modalPriceText: { ...TYPOGRAPHY.h2, color: '#00FF66' },
-  buyBtnLarge: { backgroundColor: '#00FF66', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16 },
-  buyBtnLargeText: { color: '#0B0F19', fontWeight: 'bold', fontSize: 16 },
-  curriculumModule: { marginBottom: 16, backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  curriculumModuleTitle: { ...TYPOGRAPHY.subtitle, color: '#FFF', marginBottom: 12 },
+  tagTextLarge: { fontSize: 13, color: '#4A5568', fontWeight: '500' },
+  courseDescription: { color: '#1A202C', fontWeight: '600', fontSize: 15, lineHeight: 24 },
+  modalBottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingBottom: Platform.OS === 'ios' ? 30 : 20, borderTopWidth: 1, borderTopColor: 'rgba(0, 0, 0, 0.1)', shadowColor: '#000', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 10 },
+  modalPriceText: { ...TYPOGRAPHY.h2, color: '#2D4A33', fontWeight: '900', fontSize: 24 },
+  buyBtnLarge: { backgroundColor: '#556B2F', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16 },
+  buyBtnLargeText: { color: '#F5F5DC', fontWeight: 'bold', fontSize: 16 },
+  curriculumModule: { marginBottom: 16, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(0, 0, 0, 0.08)' },
+  curriculumModuleTitle: { ...TYPOGRAPHY.subtitle, color: '#1A202C', fontWeight: '900', marginBottom: 12 },
   curriculumLessons: { paddingLeft: 4 },
-  curriculumLessonItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  curriculumLessonItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderTopWidth: 1, borderColor: 'rgba(0, 0, 0, 0.05)' },
   curriculumLessonInfo: { flex: 1, paddingRight: 16 },
-  curriculumLessonName: { fontSize: 14, color: '#E2E8F0' },
-  previewBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0, 255, 102, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(0, 255, 102, 0.2)' },
-  previewBtnText: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
-  lockedBtn: { padding: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20 }
+  curriculumLessonName: { fontSize: 14, color: '#1A202C', fontWeight: '700' },
+  previewBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(85, 107, 47, 0.15)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(85, 107, 47, 0.3)' },
+  previewBtnText: { fontSize: 12, fontWeight: '800', color: '#2D4A33' },
+  lockedBtn: { padding: 6, backgroundColor: 'rgba(0, 0, 0, 0.05)', borderRadius: 20 }
 });
 
 export default PTConnectScreen;

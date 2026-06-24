@@ -17,34 +17,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import contentService from '../../../api/services/content.service';
+import { AbstractBackground } from '../../../components/common';
 
 const { width } = Dimensions.get('window');
-
-const AbstractBackground = React.memo(() => (
-  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-    <Svg width="100%" height="100%">
-      <Defs>
-        <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#0F172A" />
-          <Stop offset="100%" stopColor="#1E293B" />
-        </LinearGradient>
-        <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.1" />
-          <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.02" />
-        </LinearGradient>
-        <LinearGradient id="circleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#FF4D00" stopOpacity="0.1" />
-          <Stop offset="100%" stopColor="#FF0080" stopOpacity="0.02" />
-        </LinearGradient>
-      </Defs>
-      <Rect width="100%" height="100%" fill="url(#bgGrad)" />
-      
-      <Circle cx="10%" cy="10%" r="120" fill="url(#circleGrad1)" />
-      <Circle cx="90%" cy="40%" r="150" fill="url(#circleGrad2)" />
-      <Circle cx="20%" cy="80%" r="180" fill="url(#circleGrad1)" />
-    </Svg>
-  </View>
-));
 
 const DiscoverScreen = () => {
   const [articles, setArticles] = useState([]);
@@ -85,7 +60,7 @@ const DiscoverScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       <AbstractBackground />
       
       {/* Header */}
@@ -95,7 +70,7 @@ const DiscoverScreen = () => {
           <Text style={styles.headerSubtitle}>Kiến thức dinh dưỡng & sức khỏe</Text>
         </View>
         <TouchableOpacity style={styles.searchBtn}>
-          <Search color="#FFFFFF" size={24} />
+          <Search color="#2D3748" size={24} />
         </TouchableOpacity>
       </View>
 
@@ -120,7 +95,7 @@ const DiscoverScreen = () => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         {loading ? (
-          <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />
+          <ActivityIndicator size="large" color="#556B2F" style={{ marginTop: 50 }} />
         ) : (
           <>
             {/* Featured Article */}
@@ -176,7 +151,7 @@ const DiscoverScreen = () => {
                     <View style={styles.articleFooter}>
                       <Text style={styles.articleMeta}>{article.date}</Text>
                       <TouchableOpacity style={styles.actionBtn}>
-                        <ExternalLink size={18} color="#00FF66" />
+                        <ExternalLink size={18} color="#556B2F" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -200,7 +175,7 @@ const DiscoverScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FAFAFA',
   },
   header: {
     flexDirection: 'row',
@@ -212,25 +187,26 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...TYPOGRAPHY.h2,
-    color: '#FFFFFF',
+    color: '#1A202C',
     fontSize: 28,
     fontWeight: '900',
     letterSpacing: 0.5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#4A5568',
     marginTop: 4,
+    fontWeight: '600'
   },
   searchBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(0, 0, 0, 0.02)',
   },
   categoriesWrapper: {
     paddingBottom: 15,
@@ -242,28 +218,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     marginHorizontal: 5,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'transparent',
   },
   categoryPillActive: {
-    backgroundColor: 'rgba(0, 255, 102, 0.15)',
-    borderColor: '#00FF66',
-    shadowColor: '#00FF66',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
+    borderColor: '#556B2F',
   },
   categoryText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontWeight: '700',
+    color: '#4A5568',
   },
   categoryTextActive: {
-    color: '#00FF66',
-    fontWeight: 'bold',
+    color: '#3A4D20',
+    fontWeight: '900',
   },
   scrollContent: {
     padding: 20,
@@ -274,14 +245,14 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 24,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EADDCA',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.5,
     shadowRadius: 15,
     elevation: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   featuredImage: {
     width: '100%',
@@ -299,7 +270,7 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   tagBadge: {
-    backgroundColor: 'rgba(0, 255, 102, 0.2)',
+    backgroundColor: 'rgba(85, 107, 47, 0.2)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -309,7 +280,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 255, 102, 0.5)',
   },
   tagText: {
-    color: '#00FF66',
+    color: '#556B2F',
     fontSize: 11,
     fontWeight: '900',
     textTransform: 'uppercase',
@@ -317,7 +288,7 @@ const styles = StyleSheet.create({
   },
   featuredTitle: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#FFFFFF',
     marginBottom: 12,
     lineHeight: 30,
@@ -339,8 +310,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: '900',
+    color: '#1A202C',
     marginBottom: 16,
     letterSpacing: 0.5,
   },
@@ -349,12 +320,17 @@ const styles = StyleSheet.create({
   },
   articleCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(0, 0, 0, 0.03)',
+    shadowColor: '#2D4A33',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   articleImage: {
     width: 110,
@@ -367,17 +343,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   articleCategory: {
-    color: '#00B3FF',
+    color: '#556B2F',
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '900',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   articleTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: '800',
+    color: '#1A202C',
     marginBottom: 10,
     lineHeight: 22,
   },
@@ -387,14 +363,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   articleMeta: {
-    color: '#9CA3AF',
+    color: '#718096',
     fontSize: 13,
+    fontWeight: '600'
   },
   actionBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },

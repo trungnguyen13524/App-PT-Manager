@@ -502,12 +502,31 @@ const CurriculumBuilderScreen = () => {
         </View>
       )}
 
+      {!isLocked && (
+        <View style={styles.instructionBox}>
+          <View style={styles.instructionHeader}>
+            <Text style={styles.instructionTitle}>Hướng dẫn Cập nhật Giáo trình</Text>
+          </View>
+          
+          <Text style={styles.instructionSubTitle}>🌟 Khi thêm Bài học mới:</Text>
+          <Text style={styles.instructionText}>1. Thêm bài học và nhập Tên bài học.</Text>
+          <Text style={styles.instructionText}>2. Bấm <Text style={styles.instructionBold}>LƯU LẠI THAY ĐỔI</Text> ở cuối trang để tạo bài.</Text>
+          <Text style={styles.instructionText}>3. Tải Video MP4 lên. Tải xong <Text style={styles.instructionBold}>KHÔNG CẦN</Text> bấm Lưu lại nữa.</Text>
+
+          <View style={styles.instructionDivider} />
+
+          <Text style={styles.instructionSubTitle}>📝 Khi sửa Bài học đã có:</Text>
+          <Text style={styles.instructionText}>• Đổi tên / thứ tự bài học ➔ Bấm <Text style={styles.instructionBold}>LƯU LẠI THAY ĐỔI</Text>.</Text>
+          <Text style={styles.instructionText}>• Tải lại Video MP4 hoặc Bật Xem thử ➔ Hệ thống <Text style={styles.instructionBold}>TỰ ĐỘNG LƯU</Text>, tuyệt đối không bấm nút Lưu ở cuối trang.</Text>
+        </View>
+      )}
+
       <ScrollView ref={scrollViewRef} style={styles.content} showsVerticalScrollIndicator={false}>
         {modules.map((module, mIdx) => (
           <View key={module.id} style={styles.moduleCard}>
             <View style={styles.moduleHeader}>
               <TouchableOpacity onPress={() => toggleModule(mIdx)} style={styles.moduleExpander}>
-                {module.isExpanded ? <ChevronUp size={20} color="#FFF" /> : <ChevronDown size={20} color="#FFF" />}
+                {module.isExpanded ? <ChevronUp size={20} color="#4A5568" /> : <ChevronDown size={20} color="#4A5568" />}
               </TouchableOpacity>
               
               <TextInput
@@ -515,7 +534,7 @@ const CurriculumBuilderScreen = () => {
                 value={module.title}
                 onChangeText={(text) => updateModuleTitle(mIdx, text)}
                 placeholder="Tên chương..."
-                placeholderTextColor="rgba(255,255,255,0.4)"
+                placeholderTextColor="#A0AEC0"
                 editable={!isLocked}
               />
 
@@ -551,16 +570,16 @@ const CurriculumBuilderScreen = () => {
                         value={lesson.title}
                         onChangeText={(text) => updateLesson(mIdx, lIdx, 'title', text)}
                         placeholder="Tiêu đề bài học..."
-                        placeholderTextColor="rgba(255,255,255,0.4)"
+                        placeholderTextColor="#A0AEC0"
                         editable={!isLocked}
                       />
                       {!isLocked && (
                         <View style={styles.lessonActions}>
                           <TouchableOpacity onPress={() => moveLesson(mIdx, lIdx, -1)} disabled={lIdx === 0}>
-                            <ArrowUp size={16} color={lIdx === 0 ? "rgba(255,255,255,0.2)" : "#FFF"} />
+                            <ArrowUp size={16} color={lIdx === 0 ? "#CBD5E1" : "#4A5568"} />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => moveLesson(mIdx, lIdx, 1)} disabled={lIdx === module.lessons.length - 1} style={{ marginLeft: 8 }}>
-                            <ArrowDown size={16} color={lIdx === module.lessons.length - 1 ? "rgba(255,255,255,0.2)" : "#FFF"} />
+                            <ArrowDown size={16} color={lIdx === module.lessons.length - 1 ? "#CBD5E1" : "#4A5568"} />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => removeLesson(mIdx, lIdx)} style={{ marginLeft: 12 }}>
                             <Trash2 size={16} color={COLORS.error} />
@@ -578,7 +597,7 @@ const CurriculumBuilderScreen = () => {
                           value={lesson.youtubeVideoId}
                           onChangeText={(text) => updateLesson(mIdx, lIdx, 'youtubeVideoId', text)}
                           placeholder="Link YouTube hoặc Video ID (11 ký tự)"
-                          placeholderTextColor="rgba(255,255,255,0.3)"
+                          placeholderTextColor="#A0AEC0"
                           editable={!isLocked}
                         />
                       </View>
@@ -592,10 +611,10 @@ const CurriculumBuilderScreen = () => {
 
                     <View style={styles.uploadRow}>
                       <TouchableOpacity 
-                        style={[styles.uploadBtn, (lesson.videoUrl || lesson.localVideoUri) && { borderColor: COLORS.success }]}
+                        style={[styles.uploadBtn, (lesson.videoUrl || lesson.localVideoUri) && { borderColor: COLORS.success, backgroundColor: 'rgba(46, 204, 113, 0.1)' }]}
                         onPress={() => !isLocked && handleUploadVideo(mIdx, lIdx, lesson.id)}
                       >
-                        <Video size={18} color={(lesson.videoUrl || lesson.localVideoUri) ? COLORS.success : COLORS.primary} style={{ marginRight: 8 }} />
+                        <Video size={18} color={(lesson.videoUrl || lesson.localVideoUri) ? COLORS.success : '#4A5568'} style={{ marginRight: 8 }} />
                         <Text style={[styles.uploadText, (lesson.videoUrl || lesson.localVideoUri) && { color: COLORS.success }]}>
                           {lesson.videoUrl ? "Đã tải Video MP4" : (lesson.localVideoUri ? "Đang tải lên..." : "Chọn Video (MP4 < 100MB)")}
                         </Text>
@@ -611,7 +630,7 @@ const CurriculumBuilderScreen = () => {
                       <Switch 
                         value={lesson.isPreview}
                         onValueChange={(val) => !isLocked && handleTogglePreview(mIdx, lIdx, lesson.id, val)}
-                        trackColor={{ false: 'rgba(255,255,255,0.1)', true: COLORS.primaryLight }}
+                        trackColor={{ false: 'rgba(0, 0, 0, 0.05)', true: COLORS.primaryLight }}
                         thumbColor={lesson.isPreview ? COLORS.primary : '#f4f3f4'}
                         disabled={isLocked}
                       />
@@ -636,7 +655,7 @@ const CurriculumBuilderScreen = () => {
 
         {!isLocked && (
           <TouchableOpacity style={styles.addModuleBtn} onPress={addModule}>
-            <Plus size={20} color={COLORS.primary} />
+            <Plus size={20} color="#556B2F" />
             <Text style={styles.addModuleText}>THÊM CHƯƠNG MỚI</Text>
           </TouchableOpacity>
         )}
@@ -662,40 +681,46 @@ const CurriculumBuilderScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FAFAFA',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingTop: 50,
     paddingBottom: SPACING.md,
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: '#F3F4F6',
   },
   backBtn: { padding: 8, marginLeft: -8 },
-  headerTitle: { ...TYPOGRAPHY.h3, color: COLORS.text },
+  headerTitle: { fontSize: 20, fontWeight: '900', color: '#1A202C', textTransform: 'uppercase' },
   content: { padding: SPACING.lg },
   moduleCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginBottom: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: '#F3F4F6',
+    shadowColor: '#2D4A33',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
   moduleHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: '#F9FAFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
   moduleExpander: { marginRight: 12 },
   moduleTitleInput: {
     flex: 1,
-    color: '#FFF',
+    color: '#2D3748',
     fontSize: 16,
     fontWeight: '700',
     padding: 0,
@@ -704,20 +729,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  lessonContainer: {
+  moduleContent: {
     padding: 12,
   },
   lessonCard: {
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: '#E5E7EB',
   },
   lessonError: {
     borderColor: COLORS.error,
-    backgroundColor: 'rgba(231, 76, 60, 0.05)',
+    backgroundColor: '#FEF2F2',
   },
   lessonHeaderRow: {
     flexDirection: 'row',
@@ -725,13 +750,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   lessonLabel: {
-    color: 'rgba(255,255,255,0.6)',
-    fontWeight: '600',
+    color: '#4A5568',
+    fontWeight: '800',
     marginRight: 8,
   },
   lessonTitleInput: {
     flex: 1,
-    color: '#FFF',
+    color: '#2D3748',
     fontSize: 15,
     fontWeight: '500',
     padding: 0,
@@ -742,8 +767,9 @@ const styles = StyleSheet.create({
   },
   subLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.5)',
+    color: '#718096',
     marginBottom: 6,
+    fontWeight: '600'
   },
   videoSourceRow: {
     flexDirection: 'row',
@@ -751,25 +777,26 @@ const styles = StyleSheet.create({
   },
   youtubeInputContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: '#F9FAFB',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: '#E5E7EB',
     height: 40,
     paddingHorizontal: 12,
     justifyContent: 'center',
   },
   youtubeInput: {
-    color: '#FFF',
+    color: '#1A202C',
     fontSize: 13,
+    fontWeight: '500'
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 10,
   },
-  divider: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
-  orText: { marginHorizontal: 10, color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: '700' },
+  divider: { flex: 1, height: 1, backgroundColor: '#E5E7EB' },
+  orText: { marginHorizontal: 10, color: '#A0AEC0', fontSize: 10, fontWeight: '800' },
   uploadRow: {},
   uploadBtn: {
     flexDirection: 'row',
@@ -778,13 +805,13 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(52, 152, 219, 0.3)',
-    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
   },
   uploadText: {
-    color: COLORS.primary,
+    color: '#4A5568',
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   previewToggleRow: {
     flexDirection: 'row',
@@ -793,12 +820,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)'
+    borderTopColor: '#F3F4F6'
   },
   previewToggleLabel: {
-    color: '#3498DB',
+    color: '#4A5568',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     flex: 1,
     marginRight: 10
   },
@@ -811,11 +838,12 @@ const styles = StyleSheet.create({
   addLessonBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 10,
   },
   addLessonText: {
-    color: COLORS.primary,
-    fontWeight: '600',
+    color: '#556B2F',
+    fontWeight: '800',
     marginLeft: 6,
   },
   addModuleBtn: {
@@ -840,9 +868,52 @@ const styles = StyleSheet.create({
   },
   publishHint: {
     textAlign: 'center',
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 11,
+    color: '#A0AEC0',
+    fontSize: 12,
     marginTop: 10,
+    fontWeight: '500'
+  },
+  instructionBox: {
+    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+    marginHorizontal: 20,
+    marginBottom: 10,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 152, 219, 0.3)',
+  },
+  instructionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  instructionTitle: {
+    color: '#3498DB',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  instructionSubTitle: {
+    color: '#3498DB',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  instructionText: {
+    color: '#4A5568',
+    fontSize: 13,
+    marginBottom: 4,
+    lineHeight: 20,
+    paddingLeft: 8,
+  },
+  instructionBold: {
+    color: '#3498DB',
+    fontWeight: 'bold',
+  },
+  instructionDivider: {
+    height: 1,
+    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+    marginVertical: 10,
   }
 });
 

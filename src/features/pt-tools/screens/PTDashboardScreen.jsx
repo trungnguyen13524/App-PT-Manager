@@ -35,12 +35,12 @@ const AbstractBackground = React.memo(() => (
     <Svg width="100%" height="100%">
       <Defs>
         <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#0F172A" />
-          <Stop offset="100%" stopColor="#1E293B" />
+          <Stop offset="0%" stopColor={COLORS.background} />
+          <Stop offset="100%" stopColor={COLORS.background} />
         </LinearGradient>
         <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#9B59B6" stopOpacity="0.15" />
-          <Stop offset="100%" stopColor="#3498DB" stopOpacity="0.05" />
+          <Stop offset="0%" stopColor={COLORS.primary} stopOpacity="0.015" />
+          <Stop offset="100%" stopColor={COLORS.secondary} stopOpacity="0.015" />
         </LinearGradient>
       </Defs>
       <Rect width="100%" height="100%" fill="url(#bgGrad)" />
@@ -69,7 +69,7 @@ const PTDashboardScreen = () => {
   if (verificationStatus === 'PENDING_REVIEW' || verificationStatus === 'PENDING') {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <ActivityIndicator size="large" color={COLORS.primary} />
         <Text style={{ color: '#fff', marginTop: 20, fontSize: 16 }}>Đang chờ Admin duyệt hồ sơ PT...</Text>
       </SafeAreaView>
@@ -79,7 +79,7 @@ const PTDashboardScreen = () => {
   if (verificationStatus === null) {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <ActivityIndicator size="large" color={COLORS.primary} />
       </SafeAreaView>
     );
@@ -88,13 +88,13 @@ const PTDashboardScreen = () => {
   if (verificationStatus === 'NONE') {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <Text style={{ color: '#fff', marginBottom: 20, fontSize: 16 }}>Bạn chưa đăng ký làm Huấn luyện viên</Text>
         <TouchableOpacity 
           style={{ backgroundColor: COLORS.primary, padding: 12, borderRadius: 8 }} 
           onPress={() => navigation.navigate('PTVerification')}
         >
-          <Text style={{ color: '#1E293B', fontWeight: 'bold' }}>Đăng ký ngay</Text>
+          <Text style={{ color: '#EADDCA', fontWeight: 'bold' }}>Đăng ký ngay</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -114,7 +114,7 @@ const PTDashboardScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <AbstractBackground />
       
       {/* Custom Header */}
@@ -142,14 +142,14 @@ const PTDashboardScreen = () => {
           <StatCard 
             title="Học viên" 
             value={students.length} 
-            icon={<Users size={20} color="#2ECC71" />} 
-            color="#2ECC71"
+            icon={<Users size={20} color={COLORS.primaryDark} />} 
+            color={COLORS.primaryDark}
           />
           <StatCard 
             title="Doanh thu" 
             value={`${(earnings.balance || 0).toLocaleString()}đ`} 
-            icon={<DollarSign size={20} color="#F1C40F" />} 
-            color="#F1C40F"
+            icon={<DollarSign size={20} color={COLORS.secondary} />} 
+            color={COLORS.secondary}
             onPress={() => navigation.navigate('PTEarnings')}
           />
         </View>
@@ -161,20 +161,20 @@ const PTDashboardScreen = () => {
         
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('CourseMeta')}>
-            <View style={[styles.actionIcon, { backgroundColor: '#3498DB20' }]}>
-              <Plus size={24} color="#3498DB" />
+            <View style={[styles.actionIcon, { backgroundColor: 'rgba(0,0,0,0.03)' }]}>
+              <Plus size={24} color={COLORS.primaryDark} />
             </View>
             <Text style={styles.actionLabel}>Tạo khóa học</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionItem}>
-            <View style={[styles.actionIcon, { backgroundColor: '#9B59B620' }]}>
-              <Search size={24} color="#9B59B6" />
+            <View style={[styles.actionIcon, { backgroundColor: 'rgba(0,0,0,0.03)' }]}>
+              <Search size={24} color={COLORS.secondary} />
             </View>
             <Text style={styles.actionLabel}>Tìm học viên</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionItem}>
-            <View style={[styles.actionIcon, { backgroundColor: '#E67E2220' }]}>
-              <BookOpen size={24} color="#E67E22" />
+            <View style={[styles.actionIcon, { backgroundColor: 'rgba(0,0,0,0.03)' }]}>
+              <BookOpen size={24} color={COLORS.text} />
             </View>
             <Text style={styles.actionLabel}>Thư viện BT</Text>
           </TouchableOpacity>
@@ -201,7 +201,7 @@ const PTDashboardScreen = () => {
               onPress={() => navigation.navigate('StudentDashboard', { isPTView: true, studentData: student })}
             >
               <View style={[styles.glassCard, styles.studentCard]}>
-                <Image source={{ uri: student.avatar }} style={styles.studentAvatar} />
+                <Image source={{ uri: student.avatar || 'https://i.pravatar.cc/150' }} style={styles.studentAvatar} />
                 <View style={styles.studentInfo}>
                   <Text style={styles.studentName}>{student.fullName}</Text>
                   <Text style={styles.studentGoal}>{(typeof student.goal === 'object' && student.goal !== null) ? student.goal.name : (student.goal || 'Tăng cơ giảm mỡ')}</Text>
@@ -219,13 +219,18 @@ const PTDashboardScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
+  container: { flex: 1, backgroundColor: COLORS.background },
   glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: COLORS.surface,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
@@ -235,8 +240,8 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 15,
   },
-  greeting: { fontSize: 14, color: 'rgba(255, 255, 255, 0.7)', fontWeight: '500' },
-  name: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
+  greeting: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '500' },
+  name: { fontSize: 20, fontWeight: '800', color: COLORS.text },
   headerActions: { flexDirection: 'row', alignItems: 'center' },
   headerBtn: { marginLeft: 15 },
   avatar: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: COLORS.primaryLight },
@@ -265,7 +270,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
-  sectionTitle: { ...TYPOGRAPHY.h3, color: '#FFFFFF' },
+  sectionTitle: { ...TYPOGRAPHY.h3, color: '#2D3748' },
   seeAll: { fontSize: 14, color: '#3498DB', fontWeight: '600' },
   quickActions: {
     flexDirection: 'row',
@@ -281,9 +286,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
-  actionLabel: { fontSize: 12, fontWeight: '600', color: 'rgba(255, 255, 255, 0.8)' },
+  actionLabel: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
   studentCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -292,10 +297,10 @@ const styles = StyleSheet.create({
   },
   studentAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: 15 },
   studentInfo: { flex: 1 },
-  studentName: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', marginBottom: 2 },
-  studentGoal: { fontSize: 12, color: 'rgba(255, 255, 255, 0.6)' },
+  studentName: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginBottom: 2 },
+  studentGoal: { fontSize: 12, color: COLORS.textSecondary },
   emptyCard: { padding: 30, alignItems: 'center', marginHorizontal: 20 },
-  emptyText: { color: 'rgba(255, 255, 255, 0.6)', fontSize: 14 }
+  emptyText: { color: COLORS.textSecondary, fontSize: 14 }
 });
 
 export default PTDashboardScreen;

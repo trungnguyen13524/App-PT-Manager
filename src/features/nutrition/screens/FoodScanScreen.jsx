@@ -37,7 +37,7 @@ const FoodScanScreen = () => {
   if (!permission) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
+        <ActivityIndicator size="large" color="#2D3748" />
       </View>
     );
   }
@@ -116,7 +116,7 @@ const FoodScanScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
 
       <CameraView
         style={StyleSheet.absoluteFill}
@@ -139,7 +139,7 @@ const FoodScanScreen = () => {
         <View style={styles.maskBottom}>
            <View style={styles.hintContainer}>
             <View style={styles.hintPill}>
-              {isScanning ? <ActivityIndicator color="#FFFFFF" size="small" style={{ marginRight: 8 }} /> : null}
+              {isScanning ? <ActivityIndicator color="#2D3748" size="small" style={{ marginRight: 8 }} /> : null}
               <Text style={styles.hintText}>
                 {isScanning ? 'Đang phân tích...' : 'Đưa món ăn vào khung hình'}
               </Text>
@@ -151,16 +151,16 @@ const FoodScanScreen = () => {
       <SafeAreaView style={styles.uiOverlay}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.glassIconBtn}>
-            <X color="#FFFFFF" size={24} />
+            <X color="#2D3748" size={24} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setFlash(!flash)} style={styles.glassIconBtn}>
-            {flash ? <Zap color="#FFD600" size={24} fill="#FFD600" /> : <ZapOff color="#FFFFFF" size={24} />}
+            {flash ? <Zap color="#FFD600" size={24} fill="#FFD600" /> : <ZapOff color="#2D3748" size={24} />}
           </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
           <TouchableOpacity style={styles.glassIconBtn}>
-            <ImageIcon color="#FFFFFF" size={24} />
+            <ImageIcon color="#2D3748" size={24} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -186,13 +186,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#2D3748',
   },
   permissionText: {
     ...TYPOGRAPHY.body1,
     textAlign: 'center',
     marginBottom: 20,
-    color: '#94A3B8',
+    color: '#4A5568',
   },
   permissionBtn: {
     backgroundColor: COLORS.primary,
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.15)',
   },
   hintText: {
-    color: '#FFFFFF',
+    color: '#2D3748',
     fontSize: 14,
     fontWeight: '500',
     letterSpacing: 0.3,
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: '#FFFFFF',
+    borderColor: '#2D3748',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2D3748',
   }
 });
 

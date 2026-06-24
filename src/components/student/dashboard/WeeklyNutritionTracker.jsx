@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { COLORS } from '../../../theme';
 
 const WeeklyNutritionTracker = ({ weeklyData, loading, todayConsumed, todayTarget }) => {
   const navigation = useNavigation();
@@ -21,7 +22,7 @@ const WeeklyNutritionTracker = ({ weeklyData, loading, todayConsumed, todayTarge
       <View style={[styles.glassCard, styles.weeklyCard]}>
         {loading ? (
           <View style={styles.loaderContainer}>
-            <ActivityIndicator size="small" color="#00FF66" />
+            <ActivityIndicator size="small" color={COLORS.primary} />
             <Text style={styles.loaderText}>Đang tải dữ liệu tuần...</Text>
           </View>
         ) : (
@@ -35,7 +36,7 @@ const WeeklyNutritionTracker = ({ weeklyData, loading, todayConsumed, todayTarge
                   const dayData = weeklyData[idx];
                   if (dayData.targetCalories > 0) {
                     const ratio = dayData.consumedCalories / dayData.targetCalories;
-                    barHeight = Math.min(80, Math.max(8, ratio * 80));
+                    barHeight = Math.min(50, Math.max(8, ratio * 50));
                   }
                 }
 
@@ -45,11 +46,17 @@ const WeeklyNutritionTracker = ({ weeklyData, loading, todayConsumed, todayTarge
                       styles.bar, 
                       { 
                         height: barHeight, 
-                        backgroundColor: isToday ? '#00FF66' : 'rgba(255,255,255,0.1)' 
+                        backgroundColor: isToday ? COLORS.primary : 'rgba(0, 0, 0, 0.05)' 
                       },
-                      isToday && styles.glowShadow
+                      isToday && {
+                        shadowColor: COLORS.primaryDark,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 10,
+                        elevation: 5,
+                      }
                     ]} />
-                    <Text style={[styles.barLabel, isToday && { color: '#00FF66', fontWeight: '900' }]}>{day}</Text>
+                    <Text style={[styles.barLabel, isToday && { color: COLORS.primary, fontWeight: '900' }]}>{day}</Text>
                   </View>
                 );
               })}
@@ -60,7 +67,7 @@ const WeeklyNutritionTracker = ({ weeklyData, loading, todayConsumed, todayTarge
                 <Text style={styles.summaryValue}>{todayConsumed}/{todayTarget} calo</Text>
                 <TouchableOpacity style={styles.summaryLink} onPress={() => navigation.navigate('NutritionOverview')}>
                   <Text style={styles.summaryLinkText}>Xem tổng quan</Text>
-                  <ChevronRight size={14} color="#00FF66" />
+                  <ChevronRight size={14} color={COLORS.primary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -74,25 +81,30 @@ const WeeklyNutritionTracker = ({ weeklyData, loading, todayConsumed, todayTarge
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 24,
-    marginBottom: 32,
+    marginBottom: 20,
   },
   sectionHeader: {
     marginBottom: 16,
   },
   sectionTitle: {
-    color: '#FFF',
+    color: '#2D3748',
     fontSize: 20,
     fontWeight: 'bold',
   },
   glassCard: {
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: 24,
-    padding: 20,
+    padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 8,
   },
   weeklyCard: {
-    padding: 20,
+    padding: 16,
   },
   loaderContainer: {
     height: 120,
@@ -100,7 +112,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loaderText: {
-    color: '#94A3B8',
+    color: '#4A5568',
     marginTop: 8,
     fontSize: 14,
   },
@@ -108,11 +120,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    height: 100,
+    height: 70,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-    paddingBottom: 16,
-    marginBottom: 16,
+    borderBottomColor: 'rgba(0, 0, 0, 0.02)',
+    paddingBottom: 12,
+    marginBottom: 12,
   },
   barContainer: {
     alignItems: 'center',
@@ -123,22 +135,16 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginBottom: 8,
   },
-  glowShadow: {
-    shadowColor: '#00FF66',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
-    elevation: 4,
-  },
+
   barLabel: {
-    color: '#94A3B8',
+    color: '#4A5568',
     fontSize: 12,
   },
   weeklySummary: {
     flexDirection: 'column',
   },
   summaryTitle: {
-    color: '#94A3B8',
+    color: '#4A5568',
     fontSize: 13,
     marginBottom: 4,
   },
@@ -148,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryValue: {
-    color: '#FFF',
+    color: '#2D3748',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -157,7 +163,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryLinkText: {
-    color: '#00FF66',
+    color: COLORS.primary,
     fontSize: 14,
     fontWeight: '600',
     marginRight: 4,

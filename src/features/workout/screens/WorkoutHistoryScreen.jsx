@@ -60,7 +60,7 @@ const WorkoutHistoryScreen = () => {
       <View style={styles.cardHeader}>
         <View style={styles.titleRow}>
           <View style={styles.iconWrapper}>
-            <Dumbbell size={20} color="#00FF66" />
+            <Dumbbell size={20} color="#556B2F" />
           </View>
           <Text style={styles.cardTitle}>{item.name || 'Buổi tập không tên'}</Text>
         </View>
@@ -94,12 +94,12 @@ const WorkoutHistoryScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <AbstractBackground />
 
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#FFFFFF" size={28} />
+          <ChevronLeft color="#2D3748" size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Lịch sử tập luyện</Text>
         <View style={{ width: 28 }} />
@@ -107,7 +107,7 @@ const WorkoutHistoryScreen = () => {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {loading ? (
-          <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />
+          <ActivityIndicator size="large" color="#556B2F" style={{ marginTop: 50 }} />
         ) : history.length === 0 ? (
           <View style={styles.emptyState}>
             <Calendar size={48} color="rgba(255,255,255,0.2)" />
@@ -128,7 +128,7 @@ const WorkoutHistoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#2D3748',
   },
   bgBlob1: {
     position: 'absolute',
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#2D3748',
     letterSpacing: 0.5,
   },
   scrollContent: {
@@ -180,12 +180,12 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   cardHeader: {
     marginBottom: 16,
@@ -199,13 +199,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   cardTitle: {
-    color: '#FFFFFF',
+    color: '#2D3748',
     fontSize: 18,
     fontWeight: '700',
     flex: 1,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   statValue: {
-    color: '#FFFFFF',
+    color: '#2D3748',
     fontSize: 15,
     fontWeight: '700',
   },
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   notesText: {
     color: '#9CA3AF',
@@ -261,15 +261,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   ctaBtn: {
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 100,
     borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.3)',
+    borderColor: 'rgba(85, 107, 47, 0.3)',
   },
   ctaBtnText: {
-    color: '#00FF66',
+    color: '#556B2F',
     fontSize: 16,
     fontWeight: '600',
   }

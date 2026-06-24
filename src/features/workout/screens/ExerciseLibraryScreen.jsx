@@ -12,6 +12,8 @@ import workoutService from '../../../api/services/workout.service';
 import dashboardService from '../../../api/services/dashboard.service';
 import ptService from '../../../api/services/pt.service';
 import { useDialogStore } from '../../../store/dialogStore';
+import WaveBackground from '../../../components/common/WaveBackground';
+import { COLORS } from '../../../theme';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 60) / 2;
@@ -148,7 +150,7 @@ const ExerciseLibraryScreen = () => {
             <Image source={imageSource} style={styles.modalImage} resizeMode="cover" />
           ) : (
             <View style={[styles.modalImage, { backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' }]}>
-              <Text style={{color: '#94A3B8'}}>Chưa có ảnh mô phỏng</Text>
+              <Text style={{color: '#4A5568'}}>Chưa có ảnh mô phỏng</Text>
             </View>
           )}
           
@@ -156,7 +158,7 @@ const ExerciseLibraryScreen = () => {
             style={styles.closeBtn} 
             onPress={() => !isLogging && setSelectedExercise(null)}
           >
-            <ChevronLeft color="#F8FAFC" size={24} />
+            <ChevronLeft color={COLORS.text} size={24} />
           </TouchableOpacity>
 
           <View style={styles.modalInfo}>
@@ -166,9 +168,9 @@ const ExerciseLibraryScreen = () => {
               <View style={styles.tag}>
                 <Text style={styles.tagText}>{selectedExercise.Target_Muscle_Group}</Text>
               </View>
-              <View style={[styles.tag, {backgroundColor: 'rgba(0,255,102,0.1)', borderColor: 'rgba(0,255,102,0.2)'}]}>
-                <Flame color="#00FF66" size={12} style={{ marginRight: 4 }} />
-                <Text style={[styles.tagText, {color: '#00FF66'}]}>{calPerMin} kcal/p</Text>
+              <View style={[styles.tag, {backgroundColor: 'rgba(85, 107, 47, 0.1)', borderColor: 'rgba(85, 107, 47, 0.2)'}]}>
+                <Flame color="#556B2F" size={12} style={{ marginRight: 4 }} />
+                <Text style={[styles.tagText, {color: '#556B2F'}]}>{calPerMin} kcal/p</Text>
               </View>
             </View>
 
@@ -192,7 +194,7 @@ const ExerciseLibraryScreen = () => {
               disabled={isLogging}
             >
               {isLogging ? (
-                <ActivityIndicator color="#0F172A" />
+                <ActivityIndicator color={COLORS.white} />
               ) : (
                 <Text style={styles.logBtnText}>Ghi nhận ({Math.round(calPerMin * (Number(durationMinutes) || 15))} kcal)</Text>
               )}
@@ -205,20 +207,20 @@ const ExerciseLibraryScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#F8FAFC" size={28} />
+          <ChevronLeft color={COLORS.text} size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{isLibraryMode ? 'Thư Viện Bài Tập' : 'Bài Tập Hôm Nay'}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => navigation.navigate('WorkoutHistory')} style={[styles.libraryBtn, { marginRight: 12 }]}>
-            <Clock color="#F8FAFC" size={24} />
+            <Clock color={COLORS.text} size={24} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setIsLibraryMode(!isLibraryMode)} style={styles.libraryBtn}>
-            <Library color={isLibraryMode ? "#00FF66" : "#F8FAFC"} size={24} />
+            <Library color={isLibraryMode ? COLORS.primary : COLORS.text} size={24} />
           </TouchableOpacity>
         </View>
       </View>
@@ -245,10 +247,10 @@ const ExerciseLibraryScreen = () => {
 
 
         {loadingPtPlan && !isLibraryMode ? (
-          <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />
+          <ActivityIndicator size="large" color="#556B2F" style={{ marginTop: 50 }} />
         ) : (!isLibraryMode && currentExercises.length === 0) ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>PT chưa giao bài tập cho ngày này.</Text>
+            <Text style={styles.emptyText}>Bạn chưa có bài tập</Text>
           </View>
         ) : (
           <View style={styles.grid}>
@@ -268,7 +270,7 @@ const ExerciseLibraryScreen = () => {
                     {imageSource ? (
                       <Image source={imageSource} style={styles.image} resizeMode="cover" />
                     ) : (
-                      <View style={[styles.image, { backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center' }]}>
+                      <View style={[styles.image, { backgroundColor: '#EADDCA', justifyContent: 'center', alignItems: 'center' }]}>
                         <Activity color="#475569" size={32} />
                       </View>
                     )}
@@ -278,7 +280,7 @@ const ExerciseLibraryScreen = () => {
                       </View>
                     )}
                     <View style={[styles.glassTag, { right: 12, left: 'auto' }]}>
-                      <Flame color="#00FF66" size={12} style={{ marginRight: 4 }} />
+                      <Flame color="#556B2F" size={12} style={{ marginRight: 4 }} />
                       <Text style={styles.glassTagText}>{cal} kcal/30p</Text>
                     </View>
                   </View>
@@ -288,7 +290,7 @@ const ExerciseLibraryScreen = () => {
                     </Text>
                     <Text style={styles.muscleGroup} numberOfLines={1}>{item.Target_Muscle_Group}</Text>
                     {item.isPTAssigned && item.ptDetails && (
-                      <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>
+                      <Text style={{ fontSize: 11, color: '#4A5568', marginTop: 4 }}>
                         {item.ptDetails.durationSec ? `${item.ptDetails.durationSec / 60} phút Cardio` : `${item.ptDetails.sets} Sets x ${item.ptDetails.reps} Reps`}
                       </Text>
                     )}
@@ -311,17 +313,18 @@ const ExerciseLibraryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
   backBtn: { padding: 4, marginLeft: -8 },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#F8FAFC' },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: COLORS.secondary },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
   grid: {
     flexDirection: 'row',
@@ -330,16 +333,21 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   card: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.surface,
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 3,
   },
   imageContainer: {
     width: '100%',
     height: 140,
     position: 'relative',
-    backgroundColor: '#334155'
+    backgroundColor: 'rgba(0,0,0,0.03)'
   },
   image: {
     width: '100%',
@@ -349,15 +357,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   glassTagText: {
-    color: '#FFF',
+    color: COLORS.secondary,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -367,32 +380,35 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: COLORS.text,
     marginBottom: 4,
   },
   muscleGroup: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textSecondary,
     fontWeight: '600'
   },
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15,23,42,0.9)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     padding: 20,
     zIndex: 100,
   },
   modalContent: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.surface,
     borderRadius: 24,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#334155',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 30,
+    elevation: 10,
   },
   modalImage: {
     width: '100%',
     height: 200,
-    backgroundColor: '#334155',
+    backgroundColor: 'rgba(0,0,0,0.03)',
   },
   closeBtn: {
     position: 'absolute',
@@ -401,9 +417,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(15,23,42,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   modalInfo: {
     padding: 20,
@@ -411,34 +432,32 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#F8FAFC',
+    color: COLORS.secondary,
     marginBottom: 8,
   },
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#334155',
+    backgroundColor: 'rgba(0,0,0,0.05)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
     marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#475569',
   },
   tagText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#CBD5E1',
+    color: COLORS.textSecondary,
   },
   modalDesc: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: COLORS.textLight,
     lineHeight: 22,
     marginTop: 8,
     marginBottom: 24,
   },
   logBtn: {
-    backgroundColor: '#00FF66',
+    backgroundColor: COLORS.primary,
     height: 50,
     borderRadius: 16,
     justifyContent: 'center',
@@ -451,22 +470,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   dayBadgeActive: {
-    backgroundColor: 'rgba(0, 255, 102, 0.15)',
-    borderColor: 'rgba(0, 255, 102, 0.5)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
+    borderColor: COLORS.primary,
   },
   dayBadgeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#9CA3AF',
+    color: COLORS.textSecondary,
   },
   dayBadgeTextActive: {
-    color: '#00FF66',
+    color: COLORS.primary,
   },
   emptyState: {
     alignItems: 'center',
@@ -475,24 +494,24 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: '#9CA3AF',
+    color: COLORS.textSecondary,
     marginTop: 16,
     fontWeight: '500',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: COLORS.background,
     borderRadius: 16,
     paddingHorizontal: 16,
     height: 50,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   inputLabel: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: COLORS.textSecondary,
     fontWeight: '600',
     marginRight: 10,
   },
@@ -500,11 +519,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.secondary,
     textAlign: 'center'
   },
   logBtnText: {
-    color: '#0F172A',
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '800',
   }

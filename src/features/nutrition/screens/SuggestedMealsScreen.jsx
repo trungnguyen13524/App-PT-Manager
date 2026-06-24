@@ -92,7 +92,7 @@ const SuggestedMealsScreen = () => {
           </Text>
           <Text style={styles.foodName} numberOfLines={2}>{meal.name}</Text>
           {isPT && meal.notes ? (
-            <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>{meal.notes}</Text>
+            <Text style={{ fontSize: 11, color: '#4A5568', marginTop: 4 }}>{meal.notes}</Text>
           ) : null}
         </View>
       </TouchableOpacity>
@@ -136,12 +136,12 @@ const SuggestedMealsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      <StatusBar barStyle="dark-content" backgroundColor="#2D3748" />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#F8FAFC" size={28} />
+          <ChevronLeft color="#2D3748" size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gợi Ý & Thư Viện</Text>
         <View style={{ width: 28 }} />
@@ -193,7 +193,7 @@ const SuggestedMealsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#2D3748',
   },
   header: {
     flexDirection: 'row',
@@ -203,12 +203,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backBtn: { padding: 4, marginLeft: -8 },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#F8FAFC' },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: '#2D3748' },
   tabContainer: {
     flexDirection: 'row',
     marginHorizontal: 20,
     marginBottom: 20,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EADDCA',
     borderRadius: 12,
     padding: 4,
   },
@@ -219,8 +219,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   activeTab: { backgroundColor: '#334155' },
-  tabText: { color: '#64748B', fontWeight: '600', fontSize: 15 },
-  activeTabText: { color: '#F8FAFC', fontWeight: '800' },
+  tabText: { color: '#718096', fontWeight: '600', fontSize: 15 },
+  activeTabText: { color: '#2D3748', fontWeight: '800' },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
   verticalList: { gap: 20 },
   grid: {
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   card: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EADDCA',
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 16,
@@ -254,10 +254,10 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   glassTagText: {
-    color: '#00FF66',
+    color: '#556B2F',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   },
   mealTypeName: {
     fontSize: 12,
-    color: '#00FF66',
+    color: '#556B2F',
     fontWeight: '700',
     marginBottom: 4,
     textTransform: 'uppercase'
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   foodName: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: '#2D3748',
   }
 });
 

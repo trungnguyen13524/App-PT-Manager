@@ -1,33 +1,33 @@
 export const COLORS = {
-  // Brand Colors
-  primary: '#00FF66',      // Xanh Neon chủ đạo (Success/Health/Neon)
-  primaryDark: '#00CC52',
-  primaryLight: 'rgba(0, 255, 102, 0.2)',
+  // Brand Colors (Deeper Sage Green, Warm Hazelnut, Strong Terracotta)
+  primary: '#4C7A57',      // Deeper Sage/Fern Green
+  primaryDark: '#2D4A33',  // Dark Forest Green
+  primaryLight: 'rgba(76, 122, 87, 0.15)',
   
-  secondary: '#00B3FF',    // Xanh dương Neon (Trust/Workout)
-  accent: '#FF0080',       // Hồng Neon (Energy/Nutrition)
+  secondary: '#B07D4B',    // Warm Hazelnut/Mocha
+  accent: '#CB4335',       // Strong Terracotta/Rust
   
   // Neutral Colors
   white: '#FFFFFF',
   black: '#000000',
-  background: '#0F172A',   // Nền hệ thống: Xanh đen sâu (Dark Slate)
-  surface: 'rgba(255, 255, 255, 0.05)', // Nền thẻ: Trong suốt mờ kính
+  background: '#FAFAFA',   // Nền hệ thống sáng mịn, sạch sẽ
+  surface: '#FFFFFF',      // Nền thẻ: Trắng
   
   // Text Colors
-  text: '#FFFFFF',         // Màu chữ chính: Trắng
-  textSecondary: '#94A3B8', // Màu chữ phụ: Xám nhạt
-  textLight: '#64748B',    // Màu chữ mờ
+  text: '#2D3748',         // Màu chữ chính: Xám đen
+  textSecondary: '#4A5568', // Màu chữ phụ
+  textLight: '#718096',    // Màu chữ mờ
   
   // Status Colors
-  success: '#00FF66',
-  error: '#FF4D4D',
-  warning: '#FFD700',
-  info: '#00B3FF',
+  success: '#4C7A57',
+  error: '#CB4335',
+  warning: '#B07D4B',
+  info: '#3498DB',
   
   // Border & Divider
-  border: 'rgba(255, 255, 255, 0.1)',
-  divider: 'rgba(255, 255, 255, 0.1)',
+  border: 'rgba(0, 0, 0, 0.1)',
+  divider: 'rgba(0, 0, 0, 0.1)',
 
   // Gradient Placeholders
-  gradientPrimary: ['#00FF66', '#00B3FF'],
+  gradientPrimary: ['#4C7A57', '#2D4A33'],
 };
