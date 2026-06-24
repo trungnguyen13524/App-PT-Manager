@@ -72,7 +72,7 @@ const PricingScreen = () => {
       <AbstractBackground />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#FFFFFF" size={28} />
+          <ChevronLeft color="#2D3748" size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nâng cấp VIP</Text>
         <View style={{ width: 28 }} />
@@ -88,7 +88,7 @@ const PricingScreen = () => {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <Crown size={36} color="#FFFFFF" fill="#FFFFFF" />
+              <Crown size={36} color="#2D3748" fill="#2D3748" />
             </LinearGradient>
           </View>
           <Text style={styles.heroTitle}>MỞ KHÓA SỨC MẠNH AI</Text>
@@ -130,7 +130,7 @@ const PricingScreen = () => {
               {plan.features.map((feat, i) => (
                 <View key={i} style={styles.featureItem}>
                   <View style={[styles.checkCircle, plan.popular ? { backgroundColor: 'rgba(255, 215, 0, 0.2)' } : {}]}>
-                    <Check size={14} color={plan.popular ? '#FFD700' : '#00FF66'} strokeWidth={3} />
+                    <Check size={14} color={plan.popular ? '#FFD700' : '#556B2F'} strokeWidth={3} />
                   </View>
                   <Text style={styles.featureText}>{feat}</Text>
                 </View>
@@ -161,7 +161,7 @@ const PricingScreen = () => {
         ))}
 
         <View style={styles.trustSection}>
-          <ShieldCheck size={16} color="rgba(255,255,255,0.5)" />
+          <ShieldCheck size={16} color="#A0AEC0" />
           <Text style={styles.trustText}>Thanh toán bảo mật siêu tốc qua cổng PayOS</Text>
         </View>
       </ScrollView>
@@ -170,7 +170,7 @@ const PricingScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -181,13 +181,13 @@ const styles = StyleSheet.create({
   backBtn: { 
     width: 40, height: 40, 
     borderRadius: 20, 
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     justifyContent: 'center', alignItems: 'center'
   },
   headerTitle: { 
     fontSize: 20,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: '900',
+    color: '#1A202C',
     textTransform: 'uppercase',
     letterSpacing: 1
   },
@@ -216,17 +216,18 @@ const styles = StyleSheet.create({
   heroTitle: { 
     fontSize: 26, 
     fontWeight: '900', 
-    color: '#FFFFFF', 
+    color: '#2D3748', 
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5
   },
   heroSubtitle: { 
     fontSize: 15, 
-    color: 'rgba(255,255,255,0.7)', 
+    color: '#4A5568', 
     textAlign: 'center', 
     lineHeight: 22, 
-    paddingHorizontal: 10 
+    paddingHorizontal: 10,
+    fontWeight: '500'
   },
   
   // --- PLAN CARDS ---
@@ -234,8 +235,14 @@ const styles = StyleSheet.create({
     padding: 24,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#2D4A33',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
+    elevation: 4,
   },
   popularCard: {
     borderColor: '#FFD700',
@@ -259,7 +266,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   popularBadgeText: { 
-    color: '#FFFFFF', 
+    color: '#2D3748', 
     fontSize: 12, 
     fontWeight: '900',
     letterSpacing: 1,
@@ -267,7 +274,7 @@ const styles = StyleSheet.create({
   planTitle: { 
     fontSize: 16, 
     fontWeight: '800', 
-    color: '#94A3B8', 
+    color: '#4A5568', 
     marginBottom: 12,
     letterSpacing: 1
   },
@@ -276,20 +283,20 @@ const styles = StyleSheet.create({
     alignItems: 'baseline', 
     marginBottom: 24,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
     paddingBottom: 20
   },
   priceText: { 
     fontSize: 38, 
     fontWeight: '900', 
-    color: '#FFFFFF',
+    color: '#1A202C',
     fontVariant: ['tabular-nums']
   },
   periodText: { 
     fontSize: 16, 
-    color: 'rgba(255,255,255,0.5)', 
+    color: '#718096', 
     marginLeft: 6,
-    fontWeight: '600'
+    fontWeight: '700'
   },
   featuresList: { marginBottom: 30 },
   featureItem: { 
@@ -301,33 +308,36 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(0, 255, 102, 0.15)',
+    backgroundColor: 'rgba(85, 107, 47, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   featureText: { 
     fontSize: 15, 
-    color: '#FFFFFF', 
+    color: '#1A202C', 
     marginLeft: 12,
-    fontWeight: '500'
+    fontWeight: '600'
   },
   
   // --- BUTTONS ---
   subscribeBtn: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#556B2F',
     height: 56,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)'
+    shadowColor: '#556B2F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 4,
   },
   subscribeBtnText: { 
     color: '#FFFFFF', 
     fontSize: 16, 
-    fontWeight: '800',
+    fontWeight: '900',
     textTransform: 'uppercase',
-    letterSpacing: 0.5
+    letterSpacing: 1
   },
   popularBtn: {
     backgroundColor: '#FFD700',
@@ -351,9 +361,9 @@ const styles = StyleSheet.create({
   },
   trustText: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
+    color: '#A0AEC0',
     marginLeft: 8,
-    fontWeight: '500'
+    fontWeight: '600'
   }
 });
 

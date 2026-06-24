@@ -36,12 +36,12 @@ const AbstractBackground = React.memo(() => (
     <Svg width="100%" height="100%">
       <Defs>
         <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#0F172A" />
-          <Stop offset="100%" stopColor="#1E293B" />
+          <Stop offset="0%" stopColor={COLORS.background} />
+          <Stop offset="100%" stopColor={COLORS.surface} />
         </LinearGradient>
         <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.1" />
-          <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.03" />
+          <Stop offset="0%" stopColor={COLORS.primary} stopOpacity="0.1" />
+          <Stop offset="100%" stopColor={COLORS.secondary} stopOpacity="0.03" />
         </LinearGradient>
       </Defs>
       <Rect width="100%" height="100%" fill="url(#bgGrad)" />
@@ -226,17 +226,16 @@ const StudentDashboardScreen = () => {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <AbstractBackground />
-        <ActivityIndicator size="large" color="#00FF66" />
+        <ActivityIndicator size="large" color="#556B2F" />
       </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <AbstractBackground />
-      
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         <DashboardHeader user={userData} totalPoints={questsData.totalPoints} />
         
         <CalorieCoreCard 
@@ -246,9 +245,7 @@ const StudentDashboardScreen = () => {
           onShareClick={() => setIsShareModalVisible(true)}
         />
         
-        <DailyQuestsCard quests={questsData.quests} onQuestPress={handleQuestPress} />
-        
-        <ProUpgradeBanner tier={userData?.tier} />
+        <MealLoggingSection mealsBreakdown={dashboardData?.mealsBreakdown} />
         
         <WeeklyNutritionTracker 
           weeklyData={weeklyData} 
@@ -256,8 +253,8 @@ const StudentDashboardScreen = () => {
           todayConsumed={dashboardData?.todayCalories?.consumed || 0}
           todayTarget={dashboardData?.todayCalories?.target || 2000}
         />
-        
-        <MealLoggingSection mealsBreakdown={dashboardData?.mealsBreakdown} />
+
+        <DailyQuestsCard quests={questsData.quests} onQuestPress={handleQuestPress} />
       </ScrollView>
 
       {/* SHARE MODAL */}
@@ -268,7 +265,7 @@ const StudentDashboardScreen = () => {
               style={styles.closeModalBtn} 
               onPress={() => setIsShareModalVisible(false)}
             >
-              <X color="#FFF" size={24} />
+              <X color="#2D3748" size={24} />
             </TouchableOpacity>
 
             <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>
@@ -276,9 +273,9 @@ const StudentDashboardScreen = () => {
                 <Svg style={StyleSheet.absoluteFillObject}>
                   <Defs>
                     <LinearGradient id="shareBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <Stop offset="0%" stopColor="#0F172A" />
-                      <Stop offset="50%" stopColor="#1E293B" />
-                      <Stop offset="100%" stopColor="#0F172A" />
+                      <Stop offset="0%" stopColor="#2D3748" />
+                      <Stop offset="50%" stopColor="#EADDCA" />
+                      <Stop offset="100%" stopColor="#2D3748" />
                     </LinearGradient>
                   </Defs>
                   <Rect width="100%" height="100%" fill="url(#shareBg)" />
@@ -286,7 +283,7 @@ const StudentDashboardScreen = () => {
 
                 <View style={styles.shareHeader}>
                   <View style={styles.logoBadge}>
-                    <Dumbbell color="#0F172A" size={16} />
+                    <Dumbbell color="#2D3748" size={16} />
                   </View>
                   <Text style={styles.shareAppName}>NutriCoach</Text>
                 </View>
@@ -320,7 +317,7 @@ const StudentDashboardScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B0F19',
+    backgroundColor: COLORS.background,
   },
   modalOverlay: {
     flex: 1,
@@ -336,17 +333,17 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     marginBottom: 16,
     padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 20,
   },
   shareCardTemplate: {
     width: 320,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#2D3748',
     borderRadius: 24,
     padding: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   shareHeader: {
     flexDirection: 'row',
@@ -357,13 +354,13 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: '#00FF66',
+    backgroundColor: '#556B2F',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
   },
   shareAppName: {
-    color: '#00FF66',
+    color: '#556B2F',
     fontSize: 16,
     fontWeight: '900',
     letterSpacing: 1,
@@ -372,12 +369,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   shareGreetingText: {
-    color: '#94A3B8',
+    color: '#4A5568',
     fontSize: 14,
     marginBottom: 4,
   },
   shareGreetingName: {
-    color: '#FFF',
+    color: '#2D3748',
     fontSize: 24,
     fontWeight: 'bold',
   },
@@ -387,7 +384,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(0, 0, 0, 0.02)',
   },
   shareTitle: {
     color: '#00B3FF',
@@ -397,20 +394,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   shareActionBtn: {
-    backgroundColor: '#00FF66',
+    backgroundColor: '#556B2F',
     paddingVertical: 16,
     paddingHorizontal: 40,
     borderRadius: 30,
     marginTop: 32,
     width: '100%',
     alignItems: 'center',
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
   },
   shareActionBtnText: {
-    color: '#0B0F19',
+    color: '#F5F5DC',
     fontSize: 16,
     fontWeight: 'bold',
   },

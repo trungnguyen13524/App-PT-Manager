@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     fontSize: 11, color: COLORS.textSecondary, marginBottom: 4
   },
   configInput: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     borderRadius: 6,
     height: 32,
     paddingHorizontal: 8,
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.divider
   },
   notesInput: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     borderRadius: 6,
     height: 32,
     paddingHorizontal: 8,

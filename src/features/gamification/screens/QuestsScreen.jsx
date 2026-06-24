@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, CheckCircle, Zap, Star, Shield, Target } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useMissionStore } from '../../../store/missionStore';
+import WaveBackground from '../../../components/common/WaveBackground';
+import { COLORS } from '../../../theme';
 
 const { width } = Dimensions.get('window');
 
@@ -23,11 +25,11 @@ const QuestsScreen = () => {
     switch (id) {
       case 'DAILY_LOGIN': return <Star color="#FFD700" size={24} />;
       case 'AI_SCAN': return <Zap color="#00B3FF" size={24} />;
-      case 'PERFECT_DIARY': return <Target color="#00FF66" size={24} />;
+      case 'PERFECT_DIARY': return <Target color="#556B2F" size={24} />;
       case 'DISCIPLINE_MASTER': return <Shield color="#FF8A00" size={24} />;
       case 'WORKOUT_LIMIT': return <Zap color="#FF4D00" size={24} />;
       case 'PT_VISIT': return <Star color="#00B3FF" size={24} />;
-      case 'DAILY_SHARE': return <Star color="#00FF66" size={24} />;
+      case 'DAILY_SHARE': return <Star color="#556B2F" size={24} />;
       default: return <Star color="#FFD700" size={24} />;
     }
   };
@@ -66,7 +68,7 @@ const QuestsScreen = () => {
         </View>
         <View style={styles.statusContainer}>
           {isCompleted ? (
-            <CheckCircle color="#00FF66" size={28} />
+            <CheckCircle color={COLORS.primary} size={28} />
           ) : (
             <View style={styles.pendingCircle}>
               <View style={styles.pendingDot} />
@@ -82,7 +84,7 @@ const QuestsScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#FFF" size={28} />
+          <ChevronLeft color={COLORS.text} size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nhiệm Vụ</Text>
         <View style={styles.walletBadge}>
@@ -97,7 +99,7 @@ const QuestsScreen = () => {
         
         {dailyQuests.length > 0 
           ? dailyQuests.map(renderQuestCard) 
-          : <Text style={{color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 20}}>Chưa có nhiệm vụ</Text>
+          : <Text style={{color: COLORS.textLight, textAlign: 'center', marginTop: 20}}>Chưa có nhiệm vụ</Text>
         }
         
         <View style={{ height: 100 }} />
@@ -109,7 +111,7 @@ const QuestsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -124,17 +126,17 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFF',
+    color: COLORS.secondary,
   },
   walletBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 184, 0, 0.15)',
+    backgroundColor: 'rgba(217, 119, 6, 0.1)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 184, 0, 0.4)',
+    borderColor: 'rgba(217, 119, 6, 0.3)',
   },
   walletIcon: {
     fontSize: 14,
@@ -143,12 +145,12 @@ const styles = StyleSheet.create({
   walletText: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#FFB800',
+    color: '#D97706',
   },
   tabContainer: {
     flexDirection: 'row',
     marginHorizontal: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     borderRadius: 12,
     padding: 4,
     marginBottom: 20,
@@ -160,14 +162,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   activeTab: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   tabText: {
     color: 'rgba(255,255,255,0.5)',
     fontWeight: '700',
   },
   activeTabText: {
-    color: '#00FF66',
+    color: '#556B2F',
     fontWeight: '900',
   },
   scrollContent: {
@@ -176,28 +178,33 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: 'rgba(255,255,255,0.9)',
+    color: COLORS.secondary,
     marginBottom: 16,
   },
   questCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
   },
   questCardCompleted: {
-    backgroundColor: 'rgba(0, 255, 102, 0.05)',
-    borderColor: 'rgba(0, 255, 102, 0.2)',
+    backgroundColor: 'rgba(85, 107, 47, 0.08)',
+    borderColor: COLORS.primary,
   },
   questIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -208,12 +215,11 @@ const styles = StyleSheet.create({
   questTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFF',
+    color: COLORS.text,
     marginBottom: 4,
   },
   questTitleCompleted: {
-    color: 'rgba(255,255,255,0.5)',
-    textDecorationLine: 'line-through',
+    color: COLORS.textSecondary,
   },
   rewardRow: {
     flexDirection: 'row',
@@ -222,14 +228,14 @@ const styles = StyleSheet.create({
   questReward: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#FFB800',
+    color: '#D97706',
     marginRight: 12,
   },
   progressText: {
     fontSize: 12,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.5)',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    color: COLORS.textSecondary,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -242,7 +248,7 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -250,7 +256,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
 });
 

@@ -11,6 +11,7 @@ import {
   Pressable,
   Animated
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
   Home, 
   Compass, 
@@ -66,7 +67,7 @@ const FABMenu = ({ isOpen, onClose, onSelect }) => {
                   activeOpacity={0.7}
                 >
                   <View style={styles.fabMenuIconBox}>
-                    <IconComponent size={24} color="#FFFFFF" strokeWidth={2} />
+                    <IconComponent size={24} color="#2D3748" strokeWidth={2} />
                   </View>
                   <Text style={styles.fabMenuLabel}>{item.label}</Text>
                 </TouchableOpacity>
@@ -104,6 +105,7 @@ const CustomTabBarButton = ({ onPress }) => (
 const StudentTabNavigator = () => {
   const [fabOpen, setFabOpen] = useState(false);
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   const handleFabSelect = (key) => {
     setFabOpen(false);
@@ -131,17 +133,18 @@ const StudentTabNavigator = () => {
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: '#0F172A',
+            backgroundColor: COLORS.surface,
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
-            borderTopWidth: 0,
-            height: Platform.OS === 'ios' ? 90 : 70,
-            paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+            borderTopWidth: 1,
+            borderTopColor: 'rgba(0, 0, 0, 0.05)',
+            height: (Platform.OS === 'ios' ? 90 : 70) + (Platform.OS === 'android' ? insets.bottom : 0),
+            paddingBottom: (Platform.OS === 'ios' ? 24 : 8) + (Platform.OS === 'android' ? insets.bottom : 0),
             paddingTop: 8,
             ...styles.shadow,
           },
-          tabBarActiveTintColor: '#00FF66',
-          tabBarInactiveTintColor: '#9CA3AF',
+          tabBarActiveTintColor: COLORS.primary,
+          tabBarInactiveTintColor: COLORS.textLight,
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: '600',
@@ -171,7 +174,7 @@ const StudentTabNavigator = () => {
           }}
         />
         <Tab.Screen 
-          name="PT Connect" 
+          name="Khóa học" 
           component={PTConnectScreen} 
           options={{
             tabBarIcon: ({ color, focused }) => <Users size={22} color={color} strokeWidth={focused ? 2.5 : 2} fill={focused ? color : "transparent"} />,
@@ -214,10 +217,10 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#00FF66',
+    backgroundColor: '#556B2F',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 15,
@@ -238,15 +241,15 @@ const styles = StyleSheet.create({
   fabMenuRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    backgroundColor: COLORS.surface,
     borderRadius: 24,
     paddingVertical: 20,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 8,
   },
@@ -258,16 +261,16 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   fabMenuLabel: {
     fontSize: 11,
-    color: '#CBD5E1',
+    color: COLORS.text,
     textAlign: 'center',
     fontWeight: '600',
     lineHeight: 14,
@@ -282,10 +285,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#00FF66',
+    backgroundColor: '#556B2F',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 10,

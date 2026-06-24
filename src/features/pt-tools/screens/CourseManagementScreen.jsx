@@ -36,7 +36,7 @@ const CourseManagementScreen = () => {
   if (verificationStatus === 'PENDING_REVIEW' || verificationStatus === 'PENDING') {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <ActivityIndicator size="large" color={COLORS.primary} />
         <Text style={{ color: '#fff', marginTop: 20, fontSize: 16 }}>Đang chờ Admin duyệt hồ sơ PT...</Text>
       </View>
@@ -46,13 +46,13 @@ const CourseManagementScreen = () => {
   if (verificationStatus === 'NONE' || verificationStatus === null) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <Text style={{ color: '#fff', marginBottom: 20, fontSize: 16 }}>Bạn chưa đăng ký làm Huấn luyện viên</Text>
         <TouchableOpacity 
           style={{ backgroundColor: COLORS.primary, padding: 12, borderRadius: 8 }} 
           onPress={() => navigation.navigate('PTVerification')}
         >
-          <Text style={{ color: '#1E293B', fontWeight: 'bold' }}>Đăng ký ngay</Text>
+          <Text style={{ color: '#EADDCA', fontWeight: 'bold' }}>Đăng ký ngay</Text>
         </TouchableOpacity>
       </View>
     );
@@ -156,7 +156,7 @@ const CourseManagementScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <ArrowLeft size={24} color={COLORS.text} />

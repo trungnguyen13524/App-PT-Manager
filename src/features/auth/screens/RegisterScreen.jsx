@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import {
   View,
   Text,
@@ -7,45 +7,35 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Dimensions,
+  Image,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  Animated,
+  Easing
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Mail, Lock, User, ArrowLeft, UserPlus, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
 import { useAuthStore } from '../../../store/authStore';
 import { useDialogStore } from '../../../store/dialogStore';
-import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
+import { COLORS } from '../../../theme';
+import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import WaveBackground from '../../../components/common/WaveBackground';
+
+const { height } = Dimensions.get('window');
 
 // -------------------------------------------------------------
 // REUSABLE LOCAL COMPONENTS (Consistent with LoginScreen)
 // -------------------------------------------------------------
 
-const AbstractBackground = memo(() => (
-  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-    <Svg width="100%" height="100%">
-      <Defs>
-        <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#0F172A" />
-          <Stop offset="100%" stopColor="#1E293B" />
-        </LinearGradient>
-        <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.15" />
-          <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.05" />
-        </LinearGradient>
-        <LinearGradient id="circleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#FF4D00" stopOpacity="0.12" />
-          <Stop offset="100%" stopColor="#FF0080" stopOpacity="0.05" />
-        </LinearGradient>
-      </Defs>
-      <Rect width="100%" height="100%" fill="url(#bgGrad)" />
-      
-      {/* 3D-like glowing abstract floating circles */}
-      <Circle cx="15%" cy="15%" r="140" fill="url(#circleGrad1)" />
-      <Circle cx="90%" cy="75%" r="180" fill="url(#circleGrad2)" />
-      <Circle cx="80%" cy="25%" r="90" fill="url(#circleGrad2)" />
-      <Circle cx="20%" cy="85%" r="120" fill="url(#circleGrad1)" />
-    </Svg>
+const PremiumLogo = memo(() => (
+  <View style={styles.logoWrapper}>
+    <Image 
+      source={require('../../../../src/logo/logo_clean.png')} 
+      style={styles.logoImage} 
+      resizeMode="contain"
+    />
   </View>
 ));
 
@@ -56,6 +46,7 @@ const GlowingInput = memo(({ icon: Icon, placeholder, value, onChangeText, secur
 
   return (
     <View style={styles.inputContainer}>
+      {/* Absolute overlay for background and border - prevents Android native view reconstruction on style change */}
       <View 
         style={[
           StyleSheet.absoluteFillObject, 
@@ -65,12 +56,12 @@ const GlowingInput = memo(({ icon: Icon, placeholder, value, onChangeText, secur
         pointerEvents="none" 
       />
       <View style={styles.inputIcon}>
-        <Icon size={20} color={isFocused ? '#00FF66' : '#CBD5E1'} />
+        <Icon size={20} color={isFocused ? COLORS.secondary : COLORS.textSecondary} />
       </View>
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor="#CBD5E1"
+        placeholderTextColor={COLORS.textLight}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={isPassword && !showPassword}
@@ -82,9 +73,9 @@ const GlowingInput = memo(({ icon: Icon, placeholder, value, onChangeText, secur
       {isPassword && (
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
           {showPassword ? (
-            <EyeOff size={20} color={isFocused ? '#00FF66' : '#CBD5E1'} />
+            <EyeOff size={20} color={isFocused ? COLORS.secondary : COLORS.textSecondary} />
           ) : (
-            <Eye size={20} color={isFocused ? '#00FF66' : '#CBD5E1'} />
+            <Eye size={20} color={isFocused ? COLORS.secondary : COLORS.textSecondary} />
           )}
         </TouchableOpacity>
       )}
@@ -92,37 +83,31 @@ const GlowingInput = memo(({ icon: Icon, placeholder, value, onChangeText, secur
   );
 });
 
-const GamifiedButton = memo(({ title, onPress, loading, variant = 'primary' }) => {
-  const isOutline = variant === 'outline';
-  
-  return (
-    <View style={styles.ctaButtonWrapper}>
-      <TouchableOpacity 
-        style={[styles.ctaButton, isOutline && styles.ctaButtonOutline]} 
-        onPress={onPress} 
-        disabled={loading}
-        activeOpacity={0.8}
-      >
-        {!isOutline && (
-          <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor="#00FF66" stopOpacity="1" />
-                <Stop offset="100%" stopColor="#00B3FF" stopOpacity="1" />
-              </LinearGradient>
-            </Defs>
-            <Rect width="100%" height="100%" fill="url(#btnGrad)" />
-          </Svg>
-        )}
-        {loading ? (
-          <ActivityIndicator color={isOutline ? "#00FF66" : "#0A0B10"} size="small" />
-        ) : (
-          <Text style={[styles.ctaText, isOutline && { color: '#00FF66' }]}>{title}</Text>
-        )}
-      </TouchableOpacity>
-    </View>
-  );
-});
+const GamifiedButton = memo(({ title, onPress, loading }) => (
+  <View style={styles.ctaButtonWrapper}>
+    <TouchableOpacity 
+      style={styles.ctaButton} 
+      onPress={onPress} 
+      disabled={loading}
+      activeOpacity={0.8}
+    >
+      <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+        <Defs>
+          <LinearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <Stop offset="0%" stopColor={COLORS.primary} stopOpacity="1" />
+            <Stop offset="100%" stopColor={COLORS.primaryDark} stopOpacity="1" />
+          </LinearGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#btnGrad)" />
+      </Svg>
+      {loading ? (
+        <ActivityIndicator color={COLORS.white} size="small" />
+      ) : (
+        <Text style={styles.ctaText}>{title}</Text>
+      )}
+    </TouchableOpacity>
+  </View>
+));
 
 // -------------------------------------------------------------
 // MAIN COMPONENT
@@ -136,6 +121,27 @@ const RegisterScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const { register, isLoading, error, clearError } = useAuthStore();
 
+  // Animation values
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const translateYAnim = React.useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.exp),
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.exp),
+      }),
+    ]).start();
+  }, []);
+
   const handleRegister = async () => {
     if (!fullName || !email || !password || !confirmPassword) {
       useDialogStore.getState().showDialog({
@@ -145,6 +151,16 @@ const RegisterScreen = () => {
       });
       return;
     }
+
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      useDialogStore.getState().showDialog({
+        title: 'Lỗi email',
+        message: 'Hệ thống chỉ hỗ trợ đăng ký bằng tài khoản @gmail.com. Vui lòng kiểm tra lại.',
+        type: 'error'
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
       useDialogStore.getState().showDialog({
         title: 'Lỗi',
@@ -154,17 +170,37 @@ const RegisterScreen = () => {
       return;
     }
 
-    const result = await register({ email, password, fullName, acceptTerms: true });
-    if (result.success) {
-      useDialogStore.getState().showDialog({
-        title: 'Thành công',
-        message: 'Tài khoản của bạn đã được tạo!',
-        type: 'success'
-      });
-    }
+    useDialogStore.getState().showDialog({
+      title: 'Xác nhận đăng ký',
+      message: (
+        <Text style={{ textAlign: 'center' }}>
+          Vui lòng kiểm tra lại thông tin:{'\n\n'}
+          Họ và tên: <Text style={{ fontWeight: 'bold', color: COLORS.primaryDark }}>{fullName}</Text>{'\n'}
+          Email: <Text style={{ fontWeight: 'bold', color: COLORS.primaryDark }}>{email}</Text>{'\n\n'}
+          Bạn có chắc chắn muốn đăng ký với thông tin này?
+        </Text>
+      ),
+      type: 'info',
+      buttons: [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xác nhận',
+          onPress: async () => {
+            const result = await register({ email, password, fullName, acceptTerms: true });
+            if (result.success) {
+              useDialogStore.getState().showDialog({
+                title: 'Thành công',
+                message: 'Tài khoản của bạn đã được tạo!',
+                type: 'success'
+              });
+            }
+          }
+        }
+      ]
+    });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (error) {
       useDialogStore.getState().showDialog({
         title: 'Lỗi đăng ký',
@@ -177,15 +213,15 @@ const RegisterScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <AbstractBackground />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <WaveBackground />
       
       <TouchableOpacity 
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
         <View style={styles.backButtonBg} />
-        <ArrowLeft size={24} color="#FFFFFF" />
+        <ArrowLeft size={24} color={COLORS.secondary} />
       </TouchableOpacity>
 
       <KeyboardAvoidingView 
@@ -197,15 +233,15 @@ const RegisterScreen = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="always"
         >
-          <View style={styles.header}>
-            <View style={styles.iconCircle}>
-              <UserPlus color="#00FF66" size={40} />
-            </View>
+          {/* Header Section (Animated) */}
+          <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: translateYAnim }] }]}>
+            <PremiumLogo />
             <Text style={styles.brandName}>TẠO TÀI KHOẢN</Text>
             <Text style={styles.brandSlogan}>BẮT ĐẦU HÀNH TRÌNH SỐNG KHỎE</Text>
-          </View>
+          </Animated.View>
 
-          <View style={styles.glassContainer}>
+          {/* Form Container (Animated) */}
+          <Animated.View style={[styles.glassContainer, { opacity: fadeAnim, transform: [{ translateY: translateYAnim }] }]}>
             <Text style={styles.title}>ĐĂNG KÝ THÀNH VIÊN</Text>
             <Text style={styles.subtitle}>
               Cùng NutriCoach xây dựng thói quen tốt mỗi ngày
@@ -266,7 +302,7 @@ const RegisterScreen = () => {
               <Text style={styles.termsBold}>Điều khoản dịch vụ</Text> và{' '}
               <Text style={styles.termsBold}>Chính sách bảo mật</Text> của chúng tôi.
             </Text>
-          </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -296,71 +332,71 @@ const styles = StyleSheet.create({
   },
   backButtonBg: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: COLORS.white,
     borderRadius: 22,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    opacity: 0.8,
   },
   header: {
     alignItems: 'center',
     marginBottom: 40,
   },
-  iconCircle: {
+  logoWrapper: {
     width: 80,
     height: 80,
+    backgroundColor: COLORS.white,
     borderRadius: 24,
-    backgroundColor: 'rgba(0, 255, 102, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#00FF66',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
+    marginBottom: 20,
+    shadowColor: COLORS.secondary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
     shadowRadius: 20,
     elevation: 10,
   },
+  logoImage: {
+    width: 50,
+    height: 50,
+  },
   brandName: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
+    color: COLORS.secondary,
+    letterSpacing: 1,
   },
   brandSlogan: {
-    fontSize: 13,
-    color: '#00FF66',
-    marginTop: 6,
+    fontSize: 12,
+    color: COLORS.primary,
     fontWeight: '700',
+    marginTop: 6,
     letterSpacing: 3,
     textTransform: 'uppercase',
-    textAlign: 'center',
   },
   glassContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: COLORS.surface,
     borderRadius: 32,
     padding: 28,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.6,
-    shadowRadius: 40,
-    elevation: 15,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 5,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '900',
+    color: COLORS.secondary,
     marginBottom: 8,
     letterSpacing: 0.5,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: '#CBD5E1',
+    color: COLORS.textSecondary,
     marginBottom: 32,
-    lineHeight: 22,
+    textAlign: 'center',
   },
   form: {
     width: '100%',
@@ -373,14 +409,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   inputOverlay: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#F3F4F6',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: 'transparent',
   },
   inputOverlayFocused: {
-    borderColor: '#00FF66',
-    backgroundColor: 'rgba(0, 255, 102, 0.08)',
+    borderColor: COLORS.secondary,
+    backgroundColor: COLORS.white,
   },
   inputIcon: {
     marginRight: 12,
@@ -388,7 +424,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    color: '#FFFFFF',
+    color: '#2D3748',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -396,11 +432,11 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   ctaButtonWrapper: {
-    shadowColor: '#00FF66',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
     borderRadius: 16,
     marginBottom: 8,
   },
@@ -411,15 +447,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  ctaButtonOutline: {
-    backgroundColor: 'rgba(0, 255, 102, 0.05)',
-    borderWidth: 1,
-    borderColor: '#00FF66',
-  },
   ctaText: {
     fontSize: 16,
     fontWeight: '900',
-    color: '#0A0B10',
+    color: COLORS.white,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
@@ -430,26 +461,26 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   footerText: {
-    color: '#CBD5E1',
+    color: COLORS.textSecondary,
     fontSize: 14,
     fontWeight: '500',
   },
   loginLink: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#00FF66',
+    color: COLORS.primary,
     letterSpacing: 0.5,
   },
   terms: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textLight,
     marginTop: 32,
     lineHeight: 18,
   },
   termsBold: {
-    color: '#00FF66',
-    fontWeight: '600',
+    color: COLORS.primary,
+    fontWeight: '700',
   }
 });
 

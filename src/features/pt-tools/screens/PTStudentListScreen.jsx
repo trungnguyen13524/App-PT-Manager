@@ -29,7 +29,7 @@ const PTStudentListScreen = () => {
   if (verificationStatus === 'PENDING_REVIEW' || verificationStatus === 'PENDING') {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <ActivityIndicator size="large" color={COLORS.primary} />
         <Text style={{ color: '#fff', marginTop: 20, fontSize: 16 }}>Đang chờ Admin duyệt hồ sơ PT...</Text>
       </View>
@@ -39,13 +39,13 @@ const PTStudentListScreen = () => {
   if (verificationStatus === 'NONE' || verificationStatus === null) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <Text style={{ color: '#fff', marginBottom: 20, fontSize: 16 }}>Bạn chưa đăng ký làm Huấn luyện viên</Text>
         <TouchableOpacity 
           style={{ backgroundColor: COLORS.primary, padding: 12, borderRadius: 8 }} 
           onPress={() => navigation.navigate('PTVerification')}
         >
-          <Text style={{ color: '#1E293B', fontWeight: 'bold' }}>Đăng ký ngay</Text>
+          <Text style={{ color: '#EADDCA', fontWeight: 'bold' }}>Đăng ký ngay</Text>
         </TouchableOpacity>
       </View>
     );
@@ -61,7 +61,7 @@ const PTStudentListScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Học viên của bạn</Text>
@@ -107,26 +107,7 @@ const PTStudentListScreen = () => {
             </TouchableOpacity>
           ))}
 
-          {/* Fake Test Student */}
-          <TouchableOpacity 
-            onPress={() => navigation.navigate('StudentDetail', { studentId: 'test_student_123' })}
-          >
-            <NutriCard style={[styles.studentCard, { borderColor: COLORS.primary, borderWidth: 1, backgroundColor: 'rgba(52, 152, 219, 0.05)' }]}>
-              <Image source={{ uri: 'https://i.pravatar.cc/150?img=11' }} style={styles.studentAvatar} />
-              <View style={styles.studentInfo}>
-                <Text style={styles.studentName}>[TEST] Học viên ảo</Text>
-                <Text style={styles.studentGoal}>Bấm vào để test tính năng Giao bài</Text>
-                <View style={styles.studentMeta}>
-                  <Text style={styles.metaText}>70 kg</Text>
-                  <View style={styles.dot} />
-                  <Text style={styles.metaText}>175 cm</Text>
-                </View>
-              </View>
-              <View style={styles.progressCircle}>
-                <Text style={styles.progressText}>0%</Text>
-              </View>
-            </NutriCard>
-          </TouchableOpacity>
+
         </View>
 
         <View style={{ height: 100 }} />

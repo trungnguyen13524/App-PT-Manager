@@ -78,7 +78,7 @@ const MealDetailScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       
       {/* Huge Image Cover */}
       <View style={styles.coverContainer}>
@@ -91,7 +91,7 @@ const MealDetailScreen = () => {
         {/* Floating Back Button */}
         <SafeAreaView style={styles.safeArea}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <ChevronLeft color="#F8FAFC" size={28} />
+            <ChevronLeft color="#2D3748" size={28} />
           </TouchableOpacity>
         </SafeAreaView>
       </View>
@@ -101,7 +101,7 @@ const MealDetailScreen = () => {
         <Text style={styles.foodName}>{foodName}</Text>
         
         <View style={styles.caloriesRow}>
-          <Flame color="#00FF66" size={32} />
+          <Flame color="#556B2F" size={32} />
           <Text style={styles.caloriesText}>{calories}</Text>
           <Text style={styles.caloriesUnit}>kcal</Text>
         </View>
@@ -129,14 +129,14 @@ const MealDetailScreen = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Chọn loại bữa ăn</Text>
               <TouchableOpacity onPress={() => setShowMealTypeModal(false)}>
-                <X color="#94A3B8" size={24} />
+                <X color="#4A5568" size={24} />
               </TouchableOpacity>
             </View>
 
             {isLogging ? (
               <View style={{ padding: 40, alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#00FF66" />
-                <Text style={{ marginTop: 12, color: '#94A3B8' }}>Đang lưu...</Text>
+                <ActivityIndicator size="large" color="#556B2F" />
+                <Text style={{ marginTop: 12, color: '#4A5568' }}>Đang lưu...</Text>
               </View>
             ) : (
               <View style={styles.mealTypeGrid}>
@@ -166,13 +166,13 @@ const MealDetailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#2D3748',
   },
   coverContainer: {
     width: '100%',
     height: '55%',
     position: 'relative',
-    backgroundColor: '#1E293B'
+    backgroundColor: '#EADDCA'
   },
   coverImage: {
     width: '100%',
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   contentContainer: {
     padding: 24,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   foodName: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#F8FAFC',
+    color: '#2D3748',
     marginBottom: 16,
   },
   caloriesRow: {
@@ -214,37 +214,37 @@ const styles = StyleSheet.create({
   caloriesText: {
     fontSize: 48,
     fontWeight: '900',
-    color: '#F8FAFC',
+    color: '#2D3748',
     lineHeight: 52,
     marginLeft: 8,
   },
   caloriesUnit: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: '#4A5568',
     marginBottom: 6,
     marginLeft: 8,
   },
   descText: {
     fontSize: 15,
-    color: '#94A3B8',
+    color: '#4A5568',
     lineHeight: 24,
   },
   bottomBar: {
     padding: 24,
     paddingBottom: 40,
     borderTopWidth: 1,
-    borderTopColor: '#1E293B',
+    borderTopColor: '#EADDCA',
   },
   logBtn: {
-    backgroundColor: '#00FF66',
+    backgroundColor: '#556B2F',
     height: 56,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logBtnText: {
-    color: '#0F172A',
+    color: '#2D3748',
     fontSize: 16,
     fontWeight: '800',
   },
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EADDCA',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     padding: 24,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: '#2D3748',
   },
   mealTypeGrid: {
     flexDirection: 'row',
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mealTypeBtnText: {
-    color: '#F8FAFC',
+    color: '#2D3748',
     fontSize: 15,
     fontWeight: '700',
   }

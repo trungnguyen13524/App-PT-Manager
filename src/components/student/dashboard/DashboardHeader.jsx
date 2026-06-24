@@ -16,6 +16,8 @@ const DashboardHeader = ({ user, totalPoints }) => {
 
   return (
     <View style={styles.headerContainer}>
+
+
       <View style={styles.headerTop}>
         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
           <View style={styles.profileInfo}>
@@ -45,7 +47,7 @@ const DashboardHeader = ({ user, totalPoints }) => {
             <Text style={styles.walletText}>{totalPoints?.toLocaleString('en-US') || 0}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.notificationBtn, { marginLeft: 12 }]}>
-            <Bell color="#00FF66" size={22} />
+            <Bell color={COLORS.primary} size={22} />
             <View style={styles.badge} />
           </TouchableOpacity>
         </View>
@@ -57,8 +59,8 @@ const DashboardHeader = ({ user, totalPoints }) => {
 const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   headerTop: {
     flexDirection: 'row',
@@ -73,11 +75,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.surface,
     padding: 2,
     marginRight: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.3)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
   },
   avatar: {
     width: '100%',
@@ -85,12 +87,12 @@ const styles = StyleSheet.create({
     borderRadius: 22,
   },
   greeting: {
-    color: '#94A3B8',
+    color: COLORS.textSecondary,
     fontSize: 13,
     marginBottom: 4,
   },
   userName: {
-    color: '#FFFFFF',
+    color: COLORS.text,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -121,11 +123,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0,0,0,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0,0,0,0.1)',
   },
   badge: {
     position: 'absolute',
@@ -134,10 +136,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FF4D00',
+    backgroundColor: COLORS.error,
     borderWidth: 1,
-    borderColor: '#0B0F19',
+    borderColor: COLORS.surface,
   },
+
 });
 
 export default DashboardHeader;

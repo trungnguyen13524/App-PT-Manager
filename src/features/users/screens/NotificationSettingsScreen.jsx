@@ -81,9 +81,9 @@ const NotificationSettingsScreen = () => {
         {description ? <Text style={styles.settingDescription}>{description}</Text> : null}
       </View>
       <Switch
-        trackColor={{ false: 'rgba(255,255,255,0.1)', true: COLORS.primary }}
-        thumbColor={'#FFF'}
-        ios_backgroundColor="rgba(255,255,255,0.1)"
+        trackColor={{ false: 'rgba(0, 0, 0, 0.05)', true: COLORS.primary }}
+        thumbColor={'#2D3748'}
+        ios_backgroundColor="rgba(0, 0, 0, 0.05)"
         onValueChange={onToggle}
         value={value}
         disabled={disabled}
@@ -93,12 +93,12 @@ const NotificationSettingsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <AbstractBackground />
       
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#FFF" size={28} />
+          <ChevronLeft color="#2D3748" size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Cài đặt thông báo</Text>
         <View style={{ width: 36 }} />
@@ -176,23 +176,23 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...TYPOGRAPHY.h3,
-    color: '#FFF',
+    color: '#2D3748',
   },
   scrollContent: {
     padding: 20,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
     marginBottom: 20,
   },
   cardTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: '#4A5568',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 16,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#2D3748',
     marginBottom: 4,
   },
   settingDescription: {
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     marginVertical: 12,
   },
   saveBtn: {

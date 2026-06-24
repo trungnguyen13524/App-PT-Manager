@@ -11,6 +11,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ArrowLeft, CheckCircle, Star, Phone } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY } from '../../../theme';
+import { AbstractBackground } from '../../../components/common';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PublicPTProfileScreen = () => {
@@ -36,12 +37,13 @@ const PublicPTProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
+      <AbstractBackground />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#fff" size={24} />
+          <ArrowLeft color="#1A202C" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hồ sơ Huấn luyện viên</Text>
         <View style={{ width: 24 }} />
@@ -56,7 +58,7 @@ const PublicPTProfileScreen = () => {
               style={styles.avatar} 
             />
             <View style={styles.verifiedBadge}>
-              <CheckCircle size={14} color="#FFF" fill="#00FF66" />
+              <CheckCircle size={14} color="#FFFFFF" fill="#556B2F" />
             </View>
           </View>
         </View>
@@ -102,7 +104,7 @@ const PublicPTProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FAFAFA',
   },
   header: {
     flexDirection: 'row',
@@ -110,21 +112,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'transparent',
   },
   backBtn: {
     padding: 5,
   },
   headerTitle: {
     ...TYPOGRAPHY.h3,
-    color: '#fff',
+    color: '#1A202C',
+    fontWeight: '900',
   },
   scrollContent: {
     paddingBottom: 40,
   },
   coverPhoto: {
     height: 120,
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.08)',
     alignItems: 'center',
     justifyContent: 'flex-end',
     borderBottomLeftRadius: 30,
@@ -135,10 +138,15 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FFFFFF',
     padding: 4,
     position: 'absolute',
     bottom: -50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   avatar: {
     width: '100%',
@@ -149,7 +157,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 5,
     right: 5,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FFFFFF',
     borderRadius: 10,
     padding: 2,
   },
@@ -159,25 +167,28 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   fullName: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#fff',
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#1A202C',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#00FF66',
+    fontWeight: '700',
+    color: '#556B2F',
     marginBottom: 16,
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: '#FFFFFF',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 16,
     width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   statItem: {
     alignItems: 'center',
@@ -185,8 +196,8 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontWeight: '900',
+    color: '#1A202C',
     marginBottom: 4,
   },
   statLabelRow: {
@@ -195,30 +206,39 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: '#718096',
+    fontWeight: '600',
   },
   statDivider: {
     width: 1,
     height: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   card: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 20,
     marginBottom: 16,
     padding: 20,
-    borderRadius: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#2D4A33',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
+    elevation: 4,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#1A202C',
+    marginBottom: 16,
   },
   bioText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    lineHeight: 22,
+    fontSize: 15,
+    color: '#4A5568',
+    lineHeight: 24,
+    fontWeight: '500',
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -226,17 +246,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tagBadge: {
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.3)',
+    borderColor: 'rgba(85, 107, 47, 0.2)',
   },
   tagText: {
-    color: '#00FF66',
+    color: '#2D4A33',
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '800',
   },
 });
 

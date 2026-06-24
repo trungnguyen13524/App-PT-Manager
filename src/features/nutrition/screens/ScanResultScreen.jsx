@@ -124,12 +124,12 @@ const ScanResultScreen = () => {
       style={{ flex: 1 }}
     >
       <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <AbstractBackground />
         
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <ChevronLeft color="#FFFFFF" size={28} />
+            <ChevronLeft color="#2D3748" size={28} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Xác nhận món ăn</Text>
           <View style={{ width: 28 }} />
@@ -141,7 +141,7 @@ const ScanResultScreen = () => {
           {!isConfirmedIdentity ? (
             <View style={styles.glassCard}>
               <View style={styles.aiLabelRow}>
-                <AlertCircle size={20} color="#00FF66" />
+                <AlertCircle size={20} color="#556B2F" />
                 <Text style={styles.aiLabelText}>AI nhận diện đây là:</Text>
               </View>
               
@@ -188,7 +188,7 @@ const ScanResultScreen = () => {
 
                 <View style={styles.statsContainer}>
                   <View style={styles.statItem}>
-                    <Text style={[styles.statVal, { color: '#00FF66' }]}>{Math.round(foodData.calories * foodData.amount)}</Text>
+                    <Text style={[styles.statVal, { color: '#556B2F' }]}>{Math.round(foodData.calories * foodData.amount)}</Text>
                     <Text style={styles.statLabel}>Calories</Text>
                   </View>
                   <View style={styles.divider} />
@@ -241,7 +241,7 @@ const ScanResultScreen = () => {
                     onPress={() => setFoodData({...foodData, amount: Math.max(0.1, foodData.amount - 0.1)})}
                     activeOpacity={0.8}
                   >
-                    <Minus size={20} color="#FFFFFF" />
+                    <Minus size={20} color="#2D3748" />
                   </TouchableOpacity>
                   <View style={styles.amountDisplay}>
                     <Text style={styles.amountText}>{foodData.amount.toFixed(1)}</Text>
@@ -252,14 +252,14 @@ const ScanResultScreen = () => {
                     onPress={() => setFoodData({...foodData, amount: foodData.amount + 0.1})}
                     activeOpacity={0.8}
                   >
-                    <Plus size={20} color="#FFFFFF" />
+                    <Plus size={20} color="#2D3748" />
                   </TouchableOpacity>
                 </View>
               </View>
 
               <View style={styles.section}>
                 <View style={styles.sectionTitleRow}>
-                  <FileText size={18} color="#00FF66" />
+                  <FileText size={18} color="#556B2F" />
                   <Text style={[styles.sectionTitle, { marginLeft: 8, marginBottom: 0 }]}>Ghi chú thêm</Text>
                 </View>
                 <TextInput
@@ -300,7 +300,7 @@ const ScanResultScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
+  container: { flex: 1, backgroundColor: '#2D3748' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -309,9 +309,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backBtn: { padding: 10, marginLeft: -6 },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.5 },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: '#2D3748', letterSpacing: 0.5 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 40 },
-  foodImage: { width: '100%', height: 250, borderRadius: 30, marginBottom: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  foodImage: { width: '100%', height: 250, borderRadius: 30, marginBottom: 24, borderWidth: 1, borderColor: 'rgba(0, 0, 0, 0.05)' },
   
   glassCard: { 
     backgroundColor: 'rgba(255, 255, 255, 0.08)', 
@@ -336,12 +336,12 @@ const styles = StyleSheet.create({
   foodNameInput: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#2D3748',
     textAlign: 'center',
     padding: 0,
     maxWidth: '85%',
   },
-  confidenceText: { fontSize: 13, color: '#00FF66', marginBottom: 24, fontWeight: '700' },
+  confidenceText: { fontSize: 13, color: '#556B2F', marginBottom: 24, fontWeight: '700' },
   identityActionRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-between' },
   wrongBtn: { 
     flex: 1, 
@@ -352,18 +352,18 @@ const styles = StyleSheet.create({
     borderRadius: 16, 
     borderWidth: 1, 
     borderColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
   },
-  wrongBtnText: { color: '#FFFFFF', fontWeight: '800', letterSpacing: 0.5 },
+  wrongBtnText: { color: '#2D3748', fontWeight: '800', letterSpacing: 0.5 },
   rightBtn: { 
     flex: 1.5, 
     height: 52, 
-    backgroundColor: '#00FF66', 
+    backgroundColor: '#556B2F', 
     flexDirection: 'row', 
     justifyContent: 'center', 
     alignItems: 'center', 
     borderRadius: 16,
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
@@ -372,16 +372,16 @@ const styles = StyleSheet.create({
   rightBtnText: { color: '#0A0B10', fontWeight: '900', marginLeft: 8, letterSpacing: 0.5 },
   
   glassCardResult: { 
-    backgroundColor: 'rgba(0, 255, 102, 0.1)', 
+    backgroundColor: 'rgba(85, 107, 47, 0.1)', 
     padding: 20, 
     borderRadius: 24, 
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.2)',
+    borderColor: 'rgba(85, 107, 47, 0.2)',
   },
   confirmedHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  confirmedFoodName: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
-  reEditLink: { fontSize: 13, color: '#00FF66', fontWeight: '700', textDecorationLine: 'underline' },
+  confirmedFoodName: { fontSize: 20, fontWeight: '800', color: '#2D3748' },
+  reEditLink: { fontSize: 13, color: '#556B2F', fontWeight: '700', textDecorationLine: 'underline' },
   statsContainer: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
@@ -391,12 +391,12 @@ const styles = StyleSheet.create({
     borderRadius: 16 
   },
   statItem: { alignItems: 'center', flex: 1 },
-  statVal: { fontSize: 18, fontWeight: '900', color: '#1E293B', fontVariant: ['tabular-nums'] },
-  statLabel: { fontSize: 12, color: '#64748B', marginTop: 2, fontWeight: '600' },
-  divider: { width: 1, height: 30, backgroundColor: '#E2E8F0' },
+  statVal: { fontSize: 18, fontWeight: '900', color: '#EADDCA', fontVariant: ['tabular-nums'] },
+  statLabel: { fontSize: 12, color: '#718096', marginTop: 2, fontWeight: '600' },
+  divider: { width: 1, height: 30, backgroundColor: '#4A5568' },
   
   section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#FFFFFF', marginBottom: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#2D3748', marginBottom: 16 },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   
   mealTypeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
@@ -404,16 +404,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12, 
     paddingHorizontal: 18, 
     borderRadius: 20, 
-    backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+    backgroundColor: 'rgba(0, 0, 0, 0.02)', 
     borderWidth: 1, 
-    borderColor: 'rgba(255, 255, 255, 0.1)' 
+    borderColor: 'rgba(0, 0, 0, 0.05)' 
   },
   mealPillActive: { 
     backgroundColor: 'rgba(0, 255, 102, 0.15)', 
-    borderColor: '#00FF66' 
+    borderColor: '#556B2F' 
   },
   mealPillText: { fontSize: 14, color: '#9CA3AF', fontWeight: '600' },
-  mealPillTextActive: { color: '#00FF66', fontWeight: '800' },
+  mealPillTextActive: { color: '#556B2F', fontWeight: '800' },
   
   amountSelector: { 
     flexDirection: 'row', 
@@ -423,20 +423,20 @@ const styles = StyleSheet.create({
     padding: 12, 
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   amountBtn: { 
     width: 44, 
     height: 44, 
     borderRadius: 22, 
-    backgroundColor: 'rgba(255, 255, 255, 0.1)', 
+    backgroundColor: 'rgba(0, 0, 0, 0.05)', 
     justifyContent: 'center', 
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   amountDisplay: { flexDirection: 'row', alignItems: 'baseline', marginHorizontal: 24 },
-  amountText: { fontSize: 36, fontWeight: '900', color: '#00FF66', fontVariant: ['tabular-nums'] },
+  amountText: { fontSize: 36, fontWeight: '900', color: '#556B2F', fontVariant: ['tabular-nums'] },
   amountUnit: { fontSize: 15, color: '#9CA3AF', marginLeft: 6, fontWeight: '700' },
   
   notesInput: { 
@@ -444,11 +444,11 @@ const styles = StyleSheet.create({
     borderRadius: 16, 
     padding: 16, 
     fontSize: 16, 
-    color: '#FFFFFF', 
+    color: '#2D3748', 
     height: 120, 
     textAlignVertical: 'top',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   
   footer: { 
@@ -458,13 +458,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent'
   },
   confirmBtn: { 
-    backgroundColor: '#00FF66', 
+    backgroundColor: '#556B2F', 
     height: 60, 
     borderRadius: 16, 
     flexDirection: 'row', 
     justifyContent: 'center', 
     alignItems: 'center',
-    shadowColor: '#00FF66',
+    shadowColor: '#556B2F',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 20,

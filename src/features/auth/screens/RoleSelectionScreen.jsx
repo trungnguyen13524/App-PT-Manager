@@ -1,45 +1,20 @@
-import React, { useState, memo } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   StatusBar,
-  Platform
+  Platform,
+  Animated,
+  Easing
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { GraduationCap, Dumbbell } from 'lucide-react-native';
-import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from 'react-native-svg';
 import { useAuthStore } from '../../../store/authStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const AbstractBackground = memo(() => (
-  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-    <Svg width="100%" height="100%">
-      <Defs>
-        <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#0F172A" />
-          <Stop offset="100%" stopColor="#1E293B" />
-        </LinearGradient>
-        <LinearGradient id="circleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#00FF66" stopOpacity="0.15" />
-          <Stop offset="100%" stopColor="#00B3FF" stopOpacity="0.05" />
-        </LinearGradient>
-        <LinearGradient id="circleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#FF4D00" stopOpacity="0.15" />
-          <Stop offset="100%" stopColor="#FF0080" stopOpacity="0.05" />
-        </LinearGradient>
-      </Defs>
-      <Rect width="100%" height="100%" fill="url(#bgGrad)" />
-      
-      {/* 3D-like glowing abstract floating circles */}
-      <Circle cx="15%" cy="15%" r="140" fill="url(#circleGrad1)" />
-      <Circle cx="90%" cy="80%" r="180" fill="url(#circleGrad2)" />
-      <Circle cx="85%" cy="25%" r="90" fill="url(#circleGrad2)" />
-      <Circle cx="20%" cy="85%" r="120" fill="url(#circleGrad1)" />
-    </Svg>
-  </View>
-));
+import WaveBackground from '../../../components/common/WaveBackground';
+import { COLORS } from '../../../theme';
 
 const RoleCard = ({ title, description, icon: Icon, color, onPress }) => {
   const [isPressed, setIsPressed] = useState(false);
@@ -64,7 +39,7 @@ const RoleCard = ({ title, description, icon: Icon, color, onPress }) => {
       {/* Subtle inner glow/tint */}
       <View style={[styles.cardGlow, { backgroundColor: color, opacity: isPressed ? 0.08 : 0.03 }]} />
       
-      <View style={[styles.iconContainer, { borderColor: color, backgroundColor: `${color}25` }]}>
+      <View style={[styles.iconContainer, { borderColor: color, backgroundColor: `${color}15` }]}>
         <Icon size={42} color={color} strokeWidth={2.5} />
       </View>
       <Text style={styles.roleTitle}>{title}</Text>
@@ -76,6 +51,27 @@ const RoleCard = ({ title, description, icon: Icon, color, onPress }) => {
 const RoleSelectionScreen = () => {
   const navigation = useNavigation();
   const { setUserRole } = useAuthStore();
+
+  // Animation values
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const translateYAnim = React.useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.exp),
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.exp),
+      }),
+    ]).start();
+  }, []);
 
   const handleSelectRole = (role) => {
     setUserRole(role);
@@ -89,22 +85,22 @@ const RoleSelectionScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <AbstractBackground />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <WaveBackground />
       
       <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Bạn là ai?</Text>
+        <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: translateYAnim }] }]}>
+          <Text style={styles.title}>BẠN LÀ AI?</Text>
           <Text style={styles.subtitle}>Chọn vai trò để chúng tôi cá nhân hóa trải nghiệm cho bạn</Text>
-        </View>
+        </Animated.View>
 
-        <View style={styles.cardsContainer}>
+        <Animated.View style={[styles.cardsContainer, { opacity: fadeAnim, transform: [{ translateY: translateYAnim }] }]}>
           {/* Student Card */}
           <RoleCard
             title="Học viên"
             description="Theo dõi dinh dưỡng, luyện tập và nhận tư vấn từ chuyên gia"
             icon={GraduationCap}
-            color="#00FF66"
+            color={COLORS.primary}
             onPress={() => handleSelectRole('USER')}
           />
 
@@ -116,7 +112,7 @@ const RoleSelectionScreen = () => {
             color="#FF4D00"
             onPress={() => handleSelectRole('PT')}
           />
-        </View>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
@@ -125,7 +121,6 @@ const RoleSelectionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A', // Fallback background
   },
   content: {
     flex: 1,
@@ -137,9 +132,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: COLORS.secondary,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     textAlign: 'center',
@@ -147,7 +142,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 15,
-    color: '#CBD5E1',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 20,
@@ -157,14 +152,19 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   roleCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 24,
+    backgroundColor: COLORS.surface,
+    borderRadius: 28,
     padding: 28,
-    marginBottom: 20,
+    marginBottom: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
     overflow: 'hidden', // to contain the cardGlow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 5,
   },
   cardGlow: {
     ...StyleSheet.absoluteFillObject,
@@ -177,23 +177,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    // Emulate 3D pop
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5,
   },
   roleTitle: {
     fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: '900',
+    color: COLORS.secondary,
     marginBottom: 10,
     letterSpacing: 0.5,
   },
   roleDesc: {
     fontSize: 14,
-    color: '#CBD5E1',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     fontWeight: '500',
@@ -202,4 +201,3 @@ const styles = StyleSheet.create({
 });
 
 export default RoleSelectionScreen;
-

@@ -15,6 +15,7 @@ import { useUserStore } from '../../../store/userStore';
 import { useDialogStore } from '../../../store/dialogStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AbstractBackground } from '../../../components/common/AbstractBackground';
+import { COLORS } from '../../../theme';
 
 const BodyMetricsScreen = () => {
   const navigation = useNavigation();
@@ -87,10 +88,10 @@ const BodyMetricsScreen = () => {
   };
 
   const getBMIStatus = (bmi) => {
-    if (bmi === '--') return { text: '', color: '#FFFFFF' };
+    if (bmi === '--') return { text: '', color: COLORS.text };
     const val = parseFloat(bmi);
     if (val < 18.5) return { text: 'Thiếu cân', color: '#FFB74D' };
-    if (val < 24.9) return { text: 'Bình thường', color: '#00FF66' };
+    if (val < 24.9) return { text: 'Bình thường', color: COLORS.primary };
     if (val < 29.9) return { text: 'Thừa cân', color: '#FF8A65' };
     return { text: 'Béo phì', color: '#E53935' };
   };
@@ -100,18 +101,18 @@ const BodyMetricsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <AbstractBackground />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#FFFFFF" size={28} />
+          <ChevronLeft color={COLORS.text} size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chỉ số cơ thể</Text>
         <TouchableOpacity onPress={handleSave} style={styles.saveBtn} disabled={isLoading}>
           {isLoading ? (
-            <ActivityIndicator size="small" color="#00FF66" />
+            <ActivityIndicator size="small" color={COLORS.primary} />
           ) : (
             <Text style={styles.saveText}>LƯU</Text>
           )}
@@ -139,7 +140,7 @@ const BodyMetricsScreen = () => {
         <View style={styles.glassCardInput}>
           <View style={styles.inputWrapper}>
             <View style={styles.inputIconBox}>
-              <ArrowUp size={20} color="#00FF66" />
+              <ArrowUp size={20} color={COLORS.primary} />
             </View>
             <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>Chiều cao</Text>
@@ -160,7 +161,7 @@ const BodyMetricsScreen = () => {
         <View style={styles.glassCardInput}>
           <View style={styles.inputWrapper}>
             <View style={styles.inputIconBox}>
-              <Scale size={20} color="#00FF66" />
+              <Scale size={20} color={COLORS.primary} />
             </View>
             <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>Cân nặng hiện tại</Text>
@@ -196,7 +197,7 @@ const BodyMetricsScreen = () => {
               ]}>
                 {g.label}
               </Text>
-              {formData.goal === g.id && <Check color="#00FF66" size={20} strokeWidth={3} />}
+              {formData.goal === g.id && <Check color={COLORS.primary} size={20} strokeWidth={3} />}
             </TouchableOpacity>
           ))}
         </View>
@@ -208,7 +209,7 @@ const BodyMetricsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
+  container: { flex: 1, backgroundColor: COLORS.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -217,19 +218,24 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backBtn: { padding: 8, marginLeft: -8 },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
+  headerTitle: { fontSize: 22, fontWeight: '800', color: COLORS.secondary },
   saveBtn: { padding: 8, marginRight: -8 },
-  saveText: { fontSize: 16, fontWeight: '900', color: '#00FF66', letterSpacing: 1 },
+  saveText: { fontSize: 16, fontWeight: '900', color: COLORS.primary, letterSpacing: 1 },
   
   content: { paddingHorizontal: 20, paddingTop: 10 },
   
   glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: COLORS.surface,
     borderRadius: 24,
     padding: 24,
     marginBottom: 30,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 3,
   },
   bmiHeader: {
     flexDirection: 'row',
@@ -237,7 +243,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  bmiTitle: { fontSize: 16, fontWeight: '600', color: '#9CA3AF' },
+  bmiTitle: { fontSize: 16, fontWeight: '600', color: COLORS.textSecondary },
   bmiBadge: { 
     paddingHorizontal: 12, 
     paddingVertical: 6, 
@@ -249,21 +255,26 @@ const styles = StyleSheet.create({
   bmiValue: { 
     fontSize: 56, 
     fontWeight: '900',
-    textShadowColor: 'rgba(0, 255, 102, 0.3)',
+    textShadowColor: 'rgba(85, 107, 47, 0.1)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
   },
-  bmiUnit: { fontSize: 18, color: '#9CA3AF', fontWeight: '700' },
+  bmiUnit: { fontSize: 18, color: COLORS.textSecondary, fontWeight: '700' },
 
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#FFFFFF', marginBottom: 16, marginLeft: 4 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.secondary, marginBottom: 16, marginLeft: 4 },
   
   glassCardInput: {
-    backgroundColor: 'rgba(20, 24, 35, 0.65)',
+    backgroundColor: COLORS.surface,
     borderRadius: 20,
     marginBottom: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -273,31 +284,36 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
+    backgroundColor: 'rgba(85, 107, 47, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
     borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.2)',
+    borderColor: 'rgba(85, 107, 47, 0.15)',
   },
   inputContent: { flex: 1 },
-  inputLabel: { fontSize: 14, color: '#9CA3AF', marginBottom: 4, fontWeight: '600' },
+  inputLabel: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 4, fontWeight: '600' },
   inputRow: { flexDirection: 'row', alignItems: 'center' },
   input: {
     flex: 1,
     fontSize: 22,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.secondary,
     paddingVertical: 0,
   },
-  inputUnit: { fontSize: 16, fontWeight: '700', color: '#9CA3AF', marginLeft: 8 },
+  inputUnit: { fontSize: 16, fontWeight: '700', color: COLORS.textSecondary, marginLeft: 8 },
 
   goalsContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: COLORS.surface,
     borderRadius: 24,
     padding: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
   },
   goalOption: {
     flexDirection: 'row',
@@ -310,11 +326,11 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   goalOptionActive: { 
-    backgroundColor: 'rgba(0, 255, 102, 0.1)',
-    borderColor: 'rgba(0, 255, 102, 0.3)',
+    backgroundColor: 'rgba(85, 107, 47, 0.08)',
+    borderColor: 'rgba(85, 107, 47, 0.2)',
   },
-  goalText: { fontSize: 16, fontWeight: '600', color: '#9CA3AF' },
-  goalTextActive: { color: '#00FF66', fontWeight: '800' },
+  goalText: { fontSize: 16, fontWeight: '600', color: COLORS.textSecondary },
+  goalTextActive: { color: COLORS.primary, fontWeight: '800' },
 });
 
 export default BodyMetricsScreen;

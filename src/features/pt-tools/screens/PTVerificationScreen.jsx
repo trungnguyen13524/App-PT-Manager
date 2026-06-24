@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, StatusBar, Image
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, StatusBar, Image, BackHandler
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -299,7 +299,7 @@ const PTVerificationScreen = () => {
     const canResubmit = verificationData?.requireResubmit !== false;
     return (
       <SafeAreaView style={styles.centerContainer}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <AlertCircle size={80} color="#FF3B30" style={{ marginBottom: 20 }} />
         <Text style={styles.pendingTitle}>Hồ sơ bị từ chối</Text>
         <Text style={styles.pendingDesc}>Lý do: {reason}</Text>
@@ -317,14 +317,17 @@ const PTVerificationScreen = () => {
   if (upperStatus === 'PENDING_REVIEW' || upperStatus === 'PENDING') {
     return (
       <SafeAreaView style={styles.centerContainer}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <ClockIcon size={80} color={COLORS.primary} style={{ marginBottom: 20 }} />
         <Text style={styles.pendingTitle}>Đang chờ duyệt hồ sơ</Text>
         <Text style={styles.pendingDesc}>
           Admin đang xem xét hồ sơ PT của bạn. Quá trình này thường mất từ 24-48 giờ. 
-          Vui lòng quay lại sau nhé!
         </Text>
-        <NutriButton title="Vào giao diện chờ" onPress={handleBypass} style={{ width: '80%', marginTop: 30 }} />
+        <NutriButton 
+          title="Vui lòng thoát khỏi app và quay lại sau" 
+          onPress={() => BackHandler.exitApp()} 
+          style={{ width: '90%', marginTop: 30 }} 
+        />
       </SafeAreaView>
     );
   }
@@ -332,7 +335,7 @@ const PTVerificationScreen = () => {
   // --- FORM STATE ---
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <View style={styles.header}>
         <TouchableOpacity 
           onPress={() => {
@@ -535,7 +538,7 @@ const styles = StyleSheet.create({
   input: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.text, fontSize: 15, marginBottom: 4 },
   chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 },
   chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface, marginRight: 8, marginBottom: 8 },
-  chipSelected: { backgroundColor: 'rgba(0, 255, 102, 0.1)', borderColor: COLORS.primary },
+  chipSelected: { backgroundColor: 'rgba(85, 107, 47, 0.1)', borderColor: COLORS.primary },
   chipText: { color: COLORS.textLight, fontSize: 14 },
   chipTextSelected: { color: COLORS.primary, fontWeight: 'bold' },
   uploadBox: { height: 120, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 8, marginBottom: 12, overflow: 'hidden' },

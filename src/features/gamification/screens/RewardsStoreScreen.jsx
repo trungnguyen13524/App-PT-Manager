@@ -10,10 +10,11 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useMissionStore } from '../../../store/missionStore';
 import { useDialogStore } from '../../../store/dialogStore';
 import questsService from '../../../api/services/quests.service';
+import { AbstractBackground } from '../../../components/common';
 
 const { width } = Dimensions.get('window');
 
-const RewardsStoreScreen = () => {
+const RewardsStoreScreen = ({ isNested = false }) => {
   const navigation = useNavigation();
   const { totalPoints, fetchDailyMissions } = useMissionStore();
 
@@ -187,7 +188,7 @@ const RewardsStoreScreen = () => {
         </View>
 
         {loadingRewards ? (
-          <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />
+          <ActivityIndicator size="large" color="#556B2F" style={{ marginTop: 50 }} />
         ) : filtered.length === 0 ? (
           <Text style={styles.emptyText}>Chưa có quà tặng nào.</Text>
         ) : (
@@ -196,8 +197,8 @@ const RewardsStoreScreen = () => {
               const canAfford = totalPoints >= item.pointsRequired;
               return (
                 <View key={item.id} style={styles.itemCard}>
-                  <View style={[styles.itemIconContainer, { backgroundColor: item.tier === 'SMALL' ? 'rgba(0, 255, 102, 0.1)' : 'rgba(255, 138, 0, 0.1)' }]}>
-                    {item.tier === 'SMALL' ? <Ticket color="#00FF66" size={32} /> : <Gift color="#FF8A00" size={32} />}
+                  <View style={[styles.itemIconContainer, { backgroundColor: item.tier === 'SMALL' ? 'rgba(85, 107, 47, 0.1)' : 'rgba(255, 138, 0, 0.1)' }]}>
+                    {item.tier === 'SMALL' ? <Ticket color="#556B2F" size={32} /> : <Gift color="#FF8A00" size={32} />}
                   </View>
                   <Text style={styles.itemTitle} numberOfLines={2}>{item.name}</Text>
                   
@@ -221,7 +222,7 @@ const RewardsStoreScreen = () => {
   };
 
   const renderHistory = () => {
-    if (loadingHistory) return <ActivityIndicator size="large" color="#00FF66" style={{ marginTop: 50 }} />;
+    if (loadingHistory) return <ActivityIndicator size="large" color="#556B2F" style={{ marginTop: 50 }} />;
     if (redemptions.length === 0) return <Text style={styles.emptyText}>Bạn chưa đổi món quà nào.</Text>;
 
     return (
@@ -234,7 +235,7 @@ const RewardsStoreScreen = () => {
           let statusColor = '#FFD700'; // PENDING
           let statusText = 'Đang chờ duyệt';
           if (isFulfilled) {
-            statusColor = '#00FF66';
+            statusColor = '#556B2F';
             statusText = 'Thành công';
           } else if (r.status === 'REJECTED') {
             statusColor = '#FF4D4D';
@@ -259,7 +260,7 @@ const RewardsStoreScreen = () => {
                   <View style={styles.voucherRow}>
                     <Text style={styles.voucherCodeText}>{r.voucherCode}</Text>
                     <TouchableOpacity onPress={() => copyToClipboard(r.voucherCode)} style={styles.copyBtn}>
-                      <Copy size={16} color="#00FF66" />
+                      <Copy size={16} color="#556B2F" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -278,19 +279,21 @@ const RewardsStoreScreen = () => {
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#FFF" size={28} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Đổi Quà</Text>
-        <View style={styles.walletBadge}>
-          <Text style={styles.walletIcon}>🪙</Text>
-          <Text style={styles.walletText}>{totalPoints.toLocaleString('en-US')}</Text>
+  const content = (
+    <>
+      {/* Header - Only show if not nested */}
+      {!isNested && (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <ChevronLeft color="#2D3748" size={28} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Đổi Quà</Text>
+          <View style={styles.walletBadge}>
+            <Text style={styles.walletIcon}>🪙</Text>
+            <Text style={styles.walletText}>{totalPoints.toLocaleString('en-US')}</Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Tabs */}
       <View style={styles.tabContainer}>
@@ -323,7 +326,7 @@ const RewardsStoreScreen = () => {
               <View style={styles.modalContent}>
                 <View style={styles.modalHeaderClose}>
                   <Text style={styles.modalTitle}>Xác nhận thông tin</Text>
-                  <TouchableOpacity onPress={() => setIsFormVisible(false)}><X color="#FFF" size={24} /></TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsFormVisible(false)}><X color="#2D3748" size={24} /></TouchableOpacity>
                 </View>
                 
                 <View style={styles.rewardSummary}>
@@ -334,11 +337,11 @@ const RewardsStoreScreen = () => {
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Số điện thoại (*)</Text>
                   <View style={styles.inputWrapper}>
-                    <Phone size={20} color="#94A3B8" />
+                    <Phone size={20} color="#4A5568" />
                     <TextInput
                       style={styles.input}
                       placeholder="0901234567"
-                      placeholderTextColor="#64748B"
+                      placeholderTextColor="#718096"
                       keyboardType="phone-pad"
                       value={phone}
                       onChangeText={setPhone}
@@ -350,11 +353,11 @@ const RewardsStoreScreen = () => {
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Địa chỉ giao hàng (*)</Text>
                   <View style={[styles.inputWrapper, { height: 80, alignItems: 'flex-start', paddingTop: 12 }]}>
-                    <MapPin size={20} color="#94A3B8" />
+                    <MapPin size={20} color="#4A5568" />
                     <TextInput
                       style={[styles.input, { height: '100%', textAlignVertical: 'top' }]}
                       placeholder="Số nhà, đường, phường, quận..."
-                      placeholderTextColor="#64748B"
+                      placeholderTextColor="#718096"
                       multiline
                       value={address}
                       onChangeText={setAddress}
@@ -372,7 +375,7 @@ const RewardsStoreScreen = () => {
                   disabled={!isFormValid || isRedeeming}
                 >
                   {isRedeeming ? (
-                    <ActivityIndicator color="#0B0F19" />
+                    <ActivityIndicator color="#F5F5DC" />
                   ) : (
                     <Text style={styles.submitBtnText}>Xác nhận đổi ngay</Text>
                   )}
@@ -387,7 +390,7 @@ const RewardsStoreScreen = () => {
       <Modal visible={isSuccessVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { alignItems: 'center', padding: 32 }]}>
-            <CheckCircle color="#00FF66" size={64} style={{ marginBottom: 16 }} />
+            <CheckCircle color="#556B2F" size={64} style={{ marginBottom: 16 }} />
             <Text style={styles.successTitle}>Đổi quà thành công!</Text>
             
             {redemptionResult?.voucherCode ? (
@@ -400,7 +403,7 @@ const RewardsStoreScreen = () => {
                   style={styles.copyMainBtn}
                   onPress={() => copyToClipboard(redemptionResult.voucherCode)}
                 >
-                  <Copy size={20} color="#0B0F19" />
+                  <Copy size={20} color="#F5F5DC" />
                   <Text style={styles.copyMainBtnText}>Sao chép mã</Text>
                 </TouchableOpacity>
               </>
@@ -419,94 +422,102 @@ const RewardsStoreScreen = () => {
           </View>
         </View>
       </Modal>
+    </>
+  );
 
+  if (isNested) {
+    return <View style={{ flex: 1 }}>{content}</View>;
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <AbstractBackground />
+      {content}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0B0F19' },
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 16,
   },
   backBtn: { padding: 4 },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#FFF' },
-  walletBadge: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255, 184, 0, 0.15)',
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
-    borderWidth: 1, borderColor: 'rgba(255, 184, 0, 0.4)',
-  },
-  walletIcon: { fontSize: 14, marginRight: 4 },
-  walletText: { fontSize: 14, fontWeight: '900', color: '#FFB800' },
+  headerTitle: { fontSize: 20, fontWeight: '900', color: '#1A202C' },
+  walletBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 184, 0, 0.15)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255, 184, 0, 0.3)' },
+  walletIcon: { fontSize: 16, marginRight: 4 },
+  walletText: { fontSize: 15, fontWeight: '900', color: '#DD9900' },
   tabContainer: {
     flexDirection: 'row', marginHorizontal: 20, marginBottom: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', borderRadius: 12, padding: 4,
+    borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.4)',
+    shadowColor: '#2D4A33', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
-  activeTab: { backgroundColor: 'rgba(255,255,255,0.1)' },
-  tabText: { color: 'rgba(255,255,255,0.5)', fontWeight: '700' },
-  activeTabText: { color: '#00FF66', fontWeight: '900' },
+  activeTab: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  tabText: { color: '#4A5568', fontWeight: '800' },
+  activeTabText: { color: '#3A4D20', fontWeight: '900' },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
   filterRow: { flexDirection: 'row', marginBottom: 20, flexWrap: 'wrap', gap: 10 },
-  filterPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  filterPillActive: { backgroundColor: 'rgba(0, 255, 102, 0.15)', borderColor: '#00FF66' },
-  filterPillText: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
-  filterPillTextActive: { color: '#00FF66', fontWeight: '800' },
+  filterPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0, 0, 0, 0.04)', borderWidth: 1, borderColor: 'transparent' },
+  filterPillActive: { backgroundColor: 'rgba(85, 107, 47, 0.1)', borderColor: '#556B2F' },
+  filterPillText: { color: '#2D3748', fontSize: 13, fontWeight: '700' },
+  filterPillTextActive: { color: '#3A4D20', fontWeight: '900' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   itemCard: {
-    width: (width - 56) / 2, backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16, padding: 16, marginBottom: 16, alignItems: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    width: (width - 56) / 2, backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 24, padding: 16, marginBottom: 16, alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.4)',
+    shadowColor: '#2D4A33', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.08, shadowRadius: 20, elevation: 3
   },
   itemIconContainer: { width: 64, height: 64, borderRadius: 32, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
-  itemTitle: { fontSize: 14, fontWeight: '700', color: '#FFF', textAlign: 'center', marginBottom: 16, minHeight: 40 },
-  buyBtn: { backgroundColor: '#00FF66', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, width: '100%', alignItems: 'center' },
-  buyBtnDisabled: { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
-  buyBtnText: { fontSize: 14, fontWeight: '800', color: '#0B0F19' },
-  emptyText: { color: '#64748B', textAlign: 'center', marginTop: 40, fontSize: 16 },
+  itemTitle: { fontSize: 14, fontWeight: '800', color: '#1A202C', textAlign: 'center', marginBottom: 16, minHeight: 40 },
+  buyBtn: { backgroundColor: '#556B2F', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, width: '100%', alignItems: 'center' },
+  buyBtnDisabled: { backgroundColor: 'rgba(85, 107, 47, 0.3)' },
+  buyBtnText: { fontSize: 14, fontWeight: '900', color: '#FFFFFF' },
+  emptyText: { color: '#4A5568', textAlign: 'center', marginTop: 40, fontSize: 16, fontWeight: '600' },
   
-  historyCard: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  historyCard: { backgroundColor: 'rgba(255, 255, 255, 0.85)', borderRadius: 24, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.4)', shadowColor: '#2D4A33', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.08, shadowRadius: 20, elevation: 3 },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  historyTitle: { color: '#FFF', fontSize: 16, fontWeight: 'bold', flex: 1 },
-  historyCost: { color: '#FFB800', fontSize: 14, fontWeight: '800' },
-  historyDate: { color: '#64748B', fontSize: 12, marginBottom: 12 },
+  historyTitle: { color: '#1A202C', fontSize: 16, fontWeight: '900', flex: 1 },
+  historyCost: { color: '#DD9900', fontSize: 15, fontWeight: '900' },
+  historyDate: { color: '#4A5568', fontSize: 13, marginBottom: 12, fontWeight: '600' },
   statusBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1 },
   statusText: { fontSize: 12, fontWeight: 'bold' },
   voucherCodeContainer: { marginTop: 12, backgroundColor: 'rgba(0,0,0,0.2)', padding: 12, borderRadius: 8 },
-  voucherLabel: { color: '#94A3B8', fontSize: 12, marginBottom: 4 },
+  voucherLabel: { color: '#4A5568', fontSize: 12, marginBottom: 4 },
   voucherRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  voucherCodeText: { color: '#00FF66', fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
+  voucherCodeText: { color: '#556B2F', fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
   copyBtn: { padding: 4 },
   rejectContainer: { flexDirection: 'row', marginTop: 12, padding: 8, backgroundColor: 'rgba(255, 77, 77, 0.1)', borderRadius: 8 },
   rejectNote: { color: '#FF4D4D', fontSize: 12, flex: 1 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalContent: { width: '100%', backgroundColor: '#1E293B', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  modalContent: { width: '100%', backgroundColor: '#EADDCA', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(0, 0, 0, 0.05)' },
   modalHeaderClose: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
-  rewardSummary: { backgroundColor: 'rgba(255,255,255,0.05)', padding: 16, borderRadius: 12, marginBottom: 20 },
-  rewardSummaryTitle: { color: '#FFF', fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#2D3748' },
+  rewardSummary: { backgroundColor: 'rgba(0, 0, 0, 0.02)', padding: 16, borderRadius: 12, marginBottom: 20 },
+  rewardSummaryTitle: { color: '#2D3748', fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
   rewardSummaryCost: { color: '#FFB800', fontSize: 14, fontWeight: '800' },
   inputGroup: { marginBottom: 16 },
-  inputLabel: { color: '#94A3B8', fontSize: 14, marginBottom: 8, fontWeight: '600' },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0B0F19', borderRadius: 12, paddingHorizontal: 16, height: 50, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  input: { flex: 1, color: '#FFF', fontSize: 16, marginLeft: 12 },
+  inputLabel: { color: '#4A5568', fontSize: 14, marginBottom: 8, fontWeight: '600' },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F5DC', borderRadius: 12, paddingHorizontal: 16, height: 50, borderWidth: 1, borderColor: 'rgba(0, 0, 0, 0.05)' },
+  input: { flex: 1, color: '#2D3748', fontSize: 16, marginLeft: 12 },
   errorText: { color: '#FF4D4D', fontSize: 12, marginTop: 4 },
-  submitBtn: { backgroundColor: '#00FF66', height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
+  submitBtn: { backgroundColor: '#556B2F', height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   submitBtnDisabled: { backgroundColor: 'rgba(255,255,255,0.2)' },
-  submitBtnText: { color: '#0B0F19', fontSize: 16, fontWeight: 'bold' },
+  submitBtnText: { color: '#F5F5DC', fontSize: 16, fontWeight: 'bold' },
 
-  successTitle: { fontSize: 24, fontWeight: 'bold', color: '#FFF', marginBottom: 8 },
-  successDesc: { color: '#94A3B8', fontSize: 14, marginBottom: 16 },
-  successDescCenter: { color: '#94A3B8', fontSize: 14, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
-  bigVoucherBox: { backgroundColor: '#0B0F19', paddingHorizontal: 24, paddingVertical: 16, borderRadius: 16, borderWidth: 2, borderColor: '#00FF66', marginBottom: 20 },
-  bigVoucherText: { color: '#00FF66', fontSize: 24, fontWeight: '900', letterSpacing: 2 },
-  copyMainBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#00FF66', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, marginBottom: 20 },
-  copyMainBtnText: { color: '#0B0F19', fontSize: 16, fontWeight: 'bold', marginLeft: 8 },
-  closeSuccessBtn: { width: '100%', paddingVertical: 16, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center' },
-  closeSuccessBtnText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' }
+  successTitle: { fontSize: 24, fontWeight: 'bold', color: '#2D3748', marginBottom: 8 },
+  successDesc: { color: '#4A5568', fontSize: 14, marginBottom: 16 },
+  successDescCenter: { color: '#4A5568', fontSize: 14, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
+  bigVoucherBox: { backgroundColor: '#F5F5DC', paddingHorizontal: 24, paddingVertical: 16, borderRadius: 16, borderWidth: 2, borderColor: '#556B2F', marginBottom: 20 },
+  bigVoucherText: { color: '#556B2F', fontSize: 24, fontWeight: '900', letterSpacing: 2 },
+  copyMainBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#556B2F', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, marginBottom: 20 },
+  copyMainBtnText: { color: '#F5F5DC', fontSize: 16, fontWeight: 'bold', marginLeft: 8 },
+  closeSuccessBtn: { width: '100%', paddingVertical: 16, borderRadius: 16, backgroundColor: 'rgba(0, 0, 0, 0.05)', alignItems: 'center' },
+  closeSuccessBtnText: { color: '#2D3748', fontSize: 16, fontWeight: 'bold' }
 });
 
 export default RewardsStoreScreen;

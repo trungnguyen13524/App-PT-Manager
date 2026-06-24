@@ -65,14 +65,14 @@ const PTProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         
         {/* Header Curve */}
         <View style={styles.headerContainer}>
           <View style={styles.headerTop}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <ArrowLeft color="#fff" size={24} />
+              <ArrowLeft color="#1A202C" size={24} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Cài đặt PT</Text>
             <View style={{ width: 24 }} />
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   // Header
   headerContainer: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     paddingHorizontal: 20,
@@ -184,7 +184,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...TYPOGRAPHY.h2,
-    color: '#fff',
+    color: '#1A202C',
+    fontWeight: '900',
   },
   profileInfo: {
     flexDirection: 'row',
@@ -208,13 +209,14 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontWeight: '900',
+    color: '#1A202C',
     marginBottom: 4,
   },
   userSub: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#4A5568',
+    fontWeight: '600',
   },
   
   // Menu
@@ -242,26 +244,30 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     marginRight: 16 
   },
-  menuOptionTitle: { fontSize: 15, fontWeight: '600', color: COLORS.text },
+  menuOptionTitle: { fontSize: 15, fontWeight: '800', color: '#1A202C' },
   divider: {
     height: 1,
     backgroundColor: COLORS.border,
     marginHorizontal: 16,
   },
   
-  // Logout
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(229, 57, 53, 0.1)',
+    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 20,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: 'rgba(229, 57, 53, 0.3)'
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+    elevation: 3,
   },
-  logoutText: { color: '#E53935', fontSize: 16, fontWeight: '700', marginLeft: 8 },
+  logoutText: { color: '#EF4444', fontSize: 16, fontWeight: '900', marginLeft: 8 },
 });
 
 export default PTProfileScreen;
