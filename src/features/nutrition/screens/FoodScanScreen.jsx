@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Dimensions,
   Platform,
+  Image as RNImage,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +27,8 @@ const FoodScanScreen = () => {
   const [permission, requestPermission] = useCameraPermissions();
   const [flash, setFlash] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [scanStatusMsg, setScanStatusMsg] = useState('Đang phân tích...');
+  const [capturedImageUri, setCapturedImageUri] = useState(null);
   const cameraRef = useRef(null);
 
   useEffect(() => {
@@ -62,50 +65,13 @@ const FoodScanScreen = () => {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.5,
       });
-
-      const formData = new FormData();
-      formData.append('image', {
-        uri: Platform.OS === 'ios' ? photo.uri.replace('file://', '') : photo.uri,
-        name: 'photo.jpg',
-        type: 'image/jpeg',
-      });
-
-      try {
-        const response = await scanService.scanImage(formData);
-        const aiData = response?.data || response || {};
-        
-        setIsScanning(false);
-        navigation.navigate('ScanResult', {
-          scannedData: {
-            scanId: aiData.id || aiData.scanId || null,
-            name: aiData.name || aiData.foodName || "Món ăn (AI nhận diện)",
-            calories: aiData.calories || 0,
-            protein: aiData.macros?.proteinG || aiData.protein || 0,
-            carbs: aiData.macros?.carbsG || aiData.carbs || 0,
-            fat: aiData.macros?.fatG || aiData.fat || 0,
-            confidence: aiData.confidence || 90,
-            image: photo.uri
-          }
-        });
-      } catch (apiError) {
-        console.warn('Scan API error, using fallback:', apiError);
-        setIsScanning(false);
-        navigation.navigate('ScanResult', {
-          scannedData: {
-            name: "Món ăn (Demo API Failed)",
-            calories: 350,
-            protein: 20,
-            carbs: 40,
-            fat: 10,
-            confidence: 99,
-            image: photo.uri
-          }
-        });
-      }
-
+      setCapturedImageUri(photo.uri);
+      
+      await processAndUploadImage(photo.uri);
     } catch (error) {
       console.error(error);
       setIsScanning(false);
+      setCapturedImageUri(null);
       useDialogStore.getState().showDialog({
         title: "Lỗi",
         message: "Không thể chụp ảnh. Vui lòng thử lại!",
@@ -114,16 +80,112 @@ const FoodScanScreen = () => {
     }
   };
 
+  const processAndUploadImage = async (uri, attempt = 1) => {
+    setIsScanning(true);
+    if (attempt === 1) setScanStatusMsg('Đang phân tích...');
+    
+    try {
+      const uriPath = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
+      const fileExtension = uriPath.split('.').pop().toLowerCase();
+      const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
+      const fileName = `scan_${Date.now()}.${fileExtension}`;
+
+      const formData = new FormData();
+      formData.append('image', {
+        uri: uriPath,
+        name: fileName,
+        type: mimeType,
+      });
+
+      const response = await scanService.scanImage(formData);
+      const aiData = response?.data || response || {};
+      
+      setIsScanning(false);
+      setScanStatusMsg('Đang phân tích...');
+      navigation.navigate('ScanResult', {
+        scannedData: {
+          scanId: aiData.id || aiData.scanId || null,
+          name: aiData.name || aiData.foodName || "Món ăn (AI nhận diện)",
+          calories: aiData.calories || aiData.Calories || aiData.nutrition?.calories || aiData.nutritionalInfo?.calories || aiData.nutritional_info?.calories || 0,
+          protein: aiData.macros?.proteinG || aiData.protein || aiData.Protein || aiData.macros?.protein || aiData.nutrition?.protein || aiData.nutrition?.proteinG || 0,
+          carbs: aiData.macros?.carbsG || aiData.carbs || aiData.Carbs || aiData.macros?.carbs || aiData.nutrition?.carbs || aiData.nutrition?.carbsG || 0,
+          fat: aiData.macros?.fatG || aiData.fat || aiData.Fat || aiData.macros?.fat || aiData.nutrition?.fat || aiData.nutrition?.fatG || 0,
+          confidence: aiData.confidence || 90,
+          ingredients: aiData.ingredients || [],
+          portion: aiData.portion || "",
+          image: uri
+        }
+      });
+    } catch (apiError) {
+      console.error(`Lỗi API nhận diện (Lần ${attempt}):`, apiError);
+      let errorMsg = apiError?.message || "";
+      
+      // Nếu là lỗi 502/sập server và chưa quá 3 lần thử -> tự động đợi và thử lại
+      if ((errorMsg.includes('502') || errorMsg.includes('<!DOCTYPE') || apiError?.code === 'AI_SERVICE_UNAVAILABLE' || apiError?.code === 'HTTP_502') && attempt < 3) {
+        setScanStatusMsg(`Server đang khởi động lại...\nSẽ thử lại sau 15s (Lần ${attempt}/3)`);
+        
+        // Đợi 15 giây rồi gọi lại chính hàm này (do Render Free tier khởi động mất khoảng 50s)
+        setTimeout(() => {
+          processAndUploadImage(uri, attempt + 1);
+        }, 15000);
+        return; // Kết thúc để hàm setTimout chạy
+      }
+
+      // Nếu đã thử quá 3 lần hoặc là lỗi khác thì hiện thông báo
+      setIsScanning(false);
+      setScanStatusMsg('Đang phân tích...');
+      
+      if (!errorMsg) errorMsg = "Không thể nhận diện món ăn. Vui lòng kiểm tra mạng hoặc thử lại sau.";
+      if (errorMsg.includes('<!DOCTYPE html>') || errorMsg.includes('502') || apiError?.code === 'AI_SERVICE_UNAVAILABLE') {
+        errorMsg = "Server vẫn chưa khởi động xong. Bạn có muốn tự nhập thông tin món ăn không?";
+      } else if (errorMsg.length > 100) {
+        errorMsg = "Đã xảy ra lỗi hệ thống (AI Server Error). Vui lòng thử lại sau.";
+      }
+
+      useDialogStore.getState().showDialog({
+        title: "Lỗi nhận diện AI",
+        message: errorMsg,
+        type: 'warning',
+        buttons: [
+          { text: 'Đóng', style: 'cancel' },
+          { 
+            text: 'Nhập thủ công', 
+            onPress: () => {
+              navigation.navigate('ScanResult', {
+                scannedData: {
+                  scanId: null,
+                  name: "",
+                  calories: 0,
+                  protein: 0,
+                  carbs: 0,
+                  fat: 0,
+                  confidence: 0,
+                  ingredients: [],
+                  portion: "",
+                  image: uri
+                }
+              });
+            }
+          }
+        ]
+      });
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
 
-      <CameraView
-        style={StyleSheet.absoluteFill}
-        facing="back"
-        flash={flash ? 'on' : 'off'}
-        ref={cameraRef}
-      />
+      {capturedImageUri ? (
+        <RNImage source={{ uri: capturedImageUri }} style={StyleSheet.absoluteFill} />
+      ) : (
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          facing="back"
+          flash={flash ? 'on' : 'off'}
+          ref={cameraRef}
+        />
+      )}
 
       <View style={StyleSheet.absoluteFill}>
         <View style={styles.maskTop} />
@@ -140,8 +202,8 @@ const FoodScanScreen = () => {
            <View style={styles.hintContainer}>
             <View style={styles.hintPill}>
               {isScanning ? <ActivityIndicator color="#2D3748" size="small" style={{ marginRight: 8 }} /> : null}
-              <Text style={styles.hintText}>
-                {isScanning ? 'Đang phân tích...' : 'Đưa món ăn vào khung hình'}
+              <Text style={[styles.hintText, isScanning && { textAlign: 'center' }]}>
+                {isScanning ? scanStatusMsg : 'Đưa món ăn vào khung hình'}
               </Text>
             </View>
           </View>
@@ -159,20 +221,42 @@ const FoodScanScreen = () => {
         </View>
 
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.glassIconBtn}>
-            <ImageIcon color="#2D3748" size={24} />
-          </TouchableOpacity>
+          {capturedImageUri ? (
+            <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-evenly', paddingHorizontal: 20 }}>
+              <TouchableOpacity 
+                style={[styles.retakeBtn, isScanning && styles.captureBtnDisabled]}
+                onPress={() => setCapturedImageUri(null)}
+                disabled={isScanning}
+              >
+                <Text style={styles.retakeBtnText}>Chụp lại</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.captureBtnOuter, isScanning && styles.captureBtnDisabled]}
-            onPress={handleCapture}
-            disabled={isScanning}
-            activeOpacity={0.8}
-          >
-            <View style={styles.captureBtnInner} />
-          </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.retryBtn, isScanning && styles.captureBtnDisabled]}
+                onPress={() => processAndUploadImage(capturedImageUri)}
+                disabled={isScanning}
+              >
+                <Text style={styles.retryBtnText}>Thử lại ảnh này</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <TouchableOpacity style={styles.glassIconBtn}>
+                <ImageIcon color="#2D3748" size={24} />
+              </TouchableOpacity>
 
-          <View style={{ width: 50, height: 50 }} />
+              <TouchableOpacity
+                style={[styles.captureBtnOuter, isScanning && styles.captureBtnDisabled]}
+                onPress={handleCapture}
+                disabled={isScanning}
+                activeOpacity={0.8}
+              >
+                <View style={styles.captureBtnInner} />
+              </TouchableOpacity>
+
+              <View style={{ width: 50, height: 50 }} />
+            </>
+          )}
         </View>
       </SafeAreaView>
     </View>
@@ -317,6 +401,30 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: '#2D3748',
+  },
+  retakeBtn: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  retakeBtnText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  retryBtn: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    backgroundColor: COLORS.primary,
+  },
+  retryBtnText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '700',
   }
 });
 

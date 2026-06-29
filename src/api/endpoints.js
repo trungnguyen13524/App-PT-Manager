@@ -26,6 +26,7 @@ export const endpoints = {
   NUTRITION: {
     FOOD_LOGS: '/nutrition/food-logs',
     DAILY_SUMMARY: '/nutrition/summary/daily',
+    MEAL_PLANS: '/nutrition/meal-plans',
     GENERATE_MEAL_PLAN: '/nutrition/meal-plans/generate',
     SCAN: '/scan',
   },
@@ -33,6 +34,11 @@ export const endpoints = {
     SEARCH: '/foods/search',
     CATEGORIES: '/foods/categories',
     DETAIL: '/foods', // Will be constructed as /foods/{id}
+  },
+  SCAN: {
+    UPLOAD: '/scan',
+    HISTORY: '/scan/history',
+    DETAIL: '/scan/:scanId',
   },
   DASHBOARD: {
     USER: '/dashboard/user',

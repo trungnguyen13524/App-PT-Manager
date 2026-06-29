@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,20 +11,47 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Search, Filter, Play, Clock, BarChart } from 'lucide-react-native';
+import { Search, Filter, Play, Clock, BarChart, Dumbbell, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
 import { useWorkoutStore } from '../../../store/workoutStore';
+import { useNutritionStore } from '../../../store/nutritionStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WORKOUT_IMAGES, toImageKey } from '../../../assets';
 
 const { width } = Dimensions.get('window');
 
 const WorkoutListScreen = () => {
   const navigation = useNavigation();
-  const { programs, isLoading, fetchExercises } = useWorkoutStore();
+  const { programs, isLoading: isProgramsLoading, fetchExercises, startSession } = useWorkoutStore();
+  const { suggestedWorkout, fetchActiveMealPlan, isLoading: isNutritionLoading } = useNutritionStore();
+
+  // Mặc định mở Ngày đầu tiên (index 0), các ngày khác đóng
+  const [expandedDays, setExpandedDays] = useState({ 0: true });
+
+  const toggleDay = (idx) => {
+    setExpandedDays(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const handleStartAiWorkout = (dayPlan, dayIndex) => {
+    const sessionData = {
+      id: `ai_day_${dayIndex + 1}`,
+      name: `Buổi tập AI - Ngày ${dayIndex + 1}: ${dayPlan.focus}`,
+      exercises: dayPlan.exercises.map(ex => ({
+        ...ex,
+        title: ex.display_name || ex.exercise_name,
+        name: ex.display_name || ex.exercise_name,
+      }))
+    };
+    startSession(sessionData);
+    navigation.navigate('ActiveWorkout');
+  };
 
   useEffect(() => {
     fetchExercises();
+    fetchActiveMealPlan();
   }, []);
+
+  const isLoading = isProgramsLoading || isNutritionLoading;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,11 +83,114 @@ const WorkoutListScreen = () => {
         {/* Categories (Quick Filter) */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categories}>
           {['Tất cả', 'Cơ ngực', 'Cơ bụng', 'Cơ chân', 'Yoga', 'Cardio'].map((cat, idx) => (
-            <TouchableOpacity key={cat} style={[styles.categoryTag, idx === 0 && styles.categoryTagActive]}>
-              <Text style={[styles.categoryText, idx === 0 && styles.categoryTextActive]}>{cat}</Text>
+            <TouchableOpacity 
+              key={idx} 
+              style={[styles.catBtn, cat === 'Tất cả' && styles.catBtnActive]}
+            >
+              <Text style={[styles.catBtnText, cat === 'Tất cả' && styles.catBtnTextActive]}>{cat}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        <TouchableOpacity 
+          style={styles.libraryBanner} 
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('ServerExerciseLibrary')}
+        >
+          <View style={styles.libraryBannerIcon}>
+            <Search color="#fff" size={24} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.libraryBannerTitle}>Khám phá Thư Viện Bài Tập</Text>
+            <Text style={styles.libraryBannerSub}>Hơn 200+ bài tập với hướng dẫn chi tiết</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* AI Workout Section */}
+        {suggestedWorkout && suggestedWorkout.length > 0 && (
+          <View style={{ marginBottom: 25 }}>
+            <Text style={styles.sectionTitle}>Lịch tập AI (Gợi ý cho bạn)</Text>
+            {suggestedWorkout.map((dayPlan, idx) => {
+              const isRest = !dayPlan.exercises || dayPlan.exercises.length === 0;
+              return (
+                <View key={`ai-work-${idx}`} style={styles.aiWorkoutCard}>
+                  <TouchableOpacity 
+                    style={styles.aiHeader}
+                    onPress={() => toggleDay(idx)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.aiDayText}>Ngày {dayPlan.day} • {dayPlan.session_name}</Text>
+                      <Text style={styles.aiDuration}>{dayPlan.duration_minutes} phút</Text>
+                    </View>
+                    <View style={styles.expandIconContainer}>
+                      {expandedDays[idx] ? (
+                        <ChevronUp color="#94A3B8" size={24} />
+                      ) : (
+                        <ChevronDown color="#94A3B8" size={24} />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Chỉ hiển thị nội dung nếu ngày đó được mở */}
+                  {expandedDays[idx] && (
+                    <View style={styles.aiExpandedContent}>
+                      {isRest ? (
+                        <View style={styles.restDayContainer}>
+                          <Text style={styles.restText}>Hôm nay là ngày nghỉ (Rest Day) 🌿</Text>
+                          <Text style={styles.restNotes}>{dayPlan.notes}</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.aiContent}>
+                          <Text style={styles.aiFocus}>Nhóm cơ: {dayPlan.focus}</Text>
+                          {dayPlan.exercises.map((ex, exIdx) => {
+                            const exName = ex.display_name || ex.exercise_name;
+                            const imgKey = toImageKey(exName);
+                            const imageSource = WORKOUT_IMAGES[imgKey];
+                            
+                            return (
+                              <View key={exIdx} style={styles.premiumExerciseCard}>
+                                {imageSource ? (
+                                  <Image source={imageSource} style={styles.premiumThumb} />
+                                ) : (
+                                  <View style={[styles.premiumThumb, { backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center' }]}>
+                                    <Dumbbell color="#94A3B8" size={24} />
+                                  </View>
+                                )}
+                                <View style={styles.premiumInfo}>
+                                  <Text style={styles.premiumNameText} numberOfLines={1}>{exName}</Text>
+                                  <View style={styles.premiumBadgesRow}>
+                                    <View style={styles.badge}>
+                                      <Text style={styles.badgeText}>{ex.sets} Sets</Text>
+                                    </View>
+                                    <View style={styles.badge}>
+                                      <Text style={styles.badgeText}>{ex.reps}</Text>
+                                    </View>
+                                  </View>
+                                </View>
+                                <TouchableOpacity style={styles.premiumPlayBtn}>
+                                  <ChevronRight color="#94A3B8" size={20} />
+                                </TouchableOpacity>
+                              </View>
+                            );
+                          })}
+                          <TouchableOpacity 
+                              style={styles.startAiBtn}
+                              onPress={() => handleStartAiWorkout(dayPlan, idx)}
+                            >
+                              <Play color="#FFF" size={20} style={{ marginRight: 8 }} />
+                              <Text style={styles.startAiBtnText}>Bắt đầu buổi tập này</Text>
+                            </TouchableOpacity>
+                          {dayPlan.notes ? <Text style={styles.aiNotes}>💡 {dayPlan.notes}</Text> : null}
+                        </View>
+                      )}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        )}
 
         <Text style={styles.sectionTitle}>Chương trình tiêu biểu</Text>
 
@@ -143,16 +273,64 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   categories: { marginBottom: 25 },
-  categoryTag: {
+  catBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: COLORS.background,
     marginRight: 10,
   },
-  categoryTagActive: { backgroundColor: COLORS.primary },
-  categoryText: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '600' },
-  categoryTextActive: { color: '#fff' },
+  catBtnActive: { backgroundColor: COLORS.primary },
+  catBtnText: {
+    color: COLORS.textLight,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  catBtnTextActive: {
+    color: '#fff',
+  },
+  libraryBanner: {
+    backgroundColor: '#0F172A',
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  libraryBannerIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  libraryBannerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  libraryBannerSub: {
+    fontSize: 13,
+    color: '#94A3B8',
+  },
+  startAiBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0F172A',
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  startAiBtnText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
   sectionTitle: { ...TYPOGRAPHY.h3, color: COLORS.text, marginBottom: 15 },
   programCard: {
     height: 200,
@@ -199,6 +377,132 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  aiWorkoutCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  aiHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  expandIconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
+  },
+  aiExpandedContent: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  aiDayText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  aiDuration: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#059669', // Dark green like in screenshot
+  },
+  restDayContainer: {
+    backgroundColor: '#ECFDF5',
+    padding: 12,
+    borderRadius: 8,
+  },
+  restText: {
+    color: '#059669',
+    fontWeight: '800',
+    fontSize: 15,
+    marginBottom: 4,
+  },
+  restNotes: {
+    color: '#047857',
+    fontSize: 13,
+  },
+  aiContent: {
+    paddingTop: 4,
+  },
+  aiFocus: {
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: 12,
+  },
+  premiumExerciseCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  premiumThumb: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    marginRight: 14,
+  },
+  premiumInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  premiumNameText: {
+    fontSize: 15,
+    color: '#0F172A',
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  premiumBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  badge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 6,
+    marginBottom: 4,
+  },
+  badgeText: {
+    fontSize: 12,
+    color: '#475569',
+    fontWeight: '700',
+  },
+  premiumPlayBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  aiNotes: {
+    marginTop: 12,
+    fontSize: 13,
+    color: '#D97706',
+    backgroundColor: '#FEF3C7',
+    padding: 8,
+    borderRadius: 8,
   }
 });
 

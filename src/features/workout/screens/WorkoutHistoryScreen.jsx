@@ -62,7 +62,9 @@ const WorkoutHistoryScreen = () => {
           <View style={styles.iconWrapper}>
             <Dumbbell size={20} color="#556B2F" />
           </View>
-          <Text style={styles.cardTitle}>{item.name || 'Buổi tập không tên'}</Text>
+          <Text style={styles.cardTitle}>
+            {item.name && !item.name.includes('undefined') ? item.name : 'Buổi tập cá nhân'}
+          </Text>
         </View>
         <Text style={styles.dateText}>{formatDate(item.performedAt)}</Text>
       </View>
@@ -128,7 +130,7 @@ const WorkoutHistoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2D3748',
+    backgroundColor: '#F8FAFC',
   },
   bgBlob1: {
     position: 'absolute',
@@ -180,12 +182,17 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   glassCard: {
-    backgroundColor: 'rgba(0, 0, 0, 0.02)',
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardHeader: {
     marginBottom: 16,
@@ -218,7 +225,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: '#F1F5F9',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,

@@ -16,8 +16,10 @@ const nutritionService = {
 
   // GET /nutrition/summary/daily
   getDailySummary: (params) => apiClient.get(endpoints.NUTRITION.DAILY_SUMMARY, { params }),
+  // GET /nutrition/meal-plans
+  getActiveMealPlan: () => apiClient.get(endpoints.NUTRITION.MEAL_PLANS),
   // POST /nutrition/meal-plans/generate
-  generateMealPlan: () => apiClient.post(endpoints.NUTRITION.GENERATE_MEAL_PLAN),
+  generateMealPlan: (data) => apiClient.post(endpoints.NUTRITION.GENERATE_MEAL_PLAN, data, { timeout: 60000 }),
 
   // POST /scan
   scanFood: (data) => apiClient.post(endpoints.NUTRITION.SCAN, data),

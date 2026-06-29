@@ -7,11 +7,11 @@ import { endpoints } from '../endpoints';
 const scanService = {
   // POST /scan - Phân tích ảnh món ăn (multipart/form-data)
   scanImage: (formData) => apiClient.post(endpoints.SCAN.UPLOAD, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 120000 // Tăng lên 120s (2 phút) để chờ backend quét và đổi vòng lặp API key
   }),
   
-  // POST /scan/:scanId/confirm - Xác nhận thông tin dinh dưỡng sau khi scan
-  confirmScan: (scanId, data) => apiClient.post(endpoints.SCAN.CONFIRM.replace(':scanId', scanId), data),
+  // (Deleted confirmScan as per new API contract)
   
   // GET /scan/history - Lấy lịch sử quét
   getScanHistory: (params) => apiClient.get(endpoints.SCAN.HISTORY, { params }),

@@ -9,6 +9,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FOOD_IMAGES, toImageKey } from '../../../assets';
 import foodsData from '../../../assets/foods.json';
 import ptService from '../../../api/services/pt.service';
+import { useNutritionStore } from '../../../store/nutritionStore';
+import { Sparkles } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 60) / 2;
@@ -17,7 +19,8 @@ const SuggestedMealsScreen = () => {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('ai'); // 'ai' | 'library'
   const [ptMeals, setPtMeals] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingPT, setIsFetchingPT] = useState(true);
+  const { suggestedMenu, generateAIMealPlan, isLoading: isGeneratingAI } = useNutritionStore();
 
   useEffect(() => {
     fetchPTMeals();
@@ -33,23 +36,54 @@ const SuggestedMealsScreen = () => {
     } catch (err) {
       console.log('No PT meals or error', err.response?.data || err.message);
     } finally {
-      setIsLoading(false);
+      setIsFetchingPT(false);
     }
   };
 
-  // Mock AI Plan for 4 meals
-  const aiMeals = [
-    { id: 'm1', mealType: 'BREAKFAST', name: 'Phở bò tái', calories: 450 },
-    { id: 'm2', mealType: 'LUNCH', name: 'Ức gà áp chảo', calories: 320 },
-    { id: 'm3', mealType: 'DINNER', name: 'Salad ức gà', calories: 280 },
-    { id: 'm4', mealType: 'SNACK', name: 'Sữa chua', calories: 120 },
-  ];
+  const handleGenerateAI = async () => {
+    await generateAIMealPlan();
+  };
 
-  const mealTypeLabels = {
-    'BREAKFAST': 'Bữa Sáng',
-    'LUNCH': 'Bữa Trưa',
-    'DINNER': 'Bữa Tối',
-    'SNACK': 'Bữa Phụ'
+  const renderAIMealCard = (meal, dayIndex, mealIndex) => {
+    const imgKey = toImageKey(meal.items?.[0] || meal.name);
+    const imageSource = FOOD_IMAGES[imgKey] || FOOD_IMAGES['uc_ga_ap_chao'];
+
+    // Map to the format MealDetail expects from JSON (fallback for UI)
+    const payloadItem = {
+      Description_VN: meal.items?.join(', ') || meal.name,
+      Calories: meal.calories,
+      Protein: 0, 
+      Carbohydrate: 0, 
+      TotalFat: 0
+    };
+
+    return (
+      <TouchableOpacity 
+        key={`ai-${dayIndex}-${mealIndex}`} 
+        style={styles.card}
+        activeOpacity={0.8}
+        onPress={() => handlePressCard(payloadItem)}
+      >
+        <View style={styles.imageContainer}>
+          {imageSource ? (
+            <Image source={imageSource} style={styles.image} />
+          ) : (
+             <View style={[styles.image, { backgroundColor: '#CBD5E1' }]} />
+          )}
+          <View style={styles.glassTag}>
+            <Text style={styles.glassTagText}>{meal.calories} kcal</Text>
+          </View>
+        </View>
+        <View style={styles.cardFooter}>
+          <Text style={styles.mealTypeName}>
+            {meal.name}
+          </Text>
+          <Text style={styles.foodName} numberOfLines={2}>
+            {meal.items?.join(', ')}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
   };
 
   const handlePressCard = (item) => {
@@ -166,18 +200,46 @@ const SuggestedMealsScreen = () => {
       {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {activeTab === 'ai' ? (
-          isLoading ? (
+          isFetchingPT ? (
             <View style={{ marginTop: 50, alignItems: 'center' }}>
               <ActivityIndicator size="large" color="#38BDF8" />
             </View>
+          ) : ptMeals && ptMeals.length > 0 ? (
+            <View style={styles.verticalList}>
+              {ptMeals.map((m) => renderCard(m, true))}
+            </View>
           ) : (
             <View style={styles.verticalList}>
-              {ptMeals && ptMeals.length > 0 ? (
-                // Render PT Meals overrides AI
-                ptMeals.map((m) => renderCard(m, true))
+              {!suggestedMenu || suggestedMenu.length === 0 ? (
+                <View style={styles.emptyAIContainer}>
+                  <Text style={styles.emptyAIText}>Bạn chưa có thực đơn AI nào.</Text>
+                  <TouchableOpacity 
+                    style={styles.generateBtn}
+                    onPress={handleGenerateAI}
+                    disabled={isGeneratingAI}
+                  >
+                    {isGeneratingAI ? (
+                      <ActivityIndicator color="#0A0B10" />
+                    ) : (
+                      <>
+                        <Sparkles color="#0A0B10" size={20} style={{ marginRight: 8 }} />
+                        <Text style={styles.generateBtnText}>TẠO THỰC ĐƠN & LỊCH TẬP AI</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
               ) : (
-                // Render AI Meals
-                aiMeals.map((m) => renderCard(m, false))
+                suggestedMenu.map((dayPlan, dayIndex) => (
+                  <View key={`day-${dayIndex}`} style={styles.dayGroup}>
+                    <View style={styles.dayHeader}>
+                      <Text style={styles.dayTitle}>Ngày {dayPlan.day}</Text>
+                      <Text style={styles.dayCalo}>{dayPlan.calories_estimate} kcal</Text>
+                    </View>
+                    {dayPlan.meals?.map((meal, mealIndex) => 
+                      renderAIMealCard(meal, dayIndex, mealIndex)
+                    )}
+                  </View>
+                ))
               )}
             </View>
           )
@@ -275,6 +337,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#2D3748',
+  },
+  emptyAIContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyAIText: {
+    color: '#9CA3AF',
+    fontSize: 16,
+    marginBottom: 24,
+  },
+  generateBtn: {
+    flexDirection: 'row',
+    backgroundColor: '#38BDF8',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  generateBtnText: {
+    color: '#0A0B10',
+    fontWeight: '800',
+    fontSize: 15,
+  },
+  dayGroup: {
+    marginBottom: 24,
+  },
+  dayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  dayTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#EADDCA',
+  },
+  dayCalo: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#38BDF8',
   }
 });
 

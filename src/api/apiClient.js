@@ -78,8 +78,8 @@ apiClient.interceptors.response.use(
     // Bóc tách lỗi từ Error Envelope của BE (RFC 7807 style)
     // Spec: { success: false, error: { code, message, details }, meta: { ... } }
     const apiError = error.response?.data?.error || { 
-      code: 'INTERNAL_SERVER_ERROR', 
-      message: 'Có lỗi xảy ra, vui lòng thử lại sau.' 
+      code: error.response?.status ? `HTTP_${error.response.status}` : 'UNKNOWN_ERROR', 
+      message: error.response?.data?.message || `Lỗi hệ thống: ${error.message} - ${error.response ? JSON.stringify(error.response.data) : ''}` 
     };
     
     // Tắt tạm log này cho đỡ rối Terminal vì luồng Food Scan đã hoạt động tốt

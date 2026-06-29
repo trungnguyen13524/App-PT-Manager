@@ -110,7 +110,7 @@ const StudentTabNavigator = () => {
   const handleFabSelect = (key) => {
     setFabOpen(false);
     if (key === 'exercise') {
-      navigation.navigate('ExerciseLibrary');
+      navigation.navigate('WorkoutList');
     } else if (key === 'menu') {
       navigation.navigate('MealLog');
     } else if (key === 'camera') {

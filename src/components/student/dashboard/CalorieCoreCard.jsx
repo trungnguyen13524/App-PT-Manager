@@ -20,7 +20,7 @@ const CalorieCoreCard = ({ todayCalories, todayMacros, streakDays, onShareClick 
   return (
     <View style={[styles.glassCard, styles.calorieCard]}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <Text style={styles.cardTitle}>NĂNG LƯỢNG LÕI</Text>
+        <Text style={styles.cardTitle}>CALO TRONG NGÀY</Text>
         <TouchableOpacity onPress={onShareClick} style={styles.shareBtn}>
           <Share2 color="#2D3748" size={16} />
           <Text style={styles.shareText}>Khoe ngay</Text>

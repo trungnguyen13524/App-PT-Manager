@@ -10,6 +10,7 @@ export const useNutritionStore = create((set, get) => ({
   },
   meals: [],
   suggestedMenu: null,
+  suggestedWorkout: null,
   weeklySummary: null,
   isLoading: false,
   error: null,
@@ -122,35 +123,36 @@ export const useNutritionStore = create((set, get) => ({
   // Lấy thực đơn gợi ý (Meal Plan)
   fetchActiveMealPlan: async () => {
     try {
-      // In v1, there is no getActiveMealPlan endpoint. If needed, we can mock or do nothing.
-      // We will rely on user explicitly calling generateAIMealPlan
+      const response = await nutritionService.getActiveMealPlan();
+      const resData = response.data || response;
+      const planData = resData.data || resData;
+
+      if (planData && (planData.daily_meals || planData.exercise_plan)) {
+        set({ 
+          suggestedMenu: planData.daily_meals || [],
+          suggestedWorkout: planData.exercise_plan || []
+        });
+      }
     } catch (err) {
-      console.warn('Không thể lấy thực đơn gợi ý');
+      console.warn('Không thể lấy thực đơn gợi ý (Có thể chưa tạo lần nào):', err.message);
     }
   },
 
-  // Tạo thực đơn AI mới
+  // Tạo thực đơn AI & Lịch tập AI mới
   generateAIMealPlan: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await nutritionService.generateMealPlan();
-      const planData = response.data || response;
-      if (planData && planData.daily_meals) {
+      const response = await nutritionService.generateMealPlan({});
+      const resData = response.data || response;
+      const planData = resData.data || resData; 
+      
+      if (planData && (planData.daily_meals || planData.exercise_plan)) {
         set({ 
-          suggestedMenu: {
-            morning: planData.daily_meals.breakfast || [],
-            lunch: planData.daily_meals.lunch || [],
-            evening: planData.daily_meals.dinner || []
-          },
-          isLoading: false
+          suggestedMenu: planData.daily_meals || [],
+          suggestedWorkout: planData.exercise_plan || [],
+          isLoading: false 
         });
-        
-        // Trigger AI_MENU mission
-        const { useMissionStore } = require('./missionStore');
-        const todayStr = new Date().toISOString().split('T')[0];
-        useMissionStore.getState().triggerMissionAction('AI_MENU', undefined, todayStr);
-        
-        return { success: true };
+        return { success: true, data: planData };
       } else {
         set({ isLoading: false, error: 'Invalid data format from AI' });
         return { success: false, error: 'Invalid data format from AI' };

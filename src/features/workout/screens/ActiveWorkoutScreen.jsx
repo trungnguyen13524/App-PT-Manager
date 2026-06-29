@@ -10,11 +10,31 @@ import {
   Platform
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { ChevronLeft, ChevronRight, Play, CheckCircle2, Clock, Flame, X } from 'lucide-react-native';
-import { COLORS, TYPOGRAPHY, SPACING } from '../../../theme';
+import { ChevronRight, Clock, X } from 'lucide-react-native';
+import { COLORS } from '../../../theme';
 import { useWorkoutStore } from '../../../store/workoutStore';
 import { useDialogStore } from '../../../store/dialogStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WORKOUT_IMAGES, toImageKey } from '../../../assets';
+
+const EXERCISE_ID_IMAGE_MAP = {
+  'ex_burpees': 'bat_nhay_toan_than',
+  'ex_high_knees': 'nang_cao_dui',
+  'ex_tricep_dip': 'chong_day_nguoc',
+  'ex_pushups': 'hit_dat_co_ban',
+  'ex_plank': 'plank_co_ban',
+  'ex_squats': 'ngoi_xom',
+  'ex_lunges': 'buoc_gap_goi',
+  'ex_pullups': 'du_xa_don',
+  'ex_jumping_jacks': 'nhay_dang_tay_chan',
+  'ex_crunches': 'gap_bung_co_ban',
+  'ex_mountain_climbers': 'leo_nui_cheo_chan',
+  'ex_situps': 'gap_bung_co_ban',
+  'ex_wall_sit': 'ngoi_dua_tuong',
+  'ex_jump_rope': 'nhay_day',
+  'ex_bicycle_crunches': 'gap_bung_dap_xe',
+  'ex_dips': 'chong_day_nguoc'
+};
 
 const { width } = Dimensions.get('window');
 
@@ -30,6 +50,11 @@ const ActiveWorkoutScreen = () => {
   // Lấy danh sách bài tập từ Session (Backend trả về exercises trong session)
   const sessionExercises = currentSession?.exercises || [];
   const currentExercise = sessionExercises[currentIndex];
+
+  const exerciseName = currentExercise?.name || currentExercise?.title || currentExercise?.display_name || 'Bài tập';
+  const mappedKey = EXERCISE_ID_IMAGE_MAP[currentExercise?.id];
+  const imgKey = mappedKey || toImageKey(exerciseName);
+  const imageSource = WORKOUT_IMAGES[imgKey];
 
   useEffect(() => {
     // Bắt đầu đếm giờ
@@ -79,6 +104,13 @@ const ActiveWorkoutScreen = () => {
                   onPress: () => navigation.navigate('Trang chủ')
                 }]
               });
+            } else {
+              useDialogStore.getState().showDialog({
+                title: 'Lỗi lưu trữ',
+                message: res.error || 'Không thể lưu nhật ký tập luyện. Các bài tập có thể không hợp lệ.',
+                type: 'error',
+                buttons: [{ text: 'Đóng' }]
+              });
             }
           }
         }
@@ -113,8 +145,9 @@ const ActiveWorkoutScreen = () => {
         
         <View style={styles.imageContainer}>
           <Image 
-            source={{ uri: currentExercise?.image || 'https://images.unsplash.com/photo-1566241142559-40e1bfc26cd1' }} 
+            source={imageSource ? imageSource : { uri: currentExercise?.image || 'https://images.unsplash.com/photo-1566241142559-40e1bfc26cd1' }} 
             style={styles.exerciseImg} 
+            resizeMode="cover"
           />
         </View>
 

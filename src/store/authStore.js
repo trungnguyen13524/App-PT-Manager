@@ -29,6 +29,14 @@ export const useAuthStore = create((set, get) => ({
           isAuthenticated: true, 
           isOnboardingComplete: user.onboardingCompleted || false 
         });
+
+        // --- ADDED: Giữ trạng thái loading cho đến khi server phản hồi (sync profile) ---
+        try {
+          await get().syncProfileAndToken();
+        } catch (e) {
+          console.warn('Không thể đồng bộ profile khi khởi động:', e);
+        }
+        // -------------------------------------------------------------------------
       }
     } catch (e) {
       console.error('Lỗi khởi tạo AuthStore:', e);

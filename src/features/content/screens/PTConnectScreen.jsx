@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
   },
   // Banner
   bannerContainer: {
-    backgroundColor: 'rgba(0, 255, 102, 0.05)',
+    backgroundColor: 'rgba(85, 107, 47, 0.08)',
     borderRadius: 24,
     padding: 20,
     flexDirection: 'row',
@@ -517,12 +517,14 @@ const styles = StyleSheet.create({
   bannerContent: {
     flex: 1,
     zIndex: 2,
+    paddingRight: 10,
   },
   bannerTitle: {
     ...TYPOGRAPHY.h3,
-    color: '#3A4D20',
+    color: '#2D4A33',
     fontWeight: '900',
     marginBottom: 8,
+    fontSize: 20,
   },
   bannerText: {
     ...TYPOGRAPHY.body2,
@@ -530,19 +532,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 16,
     opacity: 0.9,
+    lineHeight: 20,
   },
   bannerBtn: {
-    backgroundColor: 'rgba(85, 107, 47, 0.1)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: '#556B2F',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 20,
     alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 255, 102, 0.5)',
+    shadowColor: '#556B2F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   bannerBtnText: {
-    color: '#FFF',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
   },
   bannerImage: {
     width: 120,

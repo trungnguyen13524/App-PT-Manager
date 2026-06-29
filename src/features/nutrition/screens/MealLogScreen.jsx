@@ -62,7 +62,8 @@ const MealLogScreen = ({ route }) => {
     fetchDailyLogs,
     fetchActiveMealPlan,
     deleteFoodLog,
-    updateFoodLog
+    updateFoodLog,
+    generateAIMealPlan
   } = useNutritionStore();
   const { lockDailyDiaryAction } = useMissionStore();
 
@@ -83,6 +84,7 @@ const MealLogScreen = ({ route }) => {
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   useEffect(() => {
     let timeoutId;
@@ -152,9 +154,29 @@ const MealLogScreen = ({ route }) => {
     // 1. Try finding PT assigned meal plan first
     const dayAssignment = ptMealPlan?.find(p => p.dayOfWeek === dayIndex || p.day === dayIndex);
     
-    // 2. If no PT plan, fallback to AI suggestedMenu
-    // In v1, suggestedMenu is stateless and represents a generic daily plan returned by AI
-    const hasSuggestedMenu = suggestedMenu && (suggestedMenu.morning?.length > 0 || suggestedMenu.lunch?.length > 0 || suggestedMenu.evening?.length > 0);
+    let aiMenuForDay = null;
+    if (Array.isArray(suggestedMenu)) {
+      aiMenuForDay = suggestedMenu.find(d => d.day === dayIndex);
+    } else if (suggestedMenu) {
+      aiMenuForDay = suggestedMenu;
+    }
+
+    // Adapt the new AI format `meals: [ { name: 'Bữa sáng', items: [] } ]` to morning/lunch/evening
+    let aiMorning = [];
+    let aiLunch = [];
+    let aiEvening = [];
+    if (aiMenuForDay && Array.isArray(aiMenuForDay.meals)) {
+      aiMorning = aiMenuForDay.meals.find(m => m.name?.toLowerCase().includes('sáng'))?.items || [];
+      aiLunch = aiMenuForDay.meals.find(m => m.name?.toLowerCase().includes('trưa'))?.items || [];
+      aiEvening = aiMenuForDay.meals.find(m => m.name?.toLowerCase().includes('tối'))?.items || [];
+    } else if (aiMenuForDay) {
+      // Fallback for old format
+      aiMorning = aiMenuForDay.morning || [];
+      aiLunch = aiMenuForDay.lunch || [];
+      aiEvening = aiMenuForDay.evening || [];
+    }
+
+    const hasSuggestedMenu = aiMorning.length > 0 || aiLunch.length > 0 || aiEvening.length > 0;
     
     if (!dayAssignment && !hasSuggestedMenu) {
       return { morning: [], lunch: [], evening: [] };
@@ -169,9 +191,11 @@ const MealLogScreen = ({ route }) => {
       } else if (typeof mealData === 'string') {
         items = mealData.split(',').map(s => s.trim()).filter(Boolean);
       }
-      return items.map(itemName => {
-        // Exact match or contains
-        const lowerName = itemName.toLowerCase();
+      return items.map(item => {
+        const isObject = typeof item === 'object' && item !== null;
+        const nameToSearch = isObject ? (item.name || item.title || '') : item;
+        const lowerName = nameToSearch.toLowerCase();
+        
         let matchedFood = foodsData.find(f =>
           (f.Description_VN && f.Description_VN.toLowerCase() === lowerName) ||
           (f.Food_Name_VN && f.Food_Name_VN.toLowerCase() === lowerName)
@@ -186,13 +210,13 @@ const MealLogScreen = ({ route }) => {
 
         if (matchedFood) {
           return {
-            id: itemName,
+            id: isObject ? (item.id || nameToSearch) : nameToSearch,
             title: matchedFood.Description_VN || matchedFood.Food_Name_VN,
-            calories: Math.round(Number(matchedFood.Calories) || 0),
-            protein: Math.round(Number(matchedFood.Protein_g) || 0),
-            carbs: Math.round(Number(matchedFood.Carbs_g) || 0),
-            fat: Math.round(Number(matchedFood.Fat_g) || 0),
-            image: FOOD_IMAGES[toImageKey(matchedFood.Description_VN)],
+            calories: isObject && item.calories ? item.calories : Math.round(Number(matchedFood.Calories) || 0),
+            protein: isObject && item.protein ? item.protein : Math.round(Number(matchedFood.Protein_g) || 0),
+            carbs: isObject && item.carbs ? item.carbs : Math.round(Number(matchedFood.Carbs_g) || 0),
+            fat: isObject && item.fat ? item.fat : Math.round(Number(matchedFood.Fat_g) || 0),
+            image: isObject && item.image ? item.image : FOOD_IMAGES[toImageKey(matchedFood.Description_VN)],
             description: matchedFood.Description_VN || '',
             rawItem: matchedFood,
             mealType: mealType
@@ -201,14 +225,14 @@ const MealLogScreen = ({ route }) => {
 
         // Fallback if not found
         return {
-          id: itemName,
-          title: itemName,
-          calories: 0,
-          protein: 0,
-          carbs: 0,
-          fat: 0,
-          image: null,
-          description: itemName,
+          id: isObject ? (item.id || nameToSearch) : nameToSearch,
+          title: nameToSearch,
+          calories: isObject ? (item.calories || 0) : 0,
+          protein: isObject ? (item.protein || 0) : 0,
+          carbs: isObject ? (item.carbs || 0) : 0,
+          fat: isObject ? (item.fat || 0) : 0,
+          image: isObject ? (item.image || null) : null,
+          description: nameToSearch,
           rawItem: null,
           mealType: mealType
         };
@@ -224,9 +248,9 @@ const MealLogScreen = ({ route }) => {
     } else {
       // Use AI plan
       return {
-        morning: parseMeals(suggestedMenu.morning, 'BREAKFAST'),
-        lunch: parseMeals(suggestedMenu.lunch, 'LUNCH'),
-        evening: parseMeals(suggestedMenu.evening, 'DINNER')
+        morning: parseMeals(aiMorning, 'BREAKFAST'),
+        lunch: parseMeals(aiLunch, 'LUNCH'),
+        evening: parseMeals(aiEvening, 'DINNER')
       };
     }
   };
@@ -269,7 +293,16 @@ const MealLogScreen = ({ route }) => {
           onPress={() => navigation.navigate('MealDetail', { meal: item })}
         >
           <View style={styles.glassCardMenu}>
-            <Image source={{ uri: item.image }} style={styles.menuImage} />
+            {item.image ? (
+              <Image 
+                source={typeof item.image === 'string' ? { uri: item.image } : item.image} 
+                style={styles.menuImage} 
+              />
+            ) : (
+              <View style={[styles.menuImage, { backgroundColor: 'rgba(0, 0, 0, 0.05)', justifyContent: 'center', alignItems: 'center' }]}>
+                <Utensils size={24} color="#9CA3AF" />
+              </View>
+            )}
             <View style={styles.menuInfo}>
               <Text style={styles.menuTitle}>{item.title}</Text>
               <View style={styles.menuStatsRow}>
@@ -566,13 +599,32 @@ const MealLogScreen = ({ route }) => {
                 <Utensils size={48} color="rgba(255,255,255,0.2)" />
                 <Text style={styles.emptyText}>Chưa có giáo án dinh dưỡng cho ngày này.</Text>
                 <TouchableOpacity 
-                  style={{ marginTop: 20, backgroundColor: '#556B2F', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16, shadowColor: '#556B2F', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 4 }}
+                  style={[{ marginTop: 20, backgroundColor: '#556B2F', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16, shadowColor: '#556B2F', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 4 }, isGeneratingAI && { opacity: 0.7 }]}
+                  disabled={isGeneratingAI}
                   onPress={async () => {
-                    const { useNutritionStore } = require('../../../store/nutritionStore');
-                    await useNutritionStore.getState().generateAIMealPlan();
+                    if (isGeneratingAI) return;
+                    setIsGeneratingAI(true);
+                    const res = await generateAIMealPlan();
+                    setIsGeneratingAI(false);
+                    const { useDialogStore } = require('../../../store/dialogStore');
+                    if (!res?.success) {
+                      useDialogStore.getState().showDialog({
+                        title: 'Tạo thất bại',
+                        message: res?.error || 'Có lỗi xảy ra khi tạo thực đơn. Vui lòng thử lại sau.',
+                        type: 'error',
+                        confirmText: 'Đóng'
+                      });
+                    }
                   }}
                 >
-                  <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16 }}>Tạo thực đơn bằng AI</Text>
+                  {isGeneratingAI ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                      <ActivityIndicator color="#FFFFFF" size="small" style={{ marginRight: 8 }} />
+                      <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16 }}>Đang tạo bằng AI...</Text>
+                    </View>
+                  ) : (
+                    <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16 }}>Tạo Thực đơn & Lịch tập bằng AI</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             ) : (
