@@ -120,23 +120,37 @@ const FoodScanScreen = () => {
       console.error(`Lỗi API nhận diện (Lần ${attempt}):`, apiError);
       let errorMsg = apiError?.message || "";
       
-      // Nếu là lỗi 502/sập server và chưa quá 3 lần thử -> tự động đợi và thử lại
-      if ((errorMsg.includes('502') || errorMsg.includes('<!DOCTYPE') || apiError?.code === 'AI_SERVICE_UNAVAILABLE' || apiError?.code === 'HTTP_502') && attempt < 3) {
-        setScanStatusMsg(`Server đang khởi động lại...\nSẽ thử lại sau 15s (Lần ${attempt}/3)`);
-        
-        // Đợi 15 giây rồi gọi lại chính hàm này (do Render Free tier khởi động mất khoảng 50s)
+      // Phân biệt 2 loại lỗi: 
+      // 1. Lỗi sập server (502, <!DOCTYPE) -> Cần đợi lâu (15s) để server ngủ dậy
+      const isServerDown = errorMsg.includes('502') || errorMsg.includes('<!DOCTYPE') || apiError?.code === 'HTTP_502';
+      // 2. Lỗi hết API Key (429) -> Server đã tỉnh nhưng key bị quá tải -> Chỉ cần đợi 2s rồi gọi lại để Server đổi key dự phòng
+      const isApiKeyExhausted = errorMsg.includes('429');
+
+      if ((isServerDown || (apiError?.code === 'AI_SERVICE_UNAVAILABLE' && !isApiKeyExhausted)) && attempt < 5) {
+        setScanStatusMsg(`Server đang khởi động lại...\nSẽ thử lại sau 15s (Lần ${attempt}/5)`);
         setTimeout(() => {
           processAndUploadImage(uri, attempt + 1);
         }, 15000);
-        return; // Kết thúc để hàm setTimout chạy
+        return; 
       }
 
-      // Nếu đã thử quá 3 lần hoặc là lỗi khác thì hiện thông báo
+      if (isApiKeyExhausted && attempt < 5) {
+        setScanStatusMsg(`Đang thử API Key dự phòng...\n(Lần ${attempt}/5)`);
+        setTimeout(() => {
+          processAndUploadImage(uri, attempt + 1);
+        }, 2000);
+        return;
+      }
+
+      // Nếu đã thử quá 5 lần hoặc là lỗi khác thì hiện thông báo
       setIsScanning(false);
       setScanStatusMsg('Đang phân tích...');
       
       if (!errorMsg) errorMsg = "Không thể nhận diện món ăn. Vui lòng kiểm tra mạng hoặc thử lại sau.";
-      if (errorMsg.includes('<!DOCTYPE html>') || errorMsg.includes('502') || apiError?.code === 'AI_SERVICE_UNAVAILABLE') {
+      
+      if (errorMsg.includes('429')) {
+        errorMsg = "Tất cả các API Key dự phòng đều đang quá tải. Vui lòng đợi vài phút rồi thử lại!";
+      } else if (errorMsg.includes('<!DOCTYPE html>') || errorMsg.includes('502') || isServerDown) {
         errorMsg = "Server vẫn chưa khởi động xong. Bạn có muốn tự nhập thông tin món ăn không?";
       } else if (errorMsg.length > 100) {
         errorMsg = "Đã xảy ra lỗi hệ thống (AI Server Error). Vui lòng thử lại sau.";

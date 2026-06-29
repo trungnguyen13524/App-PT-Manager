@@ -73,15 +73,27 @@ export const useWorkoutStore = create((set, get) => ({
             realExerciseId = matchedEx ? matchedEx.id : (get().library[0]?.id || 'ex_burpees');
           }
 
-          return {
+          const logData = {
             exerciseId: realExerciseId,
+            orderIndex: index + 1,
             setNumber: ex.setNumber || 1,
-            reps: ex.reps ? parseInt(ex.reps) : 10,
             weightKg: ex.weightKg || 0,
-            durationSec: ex.durationSec || 60,
             restSec: ex.restSec || 60,
-            rpe: ex.rpe || 5 // Tránh gửi null khiến Zod báo lỗi Required
+            rpe: ex.rpe || 5,
+            notes: ex.notes || ''
           };
+
+          // Backend YÊU CẦU chỉ gửi 1 trong 2: reps (tập tạ) HOẶC durationSec (cardio)
+          if (ex.reps && parseInt(ex.reps) > 0) {
+            logData.reps = parseInt(ex.reps);
+          } else if (ex.durationSec && parseInt(ex.durationSec) > 0) {
+            logData.durationSec = parseInt(ex.durationSec);
+          } else {
+            // Fallback an toàn nếu AI không tạo cả 2 -> mặc định cho tập tạ 10 reps
+            logData.reps = 10;
+          }
+
+          return logData;
         }).filter(log => log.exerciseId) // Loại bỏ các log không tìm thấy ID hợp lệ để tránh lỗi Backend
       };
 

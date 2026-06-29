@@ -101,7 +101,7 @@ const ActiveWorkoutScreen = () => {
                 type: 'success',
                 buttons: [{
                   text: 'OK',
-                  onPress: () => navigation.navigate('Trang chủ')
+                  onPress: () => navigation.navigate('MainTab')
                 }]
               });
             } else {

@@ -81,6 +81,9 @@ const SuggestedMealsScreen = () => {
           <Text style={styles.foodName} numberOfLines={2}>
             {meal.items?.join(', ')}
           </Text>
+          <Text style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+            P: {meal.protein ?? meal.proteinG ?? meal.macros?.proteinG ?? meal.macros?.protein ?? 0}g • C: {meal.carbs ?? meal.carbsG ?? meal.macros?.carbsG ?? meal.macros?.carbs ?? 0}g • F: {meal.fat ?? meal.fatG ?? meal.macros?.fatG ?? meal.macros?.fat ?? 0}g
+          </Text>
         </View>
       </TouchableOpacity>
     );
@@ -125,8 +128,11 @@ const SuggestedMealsScreen = () => {
             {isPT ? '👑 PT Giao' : mealTypeLabels[meal.mealType]}
           </Text>
           <Text style={styles.foodName} numberOfLines={2}>{meal.name}</Text>
+          <Text style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+            P: {meal.protein ?? meal.proteinG ?? meal.macros?.proteinG ?? meal.macros?.protein ?? 0}g • C: {meal.carbs ?? meal.carbsG ?? meal.macros?.carbsG ?? meal.macros?.carbs ?? 0}g • F: {meal.fat ?? meal.fatG ?? meal.macros?.fatG ?? meal.macros?.fat ?? 0}g
+          </Text>
           {isPT && meal.notes ? (
-            <Text style={{ fontSize: 11, color: '#4A5568', marginTop: 4 }}>{meal.notes}</Text>
+            <Text style={{ fontSize: 11, color: '#4A5568', marginTop: 2 }}>Ghi chú: {meal.notes}</Text>
           ) : null}
         </View>
       </TouchableOpacity>
